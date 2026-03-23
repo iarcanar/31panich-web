@@ -51,7 +51,8 @@ function AdminFab() {
   return (
     <Link
       href="/admin"
-      className="fixed bottom-6 left-2 z-50 w-9 h-9 rounded-full bg-purple-950/80 border border-purple-400/20
+      style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
+      className="fixed left-2 z-50 w-9 h-9 rounded-full bg-purple-950/80 border border-purple-400/20
         flex items-center justify-center text-purple-300/60 hover:text-white hover:bg-purple-900
         shadow-lg shadow-purple-900/30 transition-all opacity-60 hover:opacity-100"
       title="Admin Dashboard"
