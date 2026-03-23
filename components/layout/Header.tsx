@@ -65,7 +65,7 @@ export default function Header() {
   }, [isHome])
 
   const headerBg = !isHome || scrolled
-    ? "bg-[#0a0a0f] shadow-lg"
+    ? "bg-gradient-to-b from-black/90 via-black/60 to-transparent lg:bg-[#0a0a0f] lg:from-transparent lg:via-transparent lg:to-transparent lg:shadow-lg"
     : "bg-gradient-to-b from-black/80 to-transparent lg:bg-slate-900 lg:from-transparent lg:to-transparent lg:shadow-lg"
 
   return (
