@@ -18,7 +18,7 @@ export default async function PromotionsPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
       {/* Hero Banner */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden -mt-14 lg:mt-0">
         <Image
           src="/bg-promotion.webp"
           alt=""
@@ -29,7 +29,7 @@ export default async function PromotionsPage() {
           aria-hidden="true"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0e0e14]/60 via-[#0e0e14]/40 to-[#0e0e14]" />
-        <div className="relative container mx-auto px-4 py-16 md:py-24 text-center">
+        <div className="relative container mx-auto px-4 pt-28 pb-16 md:py-24 text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">โปรโมชั่น</h1>
           <p className="text-gray-300">โปรโมชั่นและข้อเสนอพิเศษจากร้านสามหนึ่งพานิช</p>
         </div>
