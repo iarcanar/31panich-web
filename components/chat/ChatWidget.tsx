@@ -180,7 +180,7 @@ export default function ChatWidget() {
         <div
           ref={panelRef}
           style={{ height: panelHeight, bottom: bottomOffset }}
-          className="fixed right-6 z-50 w-80 sm:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden max-[400px]:right-2 max-[400px]:left-2 max-[400px]:w-[calc(100vw-1rem)]"
+          className="fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         >
           {/* Resize handle */}
           <div
