@@ -90,6 +90,7 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
   const [claimed, setClaimed] = useState(false)
   const [claimInfo, setClaimInfo] = useState<ClaimedInfo | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [liveClaimCount, setLiveClaimCount] = useState(coupon.claimCount ?? 0)
 
   const accent = ACCENT[coupon.discountType] || ACCENT.percent
 
@@ -99,10 +100,16 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
       setClaimed(true)
       setClaimInfo(info)
     }
+
+    // Fetch real-time claimCount from server
+    fetch(`/api/coupons/claim-count?id=${coupon.id}`)
+      .then((r) => r.json())
+      .then((data) => { if (typeof data.count === "number") setLiveClaimCount(data.count) })
+      .catch(() => {})
   }, [coupon.id])
 
-  // คูปองหมดจากการรับของคนอื่น
-  const soldOut = coupon.usageLimit > 0 && (coupon.claimCount ?? 0) >= coupon.usageLimit
+  // คูปองหมดจากการรับของคนอื่น (ใช้ liveClaimCount แทน server-render data)
+  const soldOut = coupon.usageLimit > 0 && liveClaimCount >= coupon.usageLimit
   // รับไปแล้ว (ในเครื่องนี้) และไม่อนุญาตรับซ้ำ
   const alreadyClaimed = claimed && !coupon.allowRepeatClaim
   // สถานะ disabled (แสดงแต่กดไม่ได้)
@@ -121,12 +128,15 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
     setClaimInfo(info)
     setShowModal(true)
 
-    // ส่งนับไป backend (fire-and-forget)
+    // ส่งนับไป backend + ตรวจ limit
     fetch("/api/coupons/claim-count", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: coupon.id }),
-    }).catch(() => {})
+    })
+      .then((r) => r.json())
+      .then((data) => { if (typeof data.count === "number") setLiveClaimCount(data.count) })
+      .catch(() => {})
   }
 
   // Banknote-style wave guilloche
