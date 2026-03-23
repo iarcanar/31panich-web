@@ -5,7 +5,15 @@ import { buildChatContextWithProducts } from "@/lib/ai-products"
 import { logChat } from "@/lib/chat-logger"
 import { getAiConfig } from "@/lib/ai-config"
 import { getRelevantKnowledge } from "@/lib/ai-knowledge"
-import { PHONE, LINE_ID } from "@/lib/store-config"
+import { PHONE, LINE_ID, HOURS_TEXT } from "@/lib/store-config"
+
+/** Check if current Bangkok time is within business hours (07:30-17:30) */
+function isStoreOpen(): boolean {
+  const now = new Date()
+  const bkk = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }))
+  const minutes = bkk.getHours() * 60 + bkk.getMinutes()
+  return minutes >= 450 && minutes < 1050
+}
 
 const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผู้ช่วยของร้านสามหนึ่งพานิช ร้านวัสดุก่อสร้างและอุปกรณ์ช่างครบวงจร จ.ลพบุรี
 คุณเป็นผู้ชาย ใช้คำลงท้ายว่า "ครับ" เท่านั้น ห้ามใช้ "ค่ะ/คะ/นะคะ" โดยเด็ดขาด
@@ -13,12 +21,15 @@ const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผ
 {INSTRUCTIONS}
 
 เวลาปัจจุบัน: {NOW}
+สถานะร้าน: {STORE_STATUS}
 - ใช้เวลานี้ตอบเรื่องเปิด/ปิดร้าน เฉพาะเมื่อลูกค้าถามเท่านั้น
+
+{CONTACT_RULES}
 
 การค้นหาสินค้า (สำคัญมาก — ทำตามลำดับขั้นตอน):
 ขั้นตอนที่ 1 — ตรวจสอบก่อนตอบ:
 - ดูจากรายการ "สินค้าที่เกี่ยวข้อง" ด้านล่างเท่านั้น ห้ามแต่งชื่อสินค้าขึ้นมาเอง
-- ถ้าสินค้าที่ลูกค้าถามไม่ตรงกับชื่อสินค้าในรายการ → บอกตรงๆ ว่าอาจไม่มีในระบบ แนะนำสอบถาม LINE ${LINE_ID}
+- ถ้าสินค้าที่ลูกค้าถามไม่ตรงกับชื่อสินค้าในรายการ → {FALLBACK_NO_PRODUCT}
 - ตัวอย่าง: ลูกค้าถาม "มีดอกสว่านมั้ย" แต่ในรายการมีแค่ "สว่านแบต" "สว่านโรตารี" → ตอบว่ามีสว่านหลายรุ่น แต่ดอกสว่านแยกชิ้นต้องสอบถามเพิ่ม
 
 ขั้นตอนที่ 2 — เสนอให้ดู (ยังไม่ค้นหา):
@@ -36,21 +47,18 @@ const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผ
 - ห้ามใส่แท็กเมื่อถามเรื่องอื่น (เวลาเปิดปิด จัดส่ง คืนสินค้า ทักทาย แต้มสะสม โปรโมชั่น ติดต่อ)
 - ห้ามบอกว่า "ไม่สามารถแสดงรูปภาพได้" เพราะระบบแสดงให้เอง
 
-ช่องทางติดต่อ:
-- เขียนแค่ "LINE ${LINE_ID}" หรือ "โทร ${PHONE}" ห้ามใส่ URL ระบบแปลงเป็นลิงก์กดได้เอง
-
 ข้อมูลสินค้าเฉพาะทาง (สำคัญ — แยกชัดเจนว่ามีในระบบหรือไม่):
 
 [มีในระบบออนไลน์] สินค้าที่ค้นหาแสดงบนเว็บได้:
 - สีสเปรย์ — สีพ่นงานทั่วไป เช่น พ่นรถมอเตอร์ไซค์ รถยนต์ งาน DIY → มีในระบบ ใช้ [SEARCH:] ได้
 
 [ไม่มีในระบบ — ห้ามใช้ SEARCH] สินค้าที่มีขายที่หน้าร้าน แต่ยังไม่มีในระบบออนไลน์:
-- สีทาบ้าน — ยี่ห้อ TOA, เบเยอร์ ที่ร้านมีเครื่องผสมสี สั่งผสมเฉดสีได้ รอรับได้เลย → แนะนำลูกค้าติดต่อ LINE ${LINE_ID} หรือเข้ามาที่หน้าร้านโดยตรง
-- สีอุตสาหกรรม — สีน้ำมันสำหรับทาเก็บงาน ภายใน-ภายนอก, สีสำหรับใส่กาพ่นสี งานช่างทั่วไป → แนะนำติดต่อ LINE ${LINE_ID}
+- สีทาบ้าน — ยี่ห้อ TOA, เบเยอร์ ที่ร้านมีเครื่องผสมสี สั่งผสมเฉดสีได้ รอรับได้เลย → {FALLBACK_OFFLINE_PRODUCT}
+- สีอุตสาหกรรม — สีน้ำมันสำหรับทาเก็บงาน ภายใน-ภายนอก, สีสำหรับใส่กาพ่นสี งานช่างทั่วไป → {FALLBACK_OFFLINE_PRODUCT}
 
 เมื่อลูกค้าถามเรื่องสินค้าที่ "ไม่มีในระบบ":
 - บอกว่ามีขายที่หน้าร้าน พร้อมอธิบายสั้นๆ ว่ามีอะไรบ้าง
-- แนะนำสอบถามรายละเอียดผ่าน LINE ${LINE_ID}
+- {FALLBACK_NO_PRODUCT}
 - ห้ามใส่ [SEARCH:] เด็ดขาด เพราะจะค้นไม่เจอ
 
 {PRODUCTS}`
@@ -104,11 +112,34 @@ export async function POST(request: NextRequest) {
     const { context: productContext } = await buildChatContextWithProducts(message)
     const knowledge = getRelevantKnowledge(message)
     const now = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "full", timeStyle: "short" })
+    const storeOpen = isStoreOpen()
     const { instructions } = await getAiConfig()
+
+    // Build time-aware rules
+    const storeStatus = storeOpen
+      ? `เปิดอยู่ (ในเวลาทำการ ${HOURS_TEXT})`
+      : `ปิดแล้ว (นอกเวลาทำการ — เปิดใหม่พรุ่งนี้ ${HOURS_TEXT})`
+
+    const contactRules = storeOpen
+      ? `ช่องทางติดต่อ:\n- เขียนแค่ "LINE ${LINE_ID}" หรือ "โทร ${PHONE}" ห้ามใส่ URL ระบบแปลงเป็นลิงก์กดได้เอง`
+      : `ช่องทางติดต่อ (นอกเวลาทำการ — สำคัญมาก):\n- ตอนนี้ร้านปิดแล้ว ระบบ LINE ไม่มีพนักงานตอบ\n- ห้ามแนะนำให้ติดต่อ LINE ${LINE_ID} หรือโทร ${PHONE} ในข้อความตอบกลับ เพราะจะไม่มีคนตอบ\n- ตอบคำถามเท่าที่ทำได้จากข้อมูลในระบบ ตอบแบบกลางๆ เป็นประโยชน์\n- ถ้าลูกค้าถามซ้ำหรือต้องการข้อมูลจริงๆ ที่ไม่มีในระบบ → บอกว่า "ขออภัยครับ ตอนนี้นอกเวลาทำการ ติดต่อเราได้อีกครั้งพรุ่งนี้ตั้งแต่ ${HOURS_TEXT} ได้เลยครับ"`
+
+    const fallbackNoProduct = storeOpen
+      ? `บอกตรงๆ ว่าอาจไม่มีในระบบ แนะนำสอบถาม LINE ${LINE_ID}`
+      : `บอกว่าสินค้าประเภทนี้ยังไม่มีข้อมูลในระบบ ลองกลับมาสอบถามอีกครั้งในเวลาทำการ ${HOURS_TEXT} ได้ครับ`
+
+    const fallbackOfflineProduct = storeOpen
+      ? `แนะนำลูกค้าติดต่อ LINE ${LINE_ID} หรือเข้ามาที่หน้าร้านโดยตรง`
+      : `แนะนำให้มาที่หน้าร้านในเวลาทำการ ${HOURS_TEXT} หรือสอบถามได้อีกครั้งพรุ่งนี้ครับ`
+
     const systemInstruction = SYSTEM_TEMPLATE
       .replace("{INSTRUCTIONS}", instructions)
       .replace("{PRODUCTS}", productContext + knowledge)
       .replace("{NOW}", now)
+      .replace("{STORE_STATUS}", storeStatus)
+      .replace("{CONTACT_RULES}", contactRules)
+      .replace(/\{FALLBACK_NO_PRODUCT\}/g, fallbackNoProduct)
+      .replace(/\{FALLBACK_OFFLINE_PRODUCT\}/g, fallbackOfflineProduct)
 
     // Build contents with history + new message
     const contents = [
