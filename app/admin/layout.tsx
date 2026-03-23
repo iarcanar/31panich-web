@@ -21,7 +21,7 @@ export function useAuth() {
 const NAV = [
   { href: "/admin/products", label: "สินค้า" },
   { href: "/admin/coupons", label: "คูปอง" },
-  { href: "/admin/ai-logs", label: "AI Logs" },
+  { href: "/admin/ai-logs", label: "AI Logs", adminOnly: true },
 ]
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
@@ -71,20 +71,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-[11px] text-[#64748b] font-medium mr-3 uppercase tracking-wider">Admin</span>
             {NAV.map((item) => {
               const active = pathname.startsWith(item.href)
+              const restricted = "adminOnly" in item && item.adminOnly && !isAdmin
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={restricted ? "#" : item.href}
+                  onClick={restricted ? (e) => e.preventDefault() : undefined}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    active
-                      ? "bg-white/10 text-white"
-                      : "text-[#94a3b8] hover:text-white hover:bg-white/5"
+                    restricted
+                      ? "text-[#475569] cursor-not-allowed"
+                      : active
+                        ? "bg-white/10 text-white"
+                        : "text-[#94a3b8] hover:text-white hover:bg-white/5"
                   }`}
+                  title={restricted ? "เฉพาะ Admin เท่านั้น" : undefined}
                 >
                   {item.label}
                 </Link>
               )
             })}
+
+            {/* ดูหน้าเว็บ */}
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-md text-xs font-medium text-[#64748b] hover:text-white hover:bg-white/5 transition-colors"
+              title="เปิดหน้าเว็บ (แท็บใหม่)"
+            >
+              ดูหน้าเว็บ ↗
+            </a>
 
             {/* Spacer + Version + User info + Logout */}
             <div className="flex-1" />
