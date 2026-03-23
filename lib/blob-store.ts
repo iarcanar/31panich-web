@@ -28,7 +28,8 @@ export async function readJSON<T>(filename: string, fallback: T): Promise<T> {
     try {
       const { blobs } = await list({ prefix: `data/${filename}`, limit: 1 })
       if (blobs.length > 0) {
-        const res = await fetch(blobs[0].url, { cache: "no-store" })
+        // Use downloadUrl to bypass Vercel CDN cache (url is CDN-cached and can be stale)
+        const res = await fetch(blobs[0].downloadUrl, { cache: "no-store" })
         if (res.ok) {
           const data = await res.json()
           cache.set(filename, { data, ts: Date.now() })
