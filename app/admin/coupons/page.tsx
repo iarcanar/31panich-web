@@ -233,8 +233,16 @@ function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaim
                 </span>
                 <span>{c.startDate.slice(0, 10)} → {c.endDate.slice(0, 10)}</span>
                 <span>ใช้แล้ว {c.usageCount}{c.usageLimit > 0 ? `/${c.usageLimit}` : ""}</span>
+                <span className="flex items-center gap-1">
+                  รับแล้ว <span className="font-bold text-white">{c.claimCount ?? 0}</span>
+                  {c.usageLimit > 0 && (
+                    <span className={`ml-1 ${(c.usageLimit - (c.claimCount ?? 0)) <= 0 ? "text-red-400 font-bold" : "text-emerald-400"}`}>
+                      (เหลือ {Math.max(0, c.usageLimit - (c.claimCount ?? 0))})
+                    </span>
+                  )}
+                </span>
                 <button onClick={onShowClaims} className="text-amber-400 hover:text-amber-300 cursor-pointer">
-                  รับแล้ว {c.claimCount ?? 0} คน
+                  ดูประวัติ
                 </button>
               </div>
             </div>

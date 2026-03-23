@@ -79,7 +79,7 @@ export async function getCoupons(): Promise<Coupon[]> {
 export async function getActiveCoupons(): Promise<Coupon[]> {
   const now = new Date().toISOString()
   return (await readAll())
-    .filter((c) => c.isActive && c.startDate <= now && c.endDate >= now && (c.usageLimit === 0 || c.usageCount < c.usageLimit))
+    .filter((c) => c.isActive && c.startDate <= now && c.endDate >= now)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
@@ -136,6 +136,18 @@ export async function deleteCoupon(id: string): Promise<boolean> {
     if (filtered.length === coupons.length) return false
     await writeAll(filtered)
     return true
+  })
+}
+
+export async function incrementClaimCount(id: string): Promise<number> {
+  return withLock(FILE, async () => {
+    const coupons = await readAll()
+    const idx = coupons.findIndex((c) => c.id === id)
+    if (idx === -1) return 0
+    coupons[idx].claimCount = (coupons[idx].claimCount || 0) + 1
+    coupons[idx].updatedAt = new Date().toISOString()
+    await writeAll(coupons)
+    return coupons[idx].claimCount
   })
 }
 

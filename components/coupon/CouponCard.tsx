@@ -101,11 +101,15 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
     }
   }, [coupon.id])
 
-  // ซ่อน card ที่รับแล้ว (ยกเว้น allowRepeatClaim เปิด)
-  if (claimed && !showModal && !coupon.allowRepeatClaim) return null
+  // คูปองหมดจากการรับของคนอื่น
+  const soldOut = coupon.usageLimit > 0 && (coupon.claimCount ?? 0) >= coupon.usageLimit
+  // รับไปแล้ว (ในเครื่องนี้) และไม่อนุญาตรับซ้ำ
+  const alreadyClaimed = claimed && !coupon.allowRepeatClaim
+  // สถานะ disabled (แสดงแต่กดไม่ได้)
+  const disabled = soldOut || alreadyClaimed
 
   function handleClaim() {
-    // Client-side only — no API call, no Blob operation
+    if (disabled) return
     const prefix = coupon.serialPrefix || "A"
     const claimNum = getNextClaimNumber(coupon.id)
     const serial = `31-${prefix}${claimNum}`
@@ -116,6 +120,13 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
     setClaimed(true)
     setClaimInfo(info)
     setShowModal(true)
+
+    // ส่งนับไป backend (fire-and-forget)
+    fetch("/api/coupons/claim-count", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: coupon.id }),
+    }).catch(() => {})
   }
 
   // Banknote-style wave guilloche
@@ -129,11 +140,20 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
     <>
       <div
         className={`relative bg-[#1a1a28] border border-dashed rounded-xl overflow-hidden
-          ${accent.border} transition-all hover:border-white/25`}
+          ${accent.border} transition-all ${disabled ? "opacity-50" : "hover:border-white/25"}`}
         style={guillocheStyle}
       >
         {/* Accent stripe left */}
         <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${accent.bg}`} />
+
+        {/* Disabled overlay */}
+        {disabled && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <span className="text-red-500 text-2xl font-bold -rotate-12 border-2 border-red-500/60 px-4 py-1 rounded-lg bg-black/40 backdrop-blur-sm">
+              {soldOut ? "หมดแล้ว" : "รับไปแล้ว"}
+            </span>
+          </div>
+        )}
 
         {/* Watermark 31 logo */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 w-[100px] h-[100px] opacity-[0.04] pointer-events-none select-none">
@@ -182,10 +202,11 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
             </span>
             <button
               onClick={handleClaim}
+              disabled={disabled}
               className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
-                ${accent.bg} hover:brightness-110 active:scale-95`}
+                ${disabled ? "bg-gray-600 cursor-not-allowed opacity-50" : `${accent.bg} hover:brightness-110 active:scale-95`}`}
             >
-              {claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
+              {disabled ? (soldOut ? "หมดแล้ว" : "รับแล้ว") : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
             </button>
           </div>
         </div>
