@@ -258,10 +258,11 @@ function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaim
                 </div>
                 {c.isActive ? "แสดง" : "ซ่อน"}
               </button>
-              <button onClick={onEdit} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors cursor-pointer" title="แก้ไข">
+              <button onClick={onEdit} className="h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-white flex items-center gap-1.5 px-3 transition-colors cursor-pointer text-[11px] font-medium" title="แก้ไข">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
+                แก้ไข
               </button>
               {isAdmin && (
                 <button onClick={onDelete} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#64748b] hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer" title="ลบ">
@@ -358,6 +359,7 @@ export default function AdminCouponsPage() {
     })
     setEditingId(c.id)
     setShowForm(true)
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   async function handleDelete(id: string) {
