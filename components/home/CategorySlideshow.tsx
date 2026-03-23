@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useRef } from "react"
+import { useRef, useEffect } from "react"
 
 interface CategorySlide {
   category: string
@@ -16,14 +16,15 @@ interface Props {
 
 export default function CategorySlideshow({ slides }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
+  const mobileTrackRef = useRef<HTMLDivElement>(null)
+  const autoScrollRef = useRef(true)
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  // Duplicate for infinite CSS loop
+  // Duplicate for infinite loop
   const loopSlides = [...slides, ...slides]
-  const mobileLoopSlides = [...slides, ...slides]
 
-  // Slow scroll: ~15s per slide on desktop, ~8s on mobile (faster)
+  // Desktop animation: ~15s per slide
   const duration = slides.length * 15
-  const mDuration = slides.length * 8
 
   function handlePause() {
     if (trackRef.current) trackRef.current.style.animationPlayState = "paused"
@@ -45,6 +46,35 @@ export default function CategorySlideshow({ slides }: Props) {
     anim.currentTime = next
   }
 
+  // Mobile: auto-scroll via JS (allows touch swipe override)
+  useEffect(() => {
+    const el = mobileTrackRef.current
+    if (!el) return
+    let raf: number
+    function step() {
+      if (autoScrollRef.current && el) {
+        el.scrollLeft += 0.5
+        if (el.scrollLeft >= el.scrollWidth / 2) {
+          el.scrollLeft = 0
+        }
+      }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  function onMobileTouchStart() {
+    autoScrollRef.current = false
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current)
+  }
+
+  function onMobileTouchEnd() {
+    resumeTimerRef.current = setTimeout(() => {
+      autoScrollRef.current = true
+    }, 3000)
+  }
+
   if (slides.length === 0) return null
 
   return (
@@ -56,17 +86,15 @@ export default function CategorySlideshow({ slides }: Props) {
           <h2 className="text-sm md:text-lg font-bold text-white/80">เลือกดูตามหมวดหมู่</h2>
         </div>
       </div>
-      {/* ─── Mobile: auto-slide (icon only) ─── */}
-      <div className="md:hidden overflow-hidden">
-        <div
-          className="flex gap-[2px]"
-          style={{
-            width: "max-content",
-            animation: `catSlideScrollMobile ${mDuration}s linear infinite`,
-            willChange: "transform",
-          }}
-        >
-          {mobileLoopSlides.map((slide, i) => (
+      {/* ─── Mobile: auto-scroll + touch swipe ─── */}
+      <div
+        ref={mobileTrackRef}
+        className="md:hidden overflow-x-auto no-scrollbar"
+        onTouchStart={onMobileTouchStart}
+        onTouchEnd={onMobileTouchEnd}
+      >
+        <div className="flex gap-[2px] w-max">
+          {loopSlides.map((slide, i) => (
             <Link
               key={`m-${slide.category}-${i}`}
               href={`/products/${slide.category}`}
@@ -184,10 +212,8 @@ export default function CategorySlideshow({ slides }: Props) {
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
         }
-        @keyframes catSlideScrollMobile {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </section>
   )

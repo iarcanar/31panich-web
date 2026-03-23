@@ -59,7 +59,7 @@ export default function AboutPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden -mt-14 lg:mt-0">
         <Image
           src="/front-store.webp"
           alt="หน้าร้านสามหนึ่งพานิช ลพบุรี"
@@ -69,7 +69,7 @@ export default function AboutPage() {
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-[#0e0e14]/70 to-[#0e0e14]/40" />
-        <div className="relative container mx-auto px-4 py-24 md:py-32 text-center">
+        <div className="relative container mx-auto px-4 pt-36 pb-24 md:py-32 text-center">
           <Image src="/logo.webp" alt="31 พานิช" width={80} height={80} className="mx-auto mb-6" />
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">เกี่ยวกับสามหนึ่ง</h1>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">
