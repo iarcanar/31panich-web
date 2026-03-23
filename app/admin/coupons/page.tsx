@@ -86,6 +86,11 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
 
 // ─── Main page ───────────────────────────────────────────
 
+interface ClaimRecord {
+  id: string; couponId: string; couponCode: string; serial: string
+  claimedAt: string; ip: string; ua: string
+}
+
 export default function AdminCouponsPage() {
   const { isAdmin } = useAuth()
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -93,6 +98,8 @@ export default function AdminCouponsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [claimHistory, setClaimHistory] = useState<ClaimRecord[] | null>(null)
+  const [claimCouponName, setClaimCouponName] = useState("")
 
   const fetchCoupons = useCallback(async () => {
     const res = await fetch("/api/coupons")
@@ -166,11 +173,18 @@ export default function AdminCouponsPage() {
   }
 
   async function generateCode() {
-    // Simple client-side gen (matching server SAFE_CHARS)
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     let code = ""
     for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)]
     setForm({ ...form, code })
+  }
+
+  async function showClaims(c: Coupon) {
+    setClaimCouponName(c.title)
+    setClaimHistory([]) // show loading
+    const res = await fetch(`/api/admin/coupon-claims?couponId=${c.id}`)
+    const data = await res.json()
+    setClaimHistory(data.claims || [])
   }
 
   // ─── Render ────────────────────────────────────────────
@@ -330,7 +344,7 @@ export default function AdminCouponsPage() {
                     {limitReached && <span className="text-[10px] text-orange-400">ใช้ครบแล้ว</span>}
                   </div>
                   <h3 className="text-sm font-medium text-white truncate">{c.title}</h3>
-                  <div className="flex items-center gap-3 mt-1 text-[11px] text-[#64748b]">
+                  <div className="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-[#64748b]">
                     <span>
                       {c.discountType === "percent" && `ลด ${c.discountValue}%`}
                       {c.discountType === "fixed" && `ลด ${c.discountValue} บาท`}
@@ -338,10 +352,17 @@ export default function AdminCouponsPage() {
                     </span>
                     <span>{c.startDate.slice(0, 10)} → {c.endDate.slice(0, 10)}</span>
                     <span>ใช้แล้ว {c.usageCount}{c.usageLimit > 0 ? `/${c.usageLimit}` : ""}</span>
-                    <span>รับแล้ว {c.claimCount ?? 0}</span>
+                    <button onClick={() => showClaims(c)} className="text-amber-400 hover:text-amber-300 cursor-pointer">
+                      รับแล้ว {c.claimCount ?? 0} คน
+                    </button>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => showClaims(c)} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer" title="ประวัติการรับ">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </button>
                   <button onClick={() => handleToggleActive(c)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${c.isActive ? "bg-emerald-500/20 text-emerald-400" : "bg-[#1e1e2e] text-[#64748b]"}`} title={c.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}>
                     {c.isActive ? "✓" : "○"}
                   </button>
@@ -363,6 +384,41 @@ export default function AdminCouponsPage() {
           )
         })}
       </div>
+
+      {/* ─── Claim History Modal ─── */}
+      {claimHistory !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setClaimHistory(null)} />
+          <div className="relative bg-[#13131d] border border-[#2a2a3a] rounded-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2a3a]">
+              <h3 className="text-sm font-bold text-white">ประวัติการรับ — {claimCouponName}</h3>
+              <button onClick={() => setClaimHistory(null)} className="text-[#64748b] hover:text-white text-xl cursor-pointer">&times;</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5">
+              {claimHistory.length === 0 ? (
+                <p className="text-center text-[#64748b] text-sm py-8">ยังไม่มีคนรับคูปองนี้</p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[60px_80px_1fr_80px] gap-2 text-[10px] text-[#64748b] uppercase tracking-wider pb-2 border-b border-[#2a2a3a]">
+                    <span>#</span>
+                    <span>Serial</span>
+                    <span>เวลา</span>
+                    <span>IP</span>
+                  </div>
+                  {claimHistory.map((cl, i) => (
+                    <div key={cl.id} className="grid grid-cols-[60px_80px_1fr_80px] gap-2 text-xs text-[#94a3b8] py-1.5 border-b border-[#2a2a3a]/50">
+                      <span className="text-[#64748b]">{i + 1}</span>
+                      <span className="font-mono text-amber-400">{cl.serial}</span>
+                      <span>{new Date(cl.claimedAt).toLocaleString("th-TH", { day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                      <span className="font-mono text-[11px]">{cl.ip}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

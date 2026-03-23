@@ -35,12 +35,15 @@ function localPath(filename: string): string {
   return path.join(process.cwd(), "data", filename)
 }
 
-/** Read JSON data from blob (production) or local file (dev) */
-export async function readJSON<T>(filename: string, fallback: T): Promise<T> {
-  // Check memory cache
-  const cached = cache.get(filename)
-  if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    return structuredClone(cached.data) as T
+/** Read JSON data from blob (production) or local file (dev)
+ *  @param noCache — bypass in-memory cache, always read fresh (use for write operations) */
+export async function readJSON<T>(filename: string, fallback: T, noCache = false): Promise<T> {
+  // Check memory cache (skip if noCache requested)
+  if (!noCache) {
+    const cached = cache.get(filename)
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      return structuredClone(cached.data) as T
+    }
   }
 
   if (useBlob) {

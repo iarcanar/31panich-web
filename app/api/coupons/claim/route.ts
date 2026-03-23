@@ -22,7 +22,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "coupon fully used" }, { status: 400 })
     }
 
-    const result = await claimCoupon(id)
+    // Extract client info for claim record
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || req.headers.get("x-real-ip")
+      || "unknown"
+    const ua = req.headers.get("user-agent") || "unknown"
+
+    const result = await claimCoupon(id, ip, ua)
     if (!result) {
       return NextResponse.json({ error: "claim failed" }, { status: 500 })
     }
