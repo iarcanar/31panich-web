@@ -86,8 +86,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )
             })}
 
-            {/* Spacer + User info + Logout */}
+            {/* Spacer + Version + User info + Logout */}
             <div className="flex-1" />
+            <span className="text-[10px] text-[#475569] font-mono mr-3">
+              b {process.env.NEXT_PUBLIC_ADMIN_VERSION}
+            </span>
             {user && badge && (
               <div className="flex items-center gap-2 mr-2">
                 <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${badge.color}`}>

@@ -58,7 +58,7 @@ export default function Footer() {
       {/* Copyright & Version */}
       <div className="border-t border-white/5 py-4 text-center text-[11px] text-gray-600">
         <p>© {new Date().getFullYear()} {STORE_NAME} จ.ลพบุรี</p>
-        <p className="mt-1 text-gray-700">v {process.env.NEXT_PUBLIC_APP_VERSION} · last update {process.env.NEXT_PUBLIC_BUILD_DATE}</p>
+        <p className="mt-1 text-gray-700">f {process.env.NEXT_PUBLIC_APP_VERSION} · last update {process.env.NEXT_PUBLIC_BUILD_DATE}</p>
       </div>
     </footer>
   )
