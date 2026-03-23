@@ -95,7 +95,7 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
   async function handleShare() {
     const shareData = {
       title: `คูปอง ${coupon.title} — สามหนึ่งพานิช`,
-      text: `🎟️ ${discountLabel(coupon)}\n${coupon.title}\nรหัส: ${coupon.code}\nSerial: ${serial}\nใช้ได้ถึง ${formatDate(coupon.endDate)}\n\n31panich.com/promotions`,
+      text: `🎟️ ${discountLabel(coupon)}\n${coupon.title}\nรหัส: ${coupon.code}\nSerial: ${serial}\nใช้ได้ถึง ${formatDate(coupon.endDate)}\n\n31panich.co.th/promotions`,
     }
     if (navigator.share) {
       try { await navigator.share(shareData) } catch { /* cancelled */ }
@@ -261,7 +261,7 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
 
           {/* Branding footer (included in capture) */}
           <div className="relative px-6 pb-4 text-center">
-            <p className="text-[11px] text-white/30">สามหนึ่งพานิช — 31panich.com</p>
+            <p className="text-[11px] text-white/30">สามหนึ่งพานิช — 31panich.co.th</p>
           </div>
         </div>
 

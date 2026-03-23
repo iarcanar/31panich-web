@@ -180,7 +180,7 @@ function CouponPreviewCard({ coupon: c }: { coupon: Coupon }) {
 
       {/* Branding */}
       <div className="px-3 pb-2 text-center">
-        <p className="text-[7px] text-white/20">สามหนึ่งพานิช — 31panich.com</p>
+        <p className="text-[7px] text-white/20">สามหนึ่งพานิช — 31panich.co.th</p>
       </div>
     </div>
   )
