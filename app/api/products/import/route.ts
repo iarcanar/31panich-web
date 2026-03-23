@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { bulkImportProducts } from "@/lib/products"
+import { getSessionUser } from "@/lib/auth"
 import type { Product } from "@/lib/products"
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await req.json()
 
     if (!Array.isArray(body)) {
