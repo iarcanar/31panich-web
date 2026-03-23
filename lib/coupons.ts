@@ -1,4 +1,4 @@
-import { readJSON, writeJSON } from "./blob-store"
+import { readJSON, writeJSON, withLock } from "./blob-store"
 
 // ─── Types ───────────────────────────────────────────────
 export interface Coupon {
@@ -92,66 +92,75 @@ export async function getCouponByCode(code: string): Promise<Coupon | undefined>
 
 // ─── Write helpers ───────────────────────────────────────
 export async function createCoupon(input: CouponInput): Promise<Coupon> {
-  const coupons = await readAll()
-  const now = new Date().toISOString()
-  const coupon: Coupon = {
-    ...input,
-    code: input.code || await generateCode(),
-    id: crypto.randomUUID(),
-    usageCount: 0,
-    claimCount: 0,
-    stackWithPoints: input.stackWithPoints ?? true,
-    serialPrefix: await generateSerialPrefix(),
-    createdAt: now,
-    updatedAt: now,
-  }
-  coupons.push(coupon)
-  await writeAll(coupons)
-  return coupon
+  return withLock(FILE, async () => {
+    const coupons = await readAll()
+    const now = new Date().toISOString()
+    const coupon: Coupon = {
+      ...input,
+      code: input.code || await generateCode(),
+      id: crypto.randomUUID(),
+      usageCount: 0,
+      claimCount: 0,
+      stackWithPoints: input.stackWithPoints ?? true,
+      serialPrefix: await generateSerialPrefix(),
+      createdAt: now,
+      updatedAt: now,
+    }
+    coupons.push(coupon)
+    await writeAll(coupons)
+    return coupon
+  })
 }
 
 export async function updateCoupon(id: string, input: Partial<CouponInput>): Promise<Coupon | null> {
-  const coupons = await readAll()
-  const idx = coupons.findIndex((c) => c.id === id)
-  if (idx === -1) return null
-  coupons[idx] = {
-    ...coupons[idx],
-    ...input,
-    updatedAt: new Date().toISOString(),
-  }
-  await writeAll(coupons)
-  return coupons[idx]
+  return withLock(FILE, async () => {
+    const coupons = await readAll()
+    const idx = coupons.findIndex((c) => c.id === id)
+    if (idx === -1) return null
+    coupons[idx] = {
+      ...coupons[idx],
+      ...input,
+      updatedAt: new Date().toISOString(),
+    }
+    await writeAll(coupons)
+    return coupons[idx]
+  })
 }
 
 export async function deleteCoupon(id: string): Promise<boolean> {
-  const coupons = await readAll()
-  const filtered = coupons.filter((c) => c.id !== id)
-  if (filtered.length === coupons.length) return false
-  await writeAll(filtered)
-  return true
+  return withLock(FILE, async () => {
+    const coupons = await readAll()
+    const filtered = coupons.filter((c) => c.id !== id)
+    if (filtered.length === coupons.length) return false
+    await writeAll(filtered)
+    return true
+  })
 }
 
 // ─── Claim: ลูกค้ากดรับ → ได้ serial 31-A1, 31-A2, ... ──
 export async function claimCoupon(id: string): Promise<{ coupon: Coupon; serial: string; claimedAt: string } | null> {
-  const coupons = await readAll()
-  const idx = coupons.findIndex((c) => c.id === id)
-  if (idx === -1) return null
-  coupons[idx].claimCount += 1
-  coupons[idx].updatedAt = new Date().toISOString()
-  const num = coupons[idx].claimCount
-  // ใช้ serialPrefix ที่ผูกกับ coupon ถาวร (ไม่เปลี่ยนเมื่อลบคูปองอื่น)
-  const prefix = coupons[idx].serialPrefix || String.fromCharCode(65 + (idx % 26))
-  const serial = `31-${prefix}${num}`
-  await writeAll(coupons)
-  return { coupon: coupons[idx], serial, claimedAt: new Date().toISOString() }
+  return withLock(FILE, async () => {
+    const coupons = await readAll()
+    const idx = coupons.findIndex((c) => c.id === id)
+    if (idx === -1) return null
+    coupons[idx].claimCount += 1
+    coupons[idx].updatedAt = new Date().toISOString()
+    const num = coupons[idx].claimCount
+    const prefix = coupons[idx].serialPrefix || String.fromCharCode(65 + (idx % 26))
+    const serial = `31-${prefix}${num}`
+    await writeAll(coupons)
+    return { coupon: coupons[idx], serial, claimedAt: new Date().toISOString() }
+  })
 }
 
 export async function incrementUsage(id: string): Promise<Coupon | null> {
-  const coupons = await readAll()
-  const idx = coupons.findIndex((c) => c.id === id)
-  if (idx === -1) return null
-  coupons[idx].usageCount += 1
-  coupons[idx].updatedAt = new Date().toISOString()
-  await writeAll(coupons)
-  return coupons[idx]
+  return withLock(FILE, async () => {
+    const coupons = await readAll()
+    const idx = coupons.findIndex((c) => c.id === id)
+    if (idx === -1) return null
+    coupons[idx].usageCount += 1
+    coupons[idx].updatedAt = new Date().toISOString()
+    await writeAll(coupons)
+    return coupons[idx]
+  })
 }

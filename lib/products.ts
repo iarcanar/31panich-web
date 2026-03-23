@@ -1,4 +1,4 @@
-import { readJSON, writeJSON } from "./blob-store"
+import { readJSON, writeJSON, withLock } from "./blob-store"
 export { CATEGORIES } from "./categories"
 import { CATEGORIES } from "./categories"
 
@@ -127,66 +127,72 @@ function clearConflictingPins(products: Product[], target: { isNew: boolean; isB
 }
 
 export async function createProduct(input: ProductInput): Promise<Product> {
-  const products = await readAll()
+  return withLock(FILE, async () => {
+    const products = await readAll()
 
-  // Prevent hero card in both zones: pinned product can only be isNew OR isBestseller, not both
-  if (input.isPinned && input.isNew && input.isBestseller) {
-    input.isBestseller = false
-  }
+    // Prevent hero card in both zones: pinned product can only be isNew OR isBestseller, not both
+    if (input.isPinned && input.isNew && input.isBestseller) {
+      input.isBestseller = false
+    }
 
-  // Auto-clear conflicting pins in same zone
-  if (input.isPinned) {
-    clearConflictingPins(products, input)
-  }
+    // Auto-clear conflicting pins in same zone
+    if (input.isPinned) {
+      clearConflictingPins(products, input)
+    }
 
-  const now = new Date().toISOString()
-  const product: Product = {
-    ...input,
-    id: crypto.randomUUID(),
-    slug: toSlug(input.name) || crypto.randomUUID().slice(0, 8),
-    createdAt: now,
-    updatedAt: now,
-  }
-  products.push(product)
-  await writeAll(products)
-  return product
+    const now = new Date().toISOString()
+    const product: Product = {
+      ...input,
+      id: crypto.randomUUID(),
+      slug: toSlug(input.name) || crypto.randomUUID().slice(0, 8),
+      createdAt: now,
+      updatedAt: now,
+    }
+    products.push(product)
+    await writeAll(products)
+    return product
+  })
 }
 
 export async function updateProduct(id: string, input: Partial<ProductInput>): Promise<Product | null> {
-  const products = await readAll()
-  const idx = products.findIndex((p) => p.id === id)
-  if (idx === -1) return null
+  return withLock(FILE, async () => {
+    const products = await readAll()
+    const idx = products.findIndex((p) => p.id === id)
+    if (idx === -1) return null
 
-  // Merge to know final state of zones
-  const merged = { ...products[idx], ...input }
+    // Merge to know final state of zones
+    const merged = { ...products[idx], ...input }
 
-  // Prevent hero card in both zones: pinned product can only be isNew OR isBestseller, not both
-  if (merged.isPinned && merged.isNew && merged.isBestseller) {
-    input.isBestseller = false
-    merged.isBestseller = false
-  }
+    // Prevent hero card in both zones: pinned product can only be isNew OR isBestseller, not both
+    if (merged.isPinned && merged.isNew && merged.isBestseller) {
+      input.isBestseller = false
+      merged.isBestseller = false
+    }
 
-  // Auto-clear conflicting pins in same zone
-  if (merged.isPinned) {
-    clearConflictingPins(products, merged, id)
-  }
+    // Auto-clear conflicting pins in same zone
+    if (merged.isPinned) {
+      clearConflictingPins(products, merged, id)
+    }
 
-  products[idx] = {
-    ...products[idx],
-    ...input,
-    updatedAt: new Date().toISOString(),
-  }
-  if (input.name) {
-    products[idx].slug = toSlug(input.name)
-  }
-  await writeAll(products)
-  return products[idx]
+    products[idx] = {
+      ...products[idx],
+      ...input,
+      updatedAt: new Date().toISOString(),
+    }
+    if (input.name) {
+      products[idx].slug = toSlug(input.name)
+    }
+    await writeAll(products)
+    return products[idx]
+  })
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
-  const products = await readAll()
-  const filtered = products.filter((p) => p.id !== id)
-  if (filtered.length === products.length) return false
-  await writeAll(filtered)
-  return true
+  return withLock(FILE, async () => {
+    const products = await readAll()
+    const filtered = products.filter((p) => p.id !== id)
+    if (filtered.length === products.length) return false
+    await writeAll(filtered)
+    return true
+  })
 }

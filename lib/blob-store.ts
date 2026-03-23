@@ -12,6 +12,25 @@ console.log(`[blob-store] mode=${useBlob ? "blob" : "local-fs"}, token=${useBlob
 const cache = new Map<string, { data: unknown; ts: number }>()
 const CACHE_TTL = 5_000 // 5 seconds
 
+// Per-file write lock to prevent race conditions within the same instance
+const locks = new Map<string, Promise<void>>()
+
+/** Acquire a per-file lock: queues writes so read-modify-write is safe */
+export async function withLock<T>(filename: string, fn: () => Promise<T>): Promise<T> {
+  // Wait for any pending write on this file
+  const prev = locks.get(filename) ?? Promise.resolve()
+  let release: () => void
+  const next = new Promise<void>((res) => { release = res })
+  locks.set(filename, next)
+  try {
+    await prev
+    return await fn()
+  } finally {
+    release!()
+    if (locks.get(filename) === next) locks.delete(filename)
+  }
+}
+
 function localPath(filename: string): string {
   return path.join(process.cwd(), "data", filename)
 }
@@ -68,7 +87,11 @@ export async function writeJSON<T>(filename: string, data: T): Promise<void> {
         allowOverwrite: true,
         contentType: "application/json",
       })
+      // Update cache only after successful write
+      cache.set(filename, { data, ts: Date.now() })
     } catch (err) {
+      // Invalidate cache on failure so next read fetches fresh data
+      cache.delete(filename)
       console.error(`[blob-store] writeJSON FAILED for ${filename}:`, err)
       throw new Error(`Blob write failed for ${filename}: ${err instanceof Error ? err.message : String(err)}`)
     }
@@ -77,10 +100,8 @@ export async function writeJSON<T>(filename: string, data: T): Promise<void> {
     const dir = path.dirname(fp)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(fp, json, "utf-8")
+    cache.set(filename, { data, ts: Date.now() })
   }
-
-  // Update cache immediately
-  cache.set(filename, { data, ts: Date.now() })
 }
 
 /** Upload binary file (images) to blob or local fs */

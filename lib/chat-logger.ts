@@ -1,4 +1,4 @@
-import { readJSON, writeJSON } from "./blob-store"
+import { readJSON, writeJSON, withLock } from "./blob-store"
 
 interface ChatLogEntry {
   q: string
@@ -18,27 +18,29 @@ const FILE = "chat-logs.json"
 const MAX_RECENT = 10
 
 export async function logChat(ip: string, question: string, answer: string): Promise<void> {
-  const logs = await readJSON<ChatLogs>(FILE, {})
-  const now = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Bangkok" }).replace(" ", "T")
+  await withLock(FILE, async () => {
+    const logs = await readJSON<ChatLogs>(FILE, {})
+    const now = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Bangkok" }).replace(" ", "T")
 
-  if (!logs[ip]) {
-    logs[ip] = { totalChats: 0, lastActive: now, recent: [] }
-  }
+    if (!logs[ip]) {
+      logs[ip] = { totalChats: 0, lastActive: now, recent: [] }
+    }
 
-  const entry = logs[ip]
-  entry.totalChats++
-  entry.lastActive = now
-  entry.recent.push({
-    q: question.slice(0, 80),
-    a: answer.slice(0, 80),
-    t: now,
+    const entry = logs[ip]
+    entry.totalChats++
+    entry.lastActive = now
+    entry.recent.push({
+      q: question.slice(0, 80),
+      a: answer.slice(0, 80),
+      t: now,
+    })
+
+    if (entry.recent.length > MAX_RECENT) {
+      entry.recent = entry.recent.slice(-MAX_RECENT)
+    }
+
+    await writeJSON(FILE, logs)
   })
-
-  if (entry.recent.length > MAX_RECENT) {
-    entry.recent = entry.recent.slice(-MAX_RECENT)
-  }
-
-  await writeJSON(FILE, logs)
 }
 
 export async function getChatLogs(): Promise<ChatLogs> {
