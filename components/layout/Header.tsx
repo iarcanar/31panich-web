@@ -64,9 +64,8 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [isHome])
 
-  const headerBg = !isHome || scrolled
-    ? "bg-gradient-to-b from-black/90 via-black/60 to-transparent lg:bg-[#0a0a0f] lg:from-transparent lg:via-transparent lg:to-transparent lg:shadow-lg"
-    : "bg-gradient-to-b from-black/80 to-transparent lg:bg-slate-900 lg:from-transparent lg:to-transparent lg:shadow-lg"
+  // Mobile: always gradient (no solid bar). Desktop: solid bg + shadow.
+  const headerBg = "bg-gradient-to-b from-black/80 to-transparent lg:bg-[#0a0a0f] lg:from-transparent lg:to-transparent lg:shadow-lg"
 
   return (
     <>
