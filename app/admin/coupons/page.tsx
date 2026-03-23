@@ -85,6 +85,154 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   gift: { label: "ของแถม", color: "bg-purple-500/20 text-purple-400 border-purple-500/40" },
 }
 
+// ─── Coupon Row with preview + inline verify ────────────
+
+function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaims, onUsageChanged }: {
+  coupon: Coupon; isAdmin: boolean
+  onEdit: () => void; onDelete: () => void; onToggle: () => void
+  onShowClaims: () => void; onUsageChanged: () => void
+}) {
+  const typeInfo = TYPE_LABELS[c.discountType]
+  const now = new Date().toISOString()
+  const expired = c.endDate < now
+  const notStarted = c.startDate > now
+  const limitReached = c.usageLimit > 0 && c.usageCount >= c.usageLimit
+
+  // Inline verify state
+  const [verifyCode, setVerifyCode] = useState("")
+  const [verifyStatus, setVerifyStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+  const [verifyMsg, setVerifyMsg] = useState("")
+
+  async function handleVerifyRedeem() {
+    if (!verifyCode.trim()) return
+    setVerifyStatus("loading")
+    try {
+      const res = await fetch("/api/coupons/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: verifyCode.trim(), redeem: true }),
+      })
+      const data = await res.json()
+      if (data.valid) {
+        setVerifyStatus("success")
+        setVerifyMsg(`ยืนยันสำเร็จ (ใช้แล้ว ${data.coupon?.usageCount ?? "?"}${c.usageLimit > 0 ? `/${c.usageLimit}` : ""})`)
+        setVerifyCode("")
+        onUsageChanged()
+        setTimeout(() => { setVerifyStatus("idle"); setVerifyMsg("") }, 3000)
+      } else {
+        setVerifyStatus("error")
+        setVerifyMsg(data.reason || "ไม่สำเร็จ")
+        setTimeout(() => { setVerifyStatus("idle"); setVerifyMsg("") }, 3000)
+      }
+    } catch {
+      setVerifyStatus("error")
+      setVerifyMsg("เกิดข้อผิดพลาด")
+      setTimeout(() => { setVerifyStatus("idle"); setVerifyMsg("") }, 3000)
+    }
+  }
+
+  return (
+    <div className={`bg-[#13131d] border rounded-xl overflow-hidden transition-colors ${c.isActive && !expired ? "border-[#2a2a3a]" : "border-[#2a2a3a]/50 opacity-60"}`}>
+      <div className="flex flex-col md:flex-row">
+        {/* Left: Coupon preview card */}
+        <div className="md:w-52 shrink-0 bg-[#0e0e18] border-b md:border-b-0 md:border-r border-[#2a2a3a] p-4 flex flex-col items-center justify-center gap-2">
+          <div className={`text-lg font-bold ${
+            c.discountType === "percent" ? "text-orange-400" :
+            c.discountType === "fixed" ? "text-emerald-400" : "text-violet-400"
+          }`}>
+            {c.discountType === "percent" ? `ลด ${c.discountValue}%` :
+             c.discountType === "fixed" ? `ลด ${c.discountValue}.-` :
+             c.giftDescription || "ของแถม"}
+          </div>
+          <div className="text-xs text-white/60 text-center line-clamp-2">{c.title}</div>
+          <BarcodePreview value={c.code} />
+        </div>
+
+        {/* Right: Info + actions */}
+        <div className="flex-1 p-4">
+          {/* Row 1: tags + action buttons */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${typeInfo.color}`}>
+                  {typeInfo.label}
+                </span>
+                <span className="font-mono text-xs text-amber-400">{c.code}</span>
+                {expired && <span className="text-[10px] text-red-400">หมดอายุ</span>}
+                {notStarted && <span className="text-[10px] text-blue-400">ยังไม่เริ่ม</span>}
+                {limitReached && <span className="text-[10px] text-orange-400">ใช้ครบแล้ว</span>}
+                {c.allowRepeatClaim && <span className="text-[10px] text-sky-400">รับซ้ำได้</span>}
+              </div>
+              <h3 className="text-sm font-medium text-white truncate">{c.title}</h3>
+              <div className="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-[#64748b]">
+                <span>
+                  {c.discountType === "percent" && `ลด ${c.discountValue}%`}
+                  {c.discountType === "fixed" && `ลด ${c.discountValue} บาท`}
+                  {c.discountType === "gift" && c.giftDescription}
+                </span>
+                <span>{c.startDate.slice(0, 10)} → {c.endDate.slice(0, 10)}</span>
+                <span>ใช้แล้ว {c.usageCount}{c.usageLimit > 0 ? `/${c.usageLimit}` : ""}</span>
+                <button onClick={onShowClaims} className="text-amber-400 hover:text-amber-300 cursor-pointer">
+                  รับแล้ว {c.claimCount ?? 0} คน
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button onClick={onShowClaims} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer" title="ประวัติการรับ">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </button>
+              <button onClick={onToggle} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${c.isActive ? "bg-emerald-500/20 text-emerald-400" : "bg-[#1e1e2e] text-[#64748b]"}`} title={c.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}>
+                {c.isActive ? "✓" : "○"}
+              </button>
+              <button onClick={onEdit} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors cursor-pointer" title="แก้ไข">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              {isAdmin && (
+                <button onClick={onDelete} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#64748b] hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer" title="ลบ">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2: Inline verify / redeem */}
+          <div className="mt-3 pt-3 border-t border-[#2a2a3a]/50">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-[#64748b] whitespace-nowrap">ยืนยันใช้คูปอง:</span>
+              <input
+                type="text"
+                value={verifyCode}
+                onChange={(e) => setVerifyCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && handleVerifyRedeem()}
+                placeholder={c.code}
+                className="flex-1 max-w-[160px] px-2.5 py-1.5 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-xs font-mono text-[#f1f5f9] placeholder-[#3a3a4a] focus:border-emerald-500/50 outline-none"
+              />
+              <button
+                onClick={handleVerifyRedeem}
+                disabled={verifyStatus === "loading" || !verifyCode.trim()}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:opacity-40 cursor-pointer whitespace-nowrap"
+              >
+                {verifyStatus === "loading" ? "..." : "ยืนยันใช้"}
+              </button>
+              {verifyMsg && (
+                <span className={`text-[11px] ${verifyStatus === "success" ? "text-emerald-400" : "text-red-400"}`}>
+                  {verifyMsg}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main page ───────────────────────────────────────────
 
 interface ClaimRecord {
@@ -323,71 +471,22 @@ export default function AdminCouponsPage() {
       )}
 
       {/* ─── Coupon List ─── */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {coupons.length === 0 && (
           <div className="text-center text-[#64748b] py-16 text-sm">ยังไม่มีคูปอง</div>
         )}
-        {coupons.map((c) => {
-          const typeInfo = TYPE_LABELS[c.discountType]
-          const now = new Date().toISOString()
-          const expired = c.endDate < now
-          const notStarted = c.startDate > now
-          const limitReached = c.usageLimit > 0 && c.usageCount >= c.usageLimit
-
-          return (
-            <div key={c.id} className={`bg-[#13131d] border rounded-xl p-4 transition-colors ${c.isActive && !expired ? "border-[#2a2a3a]" : "border-[#2a2a3a]/50 opacity-60"}`}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${typeInfo.color}`}>
-                      {typeInfo.label}
-                    </span>
-                    <span className="font-mono text-xs text-amber-400">{c.code}</span>
-                    {expired && <span className="text-[10px] text-red-400">หมดอายุ</span>}
-                    {notStarted && <span className="text-[10px] text-blue-400">ยังไม่เริ่ม</span>}
-                    {limitReached && <span className="text-[10px] text-orange-400">ใช้ครบแล้ว</span>}
-                    {c.allowRepeatClaim && <span className="text-[10px] text-sky-400">รับซ้ำได้</span>}
-                  </div>
-                  <h3 className="text-sm font-medium text-white truncate">{c.title}</h3>
-                  <div className="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-[#64748b]">
-                    <span>
-                      {c.discountType === "percent" && `ลด ${c.discountValue}%`}
-                      {c.discountType === "fixed" && `ลด ${c.discountValue} บาท`}
-                      {c.discountType === "gift" && c.giftDescription}
-                    </span>
-                    <span>{c.startDate.slice(0, 10)} → {c.endDate.slice(0, 10)}</span>
-                    <span>ใช้แล้ว {c.usageCount}{c.usageLimit > 0 ? `/${c.usageLimit}` : ""}</span>
-                    <button onClick={() => showClaims(c)} className="text-amber-400 hover:text-amber-300 cursor-pointer">
-                      รับแล้ว {c.claimCount ?? 0} คน
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => showClaims(c)} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer" title="ประวัติการรับ">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  </button>
-                  <button onClick={() => handleToggleActive(c)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${c.isActive ? "bg-emerald-500/20 text-emerald-400" : "bg-[#1e1e2e] text-[#64748b]"}`} title={c.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}>
-                    {c.isActive ? "✓" : "○"}
-                  </button>
-                  <button onClick={() => handleEdit(c)} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors cursor-pointer" title="แก้ไข">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  {isAdmin && (
-                    <button onClick={() => handleDelete(c.id)} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#64748b] hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer" title="ลบ">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        })}
+        {coupons.map((c) => (
+          <CouponRow
+            key={c.id}
+            coupon={c}
+            isAdmin={isAdmin}
+            onEdit={() => handleEdit(c)}
+            onDelete={() => handleDelete(c.id)}
+            onToggle={() => handleToggleActive(c)}
+            onShowClaims={() => showClaims(c)}
+            onUsageChanged={fetchCoupons}
+          />
+        ))}
       </div>
 
       {/* ─── Claim History Modal ─── */}
