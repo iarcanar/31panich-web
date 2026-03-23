@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
         return
       }
 
-      router.push("/admin/products")
+      router.push("/admin")
       router.refresh()
     } catch {
       setError("ไม่สามารถเชื่อมต่อได้")

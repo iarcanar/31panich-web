@@ -141,8 +141,7 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
                 )}
               </div>
             </div>
-            {/* DEV: ทางลัดแก้ไขสินค้า — ลบ block นี้เมื่อ deploy production */}
-            {showDevEdit && <DevEditLink productId={item.id} size="sm" />}
+            <DevEditLink productId={item.id} size="sm" />
           </Link>
         ))}
       </div>

@@ -38,8 +38,6 @@ export default function BestsellerSection() {
     ? Math.round((1 - hero.price / hero.originalPrice) * 100)
     : 0
 
-  const isDev = process.env.NODE_ENV === "development"
-
   return (
     <section className="bg-[#0e0e14] py-6 md:py-14">
       <div className="container mx-auto px-4">
@@ -113,11 +111,11 @@ export default function BestsellerSection() {
               </div>
             </div>
             {/* DEV: ทางลัดแก้ไขสินค้า — ลบ block นี้เมื่อ deploy production */}
-            {isDev && <DevEditLink productId={hero.id} />}
+            <DevEditLink productId={hero.id} />
           </Link>
         )}
 
-        <ProductCarousel products={carouselProducts} accentColor="purple" showDevEdit={isDev} />
+        <ProductCarousel products={carouselProducts} accentColor="purple" showDevEdit />
       </div>
     </section>
   )
