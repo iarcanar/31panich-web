@@ -16,6 +16,6 @@ export const HOURS_TEXT = "7.30 – 17.30 น."
 export const HOURS_OPEN = "07:30"
 export const HOURS_CLOSE = "17:30"
 
-export const GOOGLE_MAPS_URL = "https://maps.google.com/?q=14.8851745,100.6315124"
+export const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/UBtS39k4m3oe3GFj9?g_st=ac"
 export const GEO = { lat: 14.8851745, lng: 100.6315124 }
 export const ADDRESS = "99/1 หมู่ 7 ถนนพหลโยธิน ต.เขาพระงาม อ.เมือง จ.ลพบุรี 15160"
