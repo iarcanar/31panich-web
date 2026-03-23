@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import JsBarcode from "jsbarcode"
 import { CATEGORIES } from "@/lib/categories"
 import type { Coupon } from "@/lib/coupons"
+import { useAuth } from "../layout"
 
 // ─── Reusable UI (matching products admin style) ─────────
 
@@ -86,6 +87,7 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
 // ─── Main page ───────────────────────────────────────────
 
 export default function AdminCouponsPage() {
+  const { isAdmin } = useAuth()
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -348,11 +350,13 @@ export default function AdminCouponsPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
                   </button>
-                  <button onClick={() => handleDelete(c.id)} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#64748b] hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer" title="ลบ">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  {isAdmin && (
+                    <button onClick={() => handleDelete(c.id)} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#64748b] hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer" title="ลบ">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

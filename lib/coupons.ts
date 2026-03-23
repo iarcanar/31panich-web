@@ -20,11 +20,12 @@ export interface Coupon {
   usageCount: number
   claimCount: number
   stackWithPoints: boolean
+  serialPrefix: string
   createdAt: string
   updatedAt: string
 }
 
-export type CouponInput = Omit<Coupon, "id" | "createdAt" | "updatedAt" | "usageCount" | "claimCount" | "stackWithPoints"> & { stackWithPoints?: boolean }
+export type CouponInput = Omit<Coupon, "id" | "createdAt" | "updatedAt" | "usageCount" | "claimCount" | "stackWithPoints" | "serialPrefix"> & { stackWithPoints?: boolean }
 
 // ─── File helpers (cached read, invalidate on write) ────
 const DATA_PATH = path.join(process.cwd(), "data", "coupons.json")
@@ -32,23 +33,37 @@ const DATA_PATH = path.join(process.cwd(), "data", "coupons.json")
 let _cache: Coupon[] | null = null
 let _cacheMtime = 0
 
+function ensureDataFile() {
+  const dir = path.dirname(DATA_PATH)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  if (!fs.existsSync(DATA_PATH)) fs.writeFileSync(DATA_PATH, "[]", "utf-8")
+}
+
 function readAll(): Coupon[] {
-  const stat = fs.statSync(DATA_PATH)
-  const mtime = stat.mtimeMs
-  if (_cache && mtime === _cacheMtime) return JSON.parse(JSON.stringify(_cache))
-  const raw = fs.readFileSync(DATA_PATH, "utf-8")
-  _cache = JSON.parse(raw)
-  _cacheMtime = mtime
-  return JSON.parse(JSON.stringify(_cache))
+  try {
+    ensureDataFile()
+    const stat = fs.statSync(DATA_PATH)
+    const mtime = stat.mtimeMs
+    if (_cache && mtime === _cacheMtime) return JSON.parse(JSON.stringify(_cache))
+    const raw = fs.readFileSync(DATA_PATH, "utf-8")
+    _cache = JSON.parse(raw)
+    _cacheMtime = mtime
+    return JSON.parse(JSON.stringify(_cache))
+  } catch {
+    _cache = null
+    return []
+  }
 }
 
 function writeAll(coupons: Coupon[]) {
+  ensureDataFile()
   fs.writeFileSync(DATA_PATH, JSON.stringify(coupons, null, 2), "utf-8")
   _cache = null
 }
 
-// ─── Code generation ────────────────────────────────────
+// ─── Code & serial prefix generation ────────────────────
 const SAFE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+const PREFIX_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ"
 
 export function generateCode(length = 6): string {
   const all = readAll()
@@ -61,6 +76,22 @@ export function generateCode(length = 6): string {
     if (!existing.has(code)) return code
   }
   return crypto.randomUUID().slice(0, length).toUpperCase()
+}
+
+function generateSerialPrefix(): string {
+  const all = readAll()
+  const existing = new Set(all.map((c) => c.serialPrefix).filter(Boolean))
+  for (const ch of PREFIX_CHARS) {
+    if (!existing.has(ch)) return ch
+  }
+  // Fallback: 2-letter prefix
+  for (const a of PREFIX_CHARS) {
+    for (const b of PREFIX_CHARS) {
+      const prefix = a + b
+      if (!existing.has(prefix)) return prefix
+    }
+  }
+  return crypto.randomUUID().slice(0, 2).toUpperCase()
 }
 
 // ─── Read helpers ────────────────────────────────────────
@@ -94,6 +125,7 @@ export function createCoupon(input: CouponInput): Coupon {
     usageCount: 0,
     claimCount: 0,
     stackWithPoints: input.stackWithPoints ?? true,
+    serialPrefix: generateSerialPrefix(),
     createdAt: now,
     updatedAt: now,
   }
@@ -131,9 +163,9 @@ export function claimCoupon(id: string): { coupon: Coupon; serial: string; claim
   coupons[idx].claimCount += 1
   coupons[idx].updatedAt = new Date().toISOString()
   const num = coupons[idx].claimCount
-  // Serial format: 31-A1, 31-B1, ... (A=ตัวอักษรของ coupon, ตัวเลข=ลำดับ)
-  const letter = String.fromCharCode(65 + (idx % 26))
-  const serial = `31-${letter}${num}`
+  // ใช้ serialPrefix ที่ผูกกับ coupon ถาวร (ไม่เปลี่ยนเมื่อลบคูปองอื่น)
+  const prefix = coupons[idx].serialPrefix || String.fromCharCode(65 + (idx % 26))
+  const serial = `31-${prefix}${num}`
   writeAll(coupons)
   return { coupon: coupons[idx], serial, claimedAt: new Date().toISOString() }
 }

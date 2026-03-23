@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { getProductById, updateProduct, deleteProduct } from "@/lib/products"
+import { getSessionUser, canPerform } from "@/lib/auth"
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -22,6 +23,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getSessionUser()
+  if (!user || !canPerform(user.role, "delete")) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 })
+  }
   const { id } = await params
   const product = getProductById(id)
   const ok = deleteProduct(id)

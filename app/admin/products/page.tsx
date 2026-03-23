@@ -7,6 +7,7 @@ import AiEnrichButton from "@/components/admin/AiEnrichButton"
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories"
 import { CATALOGS } from "@/lib/catalogs"
 import type { Product } from "@/lib/products"
+import { useAuth } from "../layout"
 
 
 function dataQuality(p: Product): { label: string; color: string; bg: string; border: string } {
@@ -271,6 +272,7 @@ function Barcode({ value }: { value: string }) {
 // ─── Main page ──────────────────────────────────────────
 
 export default function AdminProductsPage() {
+  const { isAdmin } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -1648,7 +1650,7 @@ export default function AdminProductsPage() {
                     <th className="text-right px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">ราคา</th>
                     <th className="text-center px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">สต็อก</th>
                     <th className="text-center px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">สถานะ</th>
-                    <th className="w-20 px-4 py-2.5" />
+                    {isAdmin && <th className="w-20 px-4 py-2.5" />}
                   </tr>
                 </thead>
                 <tbody>
@@ -1727,17 +1729,19 @@ export default function AdminProductsPage() {
                           )
                         })()}
                       </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          className="p-1.5 text-[#94a3b8] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                          title="ลบ"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleDelete(p.id)}
+                            className="p-1.5 text-[#94a3b8] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                            title="ลบ"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
