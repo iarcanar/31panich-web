@@ -20,12 +20,13 @@ export interface Coupon {
   usageCount: number
   claimCount: number
   stackWithPoints: boolean
+  allowRepeatClaim: boolean  // true = ลูกค้ารับซ้ำได้ (ไม่ซ่อน card หลังรับ)
   serialPrefix: string
   createdAt: string
   updatedAt: string
 }
 
-export type CouponInput = Omit<Coupon, "id" | "createdAt" | "updatedAt" | "usageCount" | "claimCount" | "stackWithPoints" | "serialPrefix"> & { stackWithPoints?: boolean }
+export type CouponInput = Omit<Coupon, "id" | "createdAt" | "updatedAt" | "usageCount" | "claimCount" | "stackWithPoints" | "allowRepeatClaim" | "serialPrefix"> & { stackWithPoints?: boolean; allowRepeatClaim?: boolean }
 
 // ─── Data helpers (async, dual-mode via blob-store) ─────
 const FILE = "coupons.json"
@@ -103,6 +104,7 @@ export async function createCoupon(input: CouponInput): Promise<Coupon> {
       usageCount: 0,
       claimCount: 0,
       stackWithPoints: input.stackWithPoints ?? true,
+      allowRepeatClaim: input.allowRepeatClaim ?? false,
       serialPrefix: await generateSerialPrefix(),
       createdAt: now,
       updatedAt: now,

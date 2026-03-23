@@ -76,6 +76,7 @@ const EMPTY_FORM = {
   isActive: true,
   usageLimit: "0",
   stackWithPoints: true,
+  allowRepeatClaim: false,
 }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -120,6 +121,7 @@ export default function AdminCouponsPage() {
       usageLimit: Number(form.usageLimit || 0),
       category: form.category || null,
       stackWithPoints: form.stackWithPoints,
+      allowRepeatClaim: form.allowRepeatClaim,
       startDate: new Date(form.startDate).toISOString(),
       endDate: new Date(form.endDate + "T23:59:59").toISOString(),
     }
@@ -150,6 +152,7 @@ export default function AdminCouponsPage() {
       isActive: c.isActive,
       usageLimit: String(c.usageLimit),
       stackWithPoints: c.stackWithPoints ?? true,
+      allowRepeatClaim: c.allowRepeatClaim ?? false,
     })
     setEditingId(c.id)
     setShowForm(true)
@@ -306,6 +309,7 @@ export default function AdminCouponsPage() {
               </div>
               <Toggle checked={form.isActive} onChange={(v) => setForm({ ...form, isActive: v })} label="เปิดใช้งาน" color="emerald" />
               <Toggle checked={form.stackWithPoints} onChange={(v) => setForm({ ...form, stackWithPoints: v })} label="ใช้ร่วมกับโปรรับแต้มสามหนึ่งได้" color="amber" />
+              <Toggle checked={form.allowRepeatClaim} onChange={(v) => setForm({ ...form, allowRepeatClaim: v })} label="อนุญาตรับคูปองซ้ำ (ไม่จำกัดครั้ง)" color="primary" />
             </div>
           </div>
 
@@ -342,6 +346,7 @@ export default function AdminCouponsPage() {
                     {expired && <span className="text-[10px] text-red-400">หมดอายุ</span>}
                     {notStarted && <span className="text-[10px] text-blue-400">ยังไม่เริ่ม</span>}
                     {limitReached && <span className="text-[10px] text-orange-400">ใช้ครบแล้ว</span>}
+                    {c.allowRepeatClaim && <span className="text-[10px] text-sky-400">รับซ้ำได้</span>}
                   </div>
                   <h3 className="text-sm font-medium text-white truncate">{c.title}</h3>
                   <div className="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-[#64748b]">

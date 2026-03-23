@@ -88,8 +88,8 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
     }
   }, [coupon.id])
 
-  // ซ่อน card ที่รับแล้ว
-  if (claimed && !showModal) return null
+  // ซ่อน card ที่รับแล้ว (ยกเว้น allowRepeatClaim เปิด)
+  if (claimed && !showModal && !coupon.allowRepeatClaim) return null
 
   async function handleClaim() {
     if (loading) return
@@ -185,7 +185,7 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
               className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
                 ${accent.bg} hover:brightness-110 active:scale-95 disabled:opacity-50`}
             >
-              {loading ? "กำลังรับ..." : "รับคูปอง"}
+              {loading ? "กำลังรับ..." : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
             </button>
           </div>
         </div>
