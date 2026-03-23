@@ -244,8 +244,11 @@ function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaim
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </button>
-              <button onClick={onToggle} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${c.isActive ? "bg-emerald-500/20 text-emerald-400" : "bg-[#1e1e2e] text-[#64748b]"}`} title={c.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}>
-                {c.isActive ? "✓" : "○"}
+              <button onClick={onToggle} className={`h-8 rounded-lg flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium ${c.isActive ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-[#1e1e2e] text-[#64748b] border border-[#2a2a3a]"}`} title={c.isActive ? "กดเพื่อซ่อนจาก frontend" : "กดเพื่อแสดงบน frontend"}>
+                <div className={`relative w-7 h-3.5 rounded-full transition-colors ${c.isActive ? "bg-emerald-500" : "bg-[#475569]"}`}>
+                  <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-all ${c.isActive ? "left-[14px]" : "left-0.5"}`} />
+                </div>
+                {c.isActive ? "แสดง" : "ซ่อน"}
               </button>
               <button onClick={onEdit} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors cursor-pointer" title="แก้ไข">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
