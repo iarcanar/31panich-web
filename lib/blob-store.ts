@@ -1,23 +1,36 @@
-import { put, list } from "@vercel/blob"
+import { Redis } from "@upstash/redis"
+import { put } from "@vercel/blob"
 import fs from "fs"
 import path from "path"
 
-// ─── Dual-mode storage: Vercel Blob (production) / local fs (dev) ───
+// ─── Storage modes ──────────────────────────────────────
+// JSON data → Upstash Redis (free: 10,000 commands/day)
+// Images    → Vercel Blob (only for binary uploads)
+// Dev       → local filesystem
+
+const redisUrl = process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
+const redisToken = process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
+const useRedis = !!redisUrl
 const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN
 
-// Log storage mode on first load (visible in Vercel function logs)
-console.log(`[blob-store] mode=${useBlob ? "blob" : "local-fs"}, token=${useBlob ? "set" : "NOT SET"}`)
+const redis = useRedis
+  ? new Redis({
+      url: redisUrl!,
+      token: redisToken!,
+    })
+  : null
+
+console.log(`[blob-store] mode=${useRedis ? "redis" : useBlob ? "blob(legacy)" : "local-fs"}`)
 
 // In-memory cache with TTL (helps warm serverless instances)
 const cache = new Map<string, { data: unknown; ts: number }>()
-const CACHE_TTL = 5_000 // 5 seconds
+const CACHE_TTL = 60_000 // 60 seconds
 
 // Per-file write lock to prevent race conditions within the same instance
 const locks = new Map<string, Promise<void>>()
 
 /** Acquire a per-file lock: queues writes so read-modify-write is safe */
 export async function withLock<T>(filename: string, fn: () => Promise<T>): Promise<T> {
-  // Wait for any pending write on this file
   const prev = locks.get(filename) ?? Promise.resolve()
   let release: () => void
   const next = new Promise<void>((res) => { release = res })
@@ -35,10 +48,15 @@ function localPath(filename: string): string {
   return path.join(process.cwd(), "data", filename)
 }
 
-/** Read JSON data from blob (production) or local file (dev)
- *  @param noCache — bypass in-memory cache, always read fresh (use for write operations) */
+/** Redis key for a data file */
+function redisKey(filename: string): string {
+  return `data:${filename}`
+}
+
+/** Read JSON data — Redis (production) / local file (dev)
+ *  @param noCache — bypass in-memory cache, always read fresh */
 export async function readJSON<T>(filename: string, fallback: T, noCache = false): Promise<T> {
-  // Check memory cache (skip if noCache requested)
+  // Check memory cache
   if (!noCache) {
     const cached = cache.get(filename)
     if (cached && Date.now() - cached.ts < CACHE_TTL) {
@@ -46,21 +64,17 @@ export async function readJSON<T>(filename: string, fallback: T, noCache = false
     }
   }
 
-  if (useBlob) {
+  if (useRedis && redis) {
     try {
-      const { blobs } = await list({ prefix: `data/${filename}`, limit: 1 })
-      if (blobs.length > 0) {
-        // Use downloadUrl to bypass Vercel CDN cache (url is CDN-cached and can be stale)
-        const res = await fetch(blobs[0].downloadUrl, { cache: "no-store" })
-        if (res.ok) {
-          const data = await res.json()
-          cache.set(filename, { data, ts: Date.now() })
-          return structuredClone(data) as T
-        }
+      const data = await redis.get<T>(redisKey(filename))
+      if (data !== null && data !== undefined) {
+        cache.set(filename, { data, ts: Date.now() })
+        return structuredClone(data) as T
       }
-      // Blob empty → seed from local file (first deploy migration)
+      // Redis empty → seed from local file (first deploy migration)
       return await seedFromLocal(filename, fallback)
-    } catch {
+    } catch (err) {
+      console.error(`[blob-store] Redis read FAILED for ${filename}:`, err)
       return fallback
     }
   } else {
@@ -78,27 +92,19 @@ export async function readJSON<T>(filename: string, fallback: T, noCache = false
   }
 }
 
-/** Write JSON data to blob (production) or local file (dev) */
+/** Write JSON data — Redis (production) / local file (dev) */
 export async function writeJSON<T>(filename: string, data: T): Promise<void> {
-  const json = JSON.stringify(data, null, 2)
-
-  if (useBlob) {
+  if (useRedis && redis) {
     try {
-      await put(`data/${filename}`, json, {
-        access: "public",
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        contentType: "application/json",
-      })
-      // Update cache only after successful write
+      await redis.set(redisKey(filename), data)
       cache.set(filename, { data, ts: Date.now() })
     } catch (err) {
-      // Invalidate cache on failure so next read fetches fresh data
       cache.delete(filename)
-      console.error(`[blob-store] writeJSON FAILED for ${filename}:`, err)
-      throw new Error(`Blob write failed for ${filename}: ${err instanceof Error ? err.message : String(err)}`)
+      console.error(`[blob-store] Redis write FAILED for ${filename}:`, err)
+      throw new Error(`Redis write failed for ${filename}: ${err instanceof Error ? err.message : String(err)}`)
     }
   } else {
+    const json = JSON.stringify(data, null, 2)
     const fp = localPath(filename)
     const dir = path.dirname(fp)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
@@ -107,7 +113,7 @@ export async function writeJSON<T>(filename: string, data: T): Promise<void> {
   }
 }
 
-/** Upload binary file (images) to blob or local fs */
+/** Upload binary file (images) — still uses Vercel Blob or local fs */
 export async function writeFile(
   filepath: string,
   buffer: Buffer,
@@ -130,20 +136,17 @@ export async function writeFile(
   }
 }
 
-/** Seed blob from local git-committed file (one-time migration) */
+/** Seed Redis from local git-committed file (one-time migration) */
 async function seedFromLocal<T>(filename: string, fallback: T): Promise<T> {
   try {
     const fp = localPath(filename)
     if (!fs.existsSync(fp)) return fallback
     const raw = fs.readFileSync(fp, "utf-8")
     const data = JSON.parse(raw)
-    // Upload to blob for future reads
-    await put(`data/${filename}`, raw, {
-      access: "public",
-      addRandomSuffix: false,
-      allowOverwrite: true,
-      contentType: "application/json",
-    })
+    // Upload to Redis for future reads
+    if (useRedis && redis) {
+      await redis.set(redisKey(filename), data)
+    }
     cache.set(filename, { data, ts: Date.now() })
     return structuredClone(data) as T
   } catch {
@@ -151,4 +154,4 @@ async function seedFromLocal<T>(filename: string, fallback: T): Promise<T> {
   }
 }
 
-export { useBlob }
+export { useBlob, useRedis }

@@ -85,12 +85,113 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   gift: { label: "ของแถม", color: "bg-purple-500/20 text-purple-400 border-purple-500/40" },
 }
 
+// ─── Accent colors matching frontend CouponCard ─────────
+const CARD_ACCENT: Record<string, { border: string; bg: string; text: string; badge: string; waveColor: string }> = {
+  percent: { border: "border-orange-500/30", bg: "bg-orange-500", text: "text-orange-400", badge: "bg-orange-500/20 text-orange-300", waveColor: "251,146,60" },
+  fixed:   { border: "border-emerald-500/30", bg: "bg-emerald-500", text: "text-emerald-400", badge: "bg-emerald-500/20 text-emerald-300", waveColor: "52,211,153" },
+  gift:    { border: "border-violet-500/30", bg: "bg-violet-500", text: "text-violet-400", badge: "bg-violet-500/20 text-violet-300", waveColor: "167,139,250" },
+}
+
+function cardWavePattern(rgb: string): string {
+  const lines = 8, h = 56, gap = h / lines, amp = gap * 0.6
+  const paths: string[] = []
+  for (let i = 0; i < lines; i++) {
+    const y = gap * 0.5 + i * gap, cy = y - amp
+    const op = (0.12 - (i / (lines - 1)) * 0.06).toFixed(3)
+    paths.push(`<path d='M0 ${y} Q25 ${cy}, 50 ${y} T100 ${y} T150 ${y} T200 ${y}' fill='none' stroke='rgba(${rgb},${op})' stroke-width='0.7'/>`)
+  }
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='${h}' viewBox='0 0 200 ${h}'>${paths.join("")}</svg>`
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+}
+
+function cardDiscountLabel(c: Coupon): string {
+  if (c.discountType === "percent") return `ลด ${c.discountValue}%`
+  if (c.discountType === "fixed") return `ลด ${c.discountValue} บาท`
+  return c.giftDescription || "ของแถมฟรี"
+}
+
+function cardFormatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" })
+}
+
+// ─── Mini claim modal preview (matches what customer sees after claiming) ─
+function CouponPreviewCard({ coupon: c }: { coupon: Coupon }) {
+  const accent = CARD_ACCENT[c.discountType] || CARD_ACCENT.percent
+  const barcodeRef = useRef<SVGSVGElement>(null)
+  const guillocheStyle = {
+    backgroundImage: cardWavePattern(accent.waveColor),
+    backgroundRepeat: "repeat",
+    backgroundSize: "200px 56px",
+  }
+
+  useEffect(() => {
+    if (barcodeRef.current && c.code) {
+      try {
+        JsBarcode(barcodeRef.current, c.code, {
+          format: "CODE128", width: 1.2, height: 36,
+          displayValue: false, background: "transparent", lineColor: "#e2e8f0", margin: 0,
+        })
+      } catch { /* invalid code */ }
+    }
+  }, [c.code])
+
+  return (
+    <div
+      className="relative bg-[#13131d] border border-white/10 rounded-xl overflow-hidden"
+      style={guillocheStyle}
+    >
+      {/* Header: discount + title */}
+      <div className={`${accent.badge.split(" ")[0]} px-3 pt-3 pb-2 text-center border-b border-white/5`}>
+        <div className={`text-sm font-bold ${accent.text}`}>{cardDiscountLabel(c)}</div>
+        <div className="text-[10px] font-medium text-white/80 line-clamp-1 mt-0.5">{c.title}</div>
+      </div>
+
+      {/* Serial example */}
+      <div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-white/[0.03] border-b border-white/5">
+        <div className="text-center">
+          <div className="text-[8px] text-white/40 uppercase">Serial</div>
+          <div className="text-[10px] font-mono font-bold text-white/80">31-{c.serialPrefix || "A"}1</div>
+        </div>
+        <div className="w-px h-5 bg-white/10" />
+        <div className="text-center">
+          <div className="text-[8px] text-white/40 uppercase">รับเมื่อ</div>
+          <div className="text-[9px] text-white/60">ตัวอย่าง</div>
+        </div>
+      </div>
+
+      {/* Barcode */}
+      <div className="px-3 py-2 flex flex-col items-center">
+        <svg ref={barcodeRef} className="w-full max-w-[160px]" />
+        <div className="mt-1 text-[10px] font-mono font-bold text-white/70 tracking-wider">{c.code}</div>
+      </div>
+
+      {/* Mini conditions */}
+      <div className="px-3 pb-2 space-y-0.5">
+        {c.minPurchase > 0 && (
+          <p className="text-[8px] text-white/40">● ขั้นต่ำ {c.minPurchase.toLocaleString()} บาท</p>
+        )}
+        <p className="text-[8px] text-white/40">● ใช้ได้ถึง {cardFormatDate(c.endDate)}</p>
+        {c.stackWithPoints ? (
+          <p className="text-[8px] text-amber-400/70">✦ ใช้กับแต้มได้</p>
+        ) : (
+          <p className="text-[8px] text-white/30">● ใช้กับแต้มไม่ได้</p>
+        )}
+      </div>
+
+      {/* Branding */}
+      <div className="px-3 pb-2 text-center">
+        <p className="text-[7px] text-white/20">สามหนึ่งพานิช — 31panich.com</p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Coupon Row with preview + inline verify ────────────
 
-function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaims, onUsageChanged }: {
+function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaims }: {
   coupon: Coupon; isAdmin: boolean
   onEdit: () => void; onDelete: () => void; onToggle: () => void
-  onShowClaims: () => void; onUsageChanged: () => void
+  onShowClaims: () => void
 }) {
   const typeInfo = TYPE_LABELS[c.discountType]
   const now = new Date().toISOString()
@@ -98,54 +199,14 @@ function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaim
   const notStarted = c.startDate > now
   const limitReached = c.usageLimit > 0 && c.usageCount >= c.usageLimit
 
-  // Inline verify state
-  const [verifyCode, setVerifyCode] = useState("")
-  const [verifyStatus, setVerifyStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
-  const [verifyMsg, setVerifyMsg] = useState("")
-
-  async function handleVerifyRedeem() {
-    if (!verifyCode.trim()) return
-    setVerifyStatus("loading")
-    try {
-      const res = await fetch("/api/coupons/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: verifyCode.trim(), redeem: true }),
-      })
-      const data = await res.json()
-      if (data.valid) {
-        setVerifyStatus("success")
-        setVerifyMsg(`ยืนยันสำเร็จ (ใช้แล้ว ${data.coupon?.usageCount ?? "?"}${c.usageLimit > 0 ? `/${c.usageLimit}` : ""})`)
-        setVerifyCode("")
-        onUsageChanged()
-        setTimeout(() => { setVerifyStatus("idle"); setVerifyMsg("") }, 3000)
-      } else {
-        setVerifyStatus("error")
-        setVerifyMsg(data.reason || "ไม่สำเร็จ")
-        setTimeout(() => { setVerifyStatus("idle"); setVerifyMsg("") }, 3000)
-      }
-    } catch {
-      setVerifyStatus("error")
-      setVerifyMsg("เกิดข้อผิดพลาด")
-      setTimeout(() => { setVerifyStatus("idle"); setVerifyMsg("") }, 3000)
-    }
-  }
-
   return (
     <div className={`bg-[#13131d] border rounded-xl overflow-hidden transition-colors ${c.isActive && !expired ? "border-[#2a2a3a]" : "border-[#2a2a3a]/50 opacity-60"}`}>
       <div className="flex flex-col md:flex-row">
-        {/* Left: Coupon preview card */}
-        <div className="md:w-52 shrink-0 bg-[#0e0e18] border-b md:border-b-0 md:border-r border-[#2a2a3a] p-4 flex flex-col items-center justify-center gap-2">
-          <div className={`text-lg font-bold ${
-            c.discountType === "percent" ? "text-orange-400" :
-            c.discountType === "fixed" ? "text-emerald-400" : "text-violet-400"
-          }`}>
-            {c.discountType === "percent" ? `ลด ${c.discountValue}%` :
-             c.discountType === "fixed" ? `ลด ${c.discountValue}.-` :
-             c.giftDescription || "ของแถม"}
+        {/* Left: Coupon preview card (matches frontend CouponCard) */}
+        <div className="md:w-64 shrink-0 bg-[#0e0e18] border-b md:border-b-0 md:border-r border-[#2a2a3a] p-3 flex items-center justify-center">
+          <div className="w-full max-w-[240px]">
+            <CouponPreviewCard coupon={c} />
           </div>
-          <div className="text-xs text-white/60 text-center line-clamp-2">{c.title}</div>
-          <BarcodePreview value={c.code} />
         </div>
 
         {/* Right: Info + actions */}
@@ -201,32 +262,6 @@ function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaim
             </div>
           </div>
 
-          {/* Row 2: Inline verify / redeem */}
-          <div className="mt-3 pt-3 border-t border-[#2a2a3a]/50">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-[#64748b] whitespace-nowrap">ยืนยันใช้คูปอง:</span>
-              <input
-                type="text"
-                value={verifyCode}
-                onChange={(e) => setVerifyCode(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === "Enter" && handleVerifyRedeem()}
-                placeholder={c.code}
-                className="flex-1 max-w-[160px] px-2.5 py-1.5 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-xs font-mono text-[#f1f5f9] placeholder-[#3a3a4a] focus:border-emerald-500/50 outline-none"
-              />
-              <button
-                onClick={handleVerifyRedeem}
-                disabled={verifyStatus === "loading" || !verifyCode.trim()}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:opacity-40 cursor-pointer whitespace-nowrap"
-              >
-                {verifyStatus === "loading" ? "..." : "ยืนยันใช้"}
-              </button>
-              {verifyMsg && (
-                <span className={`text-[11px] ${verifyStatus === "success" ? "text-emerald-400" : "text-red-400"}`}>
-                  {verifyMsg}
-                </span>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -484,7 +519,6 @@ export default function AdminCouponsPage() {
             onDelete={() => handleDelete(c.id)}
             onToggle={() => handleToggleActive(c)}
             onShowClaims={() => showClaims(c)}
-            onUsageChanged={fetchCoupons}
           />
         ))}
       </div>

@@ -35,6 +35,20 @@ export function getClaimedInfo(id: string): ClaimedInfo | null {
   return getClaimedMap()[id] ?? null
 }
 
+/** Generate a per-device claim number from localStorage counter */
+function getNextClaimNumber(couponId: string): number {
+  const key = "claim_counters"
+  try {
+    const counters: Record<string, number> = JSON.parse(localStorage.getItem(key) || "{}")
+    const next = (counters[couponId] || 0) + 1
+    counters[couponId] = next
+    localStorage.setItem(key, JSON.stringify(counters))
+    return next
+  } catch {
+    return Math.floor(Math.random() * 900) + 100
+  }
+}
+
 // ─── Accent colors by discount type ────────────────────
 const ACCENT: Record<string, { border: string; bg: string; text: string; badge: string; waveColor: string }> = {
   percent: { border: "border-orange-500/30", bg: "bg-orange-500", text: "text-orange-400", badge: "bg-orange-500/20 text-orange-300", waveColor: "251,146,60" },
@@ -76,7 +90,6 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
   const [claimed, setClaimed] = useState(false)
   const [claimInfo, setClaimInfo] = useState<ClaimedInfo | null>(null)
   const [showModal, setShowModal] = useState(false)
-  const [loading, setLoading] = useState(false)
 
   const accent = ACCENT[coupon.discountType] || ACCENT.percent
 
@@ -91,30 +104,18 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
   // ซ่อน card ที่รับแล้ว (ยกเว้น allowRepeatClaim เปิด)
   if (claimed && !showModal && !coupon.allowRepeatClaim) return null
 
-  async function handleClaim() {
-    if (loading) return
-    setLoading(true)
-    try {
-      const res = await fetch("/api/coupons/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: coupon.id }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        alert(data.error || "ไม่สามารถรับคูปองได้")
-        return
-      }
-      const info: ClaimedInfo = { serial: data.serial, claimedAt: data.claimedAt }
-      markClaimed(coupon.id, info)
-      setClaimed(true)
-      setClaimInfo(info)
-      setShowModal(true)
-    } catch {
-      alert("เกิดข้อผิดพลาด กรุณาลองใหม่")
-    } finally {
-      setLoading(false)
-    }
+  function handleClaim() {
+    // Client-side only — no API call, no Blob operation
+    const prefix = coupon.serialPrefix || "A"
+    const claimNum = getNextClaimNumber(coupon.id)
+    const serial = `31-${prefix}${claimNum}`
+    const claimedAt = new Date().toISOString()
+
+    const info: ClaimedInfo = { serial, claimedAt }
+    markClaimed(coupon.id, info)
+    setClaimed(true)
+    setClaimInfo(info)
+    setShowModal(true)
   }
 
   // Banknote-style wave guilloche
@@ -181,11 +182,10 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
             </span>
             <button
               onClick={handleClaim}
-              disabled={loading}
               className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
-                ${accent.bg} hover:brightness-110 active:scale-95 disabled:opacity-50`}
+                ${accent.bg} hover:brightness-110 active:scale-95`}
             >
-              {loading ? "กำลังรับ..." : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
+              {claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
             </button>
           </div>
         </div>

@@ -187,6 +187,14 @@ export async function updateProduct(id: string, input: Partial<ProductInput>): P
   })
 }
 
+/** Bulk import: replace entire products.json in 1 write operation */
+export async function bulkImportProducts(products: Product[]): Promise<{ count: number }> {
+  return withLock(FILE, async () => {
+    await writeAll(products)
+    return { count: products.length }
+  })
+}
+
 export async function deleteProduct(id: string): Promise<boolean> {
   return withLock(FILE, async () => {
     const products = await readAll()
