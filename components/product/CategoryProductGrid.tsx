@@ -111,7 +111,7 @@ export default function CategoryProductGrid({ products, categoryLabel, categoryV
                   )}
                 </div>
                 <div className="p-3 md:p-4">
-                  {p.brand && <span className="text-[10px] md:text-[11px] text-cyan-400 font-medium">{p.brand}</span>}
+                  {p.brand && <span className="text-[11px] md:text-xs text-cyan-400 font-medium">{p.brand}</span>}
                   <h3 className="text-xs md:text-sm font-semibold text-white mt-0.5 md:mt-1 leading-snug line-clamp-2">{p.name}</h3>
                   <div className="flex items-baseline gap-2 mt-1.5 md:mt-2">
                     <p className="text-amber-400 font-bold text-sm md:text-base">฿{p.price.toLocaleString()}</p>
@@ -147,32 +147,36 @@ export default function CategoryProductGrid({ products, categoryLabel, categoryV
         <div className="mt-14 md:mt-20">
           <h2 className="text-lg md:text-xl font-bold text-white mb-1">สินค้าหมวดอื่นที่น่าสนใจ</h2>
           <p className="text-gray-500 text-sm mb-5">เลือกดูสินค้าเพิ่มเติมจากหมวดหมู่อื่นๆ</p>
-          <div
-            className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {recommended.map((item) => (
-              <Link
-                key={item.id}
-                href={`/products/${item.category}/${encodeURIComponent(item.slug)}`}
-                className="flex-shrink-0 w-32 md:w-36 snap-start bg-[#1a1a28] rounded-xl border border-white/10 overflow-hidden hover:border-cyan-400/20 hover:-translate-y-0.5 transition-all duration-200 group"
-              >
-                <div className="aspect-square bg-[#1e2035] relative overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    sizes="144px"
-                  />
-                </div>
-                <div className="p-2 md:p-2.5">
-                  <span className="text-[10px] text-cyan-400">{item.categoryLabel}</span>
-                  <h3 className="text-[11px] md:text-xs font-medium text-white mt-0.5 line-clamp-2 leading-snug">{item.name}</h3>
-                  <p className="text-amber-400 text-xs font-bold mt-1">฿{item.price.toLocaleString()}</p>
-                </div>
-              </Link>
-            ))}
+          <div className="relative">
+            <div
+              className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {recommended.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/products/${item.category}/${encodeURIComponent(item.slug)}`}
+                  className="flex-shrink-0 w-32 md:w-36 snap-start bg-[#1a1a28] rounded-xl border border-white/10 overflow-hidden hover:border-cyan-400/20 hover:-translate-y-0.5 transition-all duration-200 group"
+                >
+                  <div className="aspect-square bg-[#1e2035] relative overflow-hidden">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="144px"
+                    />
+                  </div>
+                  <div className="p-2 md:p-2.5">
+                    <span className="text-[10px] text-cyan-400">{item.categoryLabel}</span>
+                    <h3 className="text-[11px] md:text-xs font-medium text-white mt-0.5 line-clamp-2 leading-snug">{item.name}</h3>
+                    <p className="text-amber-400 text-xs font-bold mt-1">฿{item.price.toLocaleString()}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            {/* Mobile scroll hint fade */}
+            <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-[#0e0e14] to-transparent pointer-events-none md:hidden" />
           </div>
         </div>
       )}

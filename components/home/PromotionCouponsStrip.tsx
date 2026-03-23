@@ -94,6 +94,11 @@ export default function PromotionCouponsStrip() {
               </div>
             ))}
           </div>
+
+          {/* Mobile scroll hint fade */}
+          {canRight && (
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0e0e14] to-transparent pointer-events-none md:hidden" />
+          )}
         </div>
       </div>
     </section>

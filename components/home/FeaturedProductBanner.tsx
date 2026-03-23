@@ -86,16 +86,16 @@ export default function FeaturedProductBanner() {
                   {/* Price tags */}
                   <div className="flex items-center gap-1.5 md:gap-3 mb-2 md:mb-5">
                     <div className="bg-white rounded-lg px-2 py-1 md:px-4 md:py-2 text-center -rotate-2 shadow-lg">
-                      <p className="text-orange-500 text-[8px] md:text-xs font-bold">ซื้อปลีก</p>
+                      <p className="text-orange-500 text-[10px] md:text-xs font-bold">ซื้อปลีก</p>
                       <p className="text-gray-900 text-lg md:text-3xl font-black leading-none">80<span className="text-[10px] md:text-base font-bold ml-0.5">.-</span></p>
-                      <p className="text-gray-400 text-[8px] md:text-xs line-through">200 บาท</p>
+                      <p className="text-gray-400 text-[10px] md:text-xs line-through">200 บาท</p>
                     </div>
                     <div className="bg-gray-900 rounded-lg px-2 py-1 md:px-4 md:py-2 text-center rotate-2 shadow-lg border border-amber-400 md:border-2">
-                      <p className="text-amber-400 text-[8px] md:text-xs font-bold">ซื้อครบ 500</p>
+                      <p className="text-amber-400 text-[10px] md:text-xs font-bold">ซื้อครบ 500</p>
                       <p className="text-white text-lg md:text-3xl font-black leading-none">40<span className="text-[10px] md:text-base font-bold ml-0.5">.-</span></p>
-                      <p className="text-amber-400/60 text-[8px] md:text-xs">แลกซื้อได้เลย!</p>
+                      <p className="text-amber-400/60 text-[10px] md:text-xs">แลกซื้อได้เลย!</p>
                     </div>
-                    <p className="text-white/50 text-[8px] md:text-xs italic">*จำนวนจำกัด</p>
+                    <p className="text-white/50 text-[10px] md:text-xs italic">*จำนวนจำกัด</p>
                   </div>
 
                   {/* CTA */}

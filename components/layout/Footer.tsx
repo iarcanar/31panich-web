@@ -13,10 +13,10 @@ export default function Footer() {
           <div className="flex items-center gap-5">
             <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
               <Image src="/line-qr.webp" alt={`LINE ${LINE_ID}`} width={64} height={64} className="rounded-lg" />
-              <p className="text-[8px] text-gray-600 text-center mt-1">สแกนแอดไลน์</p>
+              <p className="text-[10px] text-gray-600 text-center mt-1">สแกนแอดไลน์</p>
             </a>
 
-            <div className="text-[11px] space-y-1.5 text-left">
+            <div className="text-xs space-y-1.5 text-left">
               <p className="text-gray-400">เปิดทุกวัน <span className="text-white font-medium">{HOURS_TEXT}</span></p>
               <p><ContactLink type="phone" className="text-white hover:text-cyan-400 transition">{PHONE}</ContactLink></p>
               <p><ContactLink type="line" className="text-white hover:text-cyan-400 transition">LINE {LINE_ID}</ContactLink></p>
