@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import Image from "next/image"
 import JsBarcode from "jsbarcode"
-import { toJpeg } from "html-to-image"
 import type { Coupon } from "@/lib/coupons"
 
 interface Props {
@@ -13,10 +12,10 @@ interface Props {
   onClose: () => void
 }
 
-const ACCENT: Record<string, { bg: string; text: string; stripe: string; waveColor: string }> = {
-  percent: { bg: "bg-orange-500/10", text: "text-orange-400", stripe: "bg-orange-500", waveColor: "251,146,60" },
-  fixed:   { bg: "bg-emerald-500/10", text: "text-emerald-400", stripe: "bg-emerald-500", waveColor: "52,211,153" },
-  gift:    { bg: "bg-violet-500/10", text: "text-violet-400", stripe: "bg-violet-500", waveColor: "167,139,250" },
+const ACCENT: Record<string, { bg: string; text: string; stripe: string; waveColor: string; rgb: string }> = {
+  percent: { bg: "bg-orange-500/10", text: "text-orange-400", stripe: "bg-orange-500", waveColor: "251,146,60", rgb: "rgb(251,146,60)" },
+  fixed:   { bg: "bg-emerald-500/10", text: "text-emerald-400", stripe: "bg-emerald-500", waveColor: "52,211,153", rgb: "rgb(52,211,153)" },
+  gift:    { bg: "bg-violet-500/10", text: "text-violet-400", stripe: "bg-violet-500", waveColor: "167,139,250", rgb: "rgb(167,139,250)" },
 }
 
 function wavePatternUrl(rgb: string): string {
@@ -53,9 +52,19 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" })
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
+}
+
 export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }: Props) {
   const barcodeRef = useRef<SVGSVGElement>(null)
-  const captureRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
   const accent = ACCENT[coupon.discountType] || ACCENT.percent
@@ -114,39 +123,152 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
   }
 
   const handleSaveImage = useCallback(async () => {
-    if (!captureRef.current || saving) return
+    if (saving) return
     setSaving(true)
     try {
-      const dataUrl = await toJpeg(captureRef.current, {
-        quality: 0.92,
-        backgroundColor: "#13131d",
-        pixelRatio: 2,
+      const W = 800, pad = 48
+      const accentColor = accent.rgb
+      const bg = "#13131d"
+      const textMain = "#e2e8f0"
+      const textSub = "rgba(255,255,255,0.5)"
+      const textDim = "rgba(255,255,255,0.3)"
+      const borderColor = "rgba(255,255,255,0.08)"
+
+      // Build conditions list
+      const conditions: string[] = []
+      if (coupon.description) conditions.push(coupon.description)
+      if (coupon.minPurchase > 0) conditions.push(`ซื้อขั้นต่ำ ${coupon.minPurchase.toLocaleString()} บาท`)
+      if (coupon.category) conditions.push(`หมวด: ${coupon.category}`)
+      conditions.push(`ใช้ได้ถึง ${formatDate(coupon.endDate)}`)
+      if (coupon.stackWithPoints) {
+        conditions.push("✦ ใช้ร่วมกับโปรรับแต้มสามหนึ่งได้")
+      } else {
+        conditions.push("ไม่สามารถใช้ร่วมกับโปรรับแต้มสามหนึ่ง")
+      }
+
+      // Generate barcode on a hidden canvas
+      const barcodeCanvas = document.createElement("canvas")
+      JsBarcode(barcodeCanvas, coupon.code, {
+        format: "CODE128", width: 3, height: 80,
+        displayValue: false, background: "transparent", lineColor: textMain, margin: 0,
       })
 
-      // Mobile: try share API with file (saves to gallery on iOS/Android)
+      // Calculate total height
+      const headerH = 120
+      const serialH = 70
+      const barcodeSection = 130
+      const condH = conditions.length * 28 + 20
+      const footerH = 60
+      const H = pad + headerH + serialH + barcodeSection + condH + footerH + pad
+
+      const canvas = document.createElement("canvas")
+      canvas.width = W * 2
+      canvas.height = H * 2
+      const ctx = canvas.getContext("2d")!
+      ctx.scale(2, 2)
+
+      // Background
+      ctx.fillStyle = bg
+      ctx.roundRect(0, 0, W, H, 20)
+      ctx.fill()
+
+      // Border
+      ctx.strokeStyle = borderColor
+      ctx.lineWidth = 1.5
+      ctx.roundRect(0, 0, W, H, 20)
+      ctx.stroke()
+
+      let y = pad
+
+      // ── Header: discount label + title ──
+      ctx.fillStyle = accentColor
+      ctx.font = "bold 40px sans-serif"
+      ctx.textAlign = "center"
+      ctx.fillText(discountLabel(coupon), W / 2, y + 45)
+      ctx.fillStyle = textMain
+      ctx.font = "500 22px sans-serif"
+      ctx.fillText(coupon.title, W / 2, y + 85)
+      y += headerH
+
+      // Divider
+      ctx.strokeStyle = borderColor
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke()
+
+      // ── Serial + timestamp ──
+      ctx.fillStyle = textDim
+      ctx.font = "11px sans-serif"
+      ctx.textAlign = "center"
+      ctx.fillText("SERIAL", W / 2 - 80, y + 22)
+      ctx.fillText("รับเมื่อ", W / 2 + 80, y + 22)
+      ctx.fillStyle = textMain
+      ctx.font = "bold 16px monospace"
+      ctx.fillText(serial, W / 2 - 80, y + 46)
+      ctx.fillStyle = textSub
+      ctx.font = "13px sans-serif"
+      ctx.fillText(formatDateTime(claimedAt), W / 2 + 80, y + 46)
+      y += serialH
+
+      // Divider
+      ctx.strokeStyle = borderColor
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke()
+
+      // ── Barcode ──
+      const bw = Math.min(barcodeCanvas.width / 2, W - pad * 4)
+      const bh = (bw / barcodeCanvas.width) * barcodeCanvas.height
+      ctx.drawImage(barcodeCanvas, (W - bw) / 2, y + 20, bw, bh)
+      ctx.fillStyle = textMain
+      ctx.font = "bold 20px monospace"
+      ctx.textAlign = "center"
+      ctx.fillText(coupon.code, W / 2, y + 20 + bh + 28)
+      y += barcodeSection
+
+      // ── Conditions ──
+      ctx.textAlign = "left"
+      ctx.font = "14px sans-serif"
+      for (const cond of conditions) {
+        const isSpecial = cond.startsWith("✦")
+        ctx.fillStyle = isSpecial ? "rgba(251,191,36,0.8)" : textSub
+        const bullet = isSpecial ? "" : "●  "
+        ctx.fillText(bullet + cond, pad + 10, y + 20)
+        y += 28
+      }
+      y += 20
+
+      // ── Footer: branding ──
+      ctx.fillStyle = textDim
+      ctx.font = "12px sans-serif"
+      ctx.textAlign = "center"
+      ctx.fillText("สามหนึ่งพานิช — 31panich.com", W / 2, y + 20)
+
+      // Export to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => b ? resolve(b) : reject(new Error("toBlob failed")), "image/jpeg", 0.92)
+      })
+
+      const fileName = `coupon-${coupon.code}.jpg`
+
+      // Mobile: use share API with file (saves to gallery on iOS/Android)
       if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
-        const res = await fetch(dataUrl)
-        const blob = await res.blob()
-        const file = new File([blob], `coupon-${coupon.code}.jpg`, { type: "image/jpeg" })
-        try {
-          await navigator.share({ files: [file], title: `คูปอง ${coupon.code}` })
-        } catch {
-          // User cancelled share — still ok
+        const file = new File([blob], fileName, { type: "image/jpeg" })
+        if (navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: `คูปอง ${coupon.code}` })
+          } catch { /* user cancelled */ }
+        } else {
+          // Fallback: download
+          downloadBlob(blob, fileName)
         }
       } else {
-        // Desktop: trigger download (opens file explorer)
-        const link = document.createElement("a")
-        link.download = `coupon-${coupon.code}.jpg`
-        link.href = dataUrl
-        link.click()
+        // Desktop: trigger download
+        downloadBlob(blob, fileName)
       }
-    } catch {
-      // Fallback: alert user to screenshot
+    } catch (err) {
+      console.error("Save image error:", err)
       alert("ไม่สามารถบันทึกภาพได้ กรุณา screenshot หน้าจอแทน")
     } finally {
       setSaving(false)
     }
-  }, [coupon.code, saving])
+  }, [coupon, serial, claimedAt, accent, saving])
 
   // Banknote-style wave guilloche
   const guillocheStyle = {
@@ -165,7 +287,6 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
         className="relative w-full max-w-md mx-auto bg-[#13131d] md:rounded-2xl rounded-t-2xl
           border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto"
         style={guillocheStyle}
-        ref={captureRef}
       >
         {/* Watermark 31 logo — center background */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
