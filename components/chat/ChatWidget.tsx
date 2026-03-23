@@ -32,6 +32,7 @@ export default function ChatWidget() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT)
+  const [bottomOffset, setBottomOffset] = useState(24) // px from bottom (adjusts for keyboard)
   const scrollRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -55,12 +56,32 @@ export default function ChatWidget() {
     return () => { clearTimeout(timer); document.removeEventListener("mousedown", handleClick) }
   }, [panelOpen])
 
-  // Scroll outside → collapse chat
+  // Adjust panel position when mobile keyboard opens/closes
+  useEffect(() => {
+    if (!panelOpen || !window.visualViewport) return
+    function handleResize() {
+      const vv = window.visualViewport!
+      // When keyboard is open, viewport height shrinks — move panel up
+      const keyboardHeight = window.innerHeight - vv.height
+      setBottomOffset(keyboardHeight > 50 ? keyboardHeight + 8 : 24)
+      // Also shrink panel to fit visible area
+      if (keyboardHeight > 50) {
+        const maxH = vv.height - 40
+        setPanelHeight((h) => Math.min(h, maxH))
+      }
+    }
+    window.visualViewport.addEventListener("resize", handleResize)
+    return () => window.visualViewport?.removeEventListener("resize", handleResize)
+  }, [panelOpen])
+
+  // Scroll outside → collapse chat (but not when mobile keyboard opens)
   useEffect(() => {
     if (!panelOpen) return
     function handleScroll(e: Event) {
       // ignore scroll inside the chat panel itself
       if (panelRef.current?.contains(e.target as Node)) return
+      // ignore scroll caused by mobile keyboard (input is focused)
+      if (panelRef.current?.contains(document.activeElement)) return
       setPanelOpen(false)
     }
     window.addEventListener("scroll", handleScroll, { passive: true, capture: true })
@@ -158,8 +179,8 @@ export default function ChatWidget() {
       {panelOpen && (
         <div
           ref={panelRef}
-          style={{ height: panelHeight }}
-          className="fixed bottom-6 right-6 z-50 w-80 sm:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden max-[400px]:right-2 max-[400px]:left-2 max-[400px]:w-[calc(100vw-1rem)]"
+          style={{ height: panelHeight, bottom: bottomOffset }}
+          className="fixed right-6 z-50 w-80 sm:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden max-[400px]:right-2 max-[400px]:left-2 max-[400px]:w-[calc(100vw-1rem)]"
         >
           {/* Resize handle */}
           <div
