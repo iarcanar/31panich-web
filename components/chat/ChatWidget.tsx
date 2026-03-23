@@ -34,23 +34,10 @@ export default function ChatWidget() {
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT)
   const [bottomOffset, setBottomOffset] = useState(24)
   const preKbHeight = useRef(DEFAULT_HEIGHT)
-  const panelHeightRef = useRef(DEFAULT_HEIGHT)
   const kbOpen = useRef(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
-
-  // Keep ref in sync with state (so keyboard handler reads latest without re-registering)
-  panelHeightRef.current = panelHeight
-
-  // Reset position when panel opens — always start anchored to bottom
-  useEffect(() => {
-    if (panelOpen) {
-      kbOpen.current = false
-      setBottomOffset(24)
-      setPanelHeight((h) => h || DEFAULT_HEIGHT)
-    }
-  }, [panelOpen])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -58,7 +45,7 @@ export default function ChatWidget() {
     }
   }, [messages, loading])
 
-  // Click-outside → collapse chat (delayed to avoid catching the opening tap)
+  // Click-outside → collapse chat
   useEffect(() => {
     if (!panelOpen) return
     function handleClick(e: MouseEvent) {
@@ -66,54 +53,46 @@ export default function ChatWidget() {
         setPanelOpen(false)
       }
     }
-    const timer = setTimeout(() => document.addEventListener("mousedown", handleClick), 200)
+    const timer = setTimeout(() => document.addEventListener("mousedown", handleClick), 100)
     return () => { clearTimeout(timer); document.removeEventListener("mousedown", handleClick) }
   }, [panelOpen])
 
-  // Adjust panel when mobile keyboard opens/closes — reads height from ref, no re-register loop
+  // Adjust panel when mobile keyboard opens/closes
   useEffect(() => {
     if (!panelOpen || !window.visualViewport) return
-    let rafId = 0
     function handleResize() {
-      cancelAnimationFrame(rafId)
-      rafId = requestAnimationFrame(() => {
-        const vv = window.visualViewport!
-        const keyboardHeight = window.innerHeight - vv.height
-        if (keyboardHeight > 100) {
-          if (!kbOpen.current) {
-            preKbHeight.current = panelHeightRef.current
-            kbOpen.current = true
-          }
-          setBottomOffset(keyboardHeight + 8)
-          const maxH = vv.height - 40
-          setPanelHeight((h) => Math.min(h, maxH))
-        } else if (kbOpen.current) {
-          kbOpen.current = false
-          setBottomOffset(24)
-          setPanelHeight(preKbHeight.current)
+      const vv = window.visualViewport!
+      const keyboardHeight = window.innerHeight - vv.height
+      if (keyboardHeight > 50) {
+        // Keyboard opened — save height on first open, then shrink
+        if (!kbOpen.current) {
+          preKbHeight.current = panelHeight
+          kbOpen.current = true
         }
-      })
+        setBottomOffset(keyboardHeight + 8)
+        const maxH = vv.height - 40
+        setPanelHeight((h) => Math.min(h, maxH))
+      } else if (kbOpen.current) {
+        // Keyboard closed — restore saved height
+        kbOpen.current = false
+        setBottomOffset(24)
+        setPanelHeight(preKbHeight.current)
+      }
     }
     window.visualViewport.addEventListener("resize", handleResize)
-    return () => {
-      cancelAnimationFrame(rafId)
-      window.visualViewport?.removeEventListener("resize", handleResize)
-    }
-  }, [panelOpen]) // panelHeight removed — read from ref instead
+    return () => window.visualViewport?.removeEventListener("resize", handleResize)
+  }, [panelOpen, panelHeight])
 
-  // Scroll outside → collapse chat (delayed 300ms to avoid layout-shift false trigger)
+  // Scroll outside → collapse chat (not when keyboard causes scroll)
   useEffect(() => {
     if (!panelOpen) return
-    let armed = false
     function handleScroll(e: Event) {
-      if (!armed) return
       if (panelRef.current?.contains(e.target as Node)) return
       if (panelRef.current?.contains(document.activeElement)) return
       setPanelOpen(false)
     }
-    const timer = setTimeout(() => { armed = true }, 300)
     window.addEventListener("scroll", handleScroll, { passive: true, capture: true })
-    return () => { clearTimeout(timer); window.removeEventListener("scroll", handleScroll, { capture: true }) }
+    return () => window.removeEventListener("scroll", handleScroll, { capture: true })
   }, [panelOpen])
 
   // Resize drag handlers
@@ -208,7 +187,7 @@ export default function ChatWidget() {
         <div
           ref={panelRef}
           style={{ height: panelHeight, bottom: bottomOffset }}
-          className="fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+          className="fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-[bottom] duration-200 ease-out"
         >
           {/* Resize handle */}
           <div
