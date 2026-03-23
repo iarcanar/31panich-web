@@ -1,0 +1,23 @@
+[
+  {
+    "code": "31-A1",
+    "title": "ซื้อ500 ลด20",
+    "description": "สำหรับเปิดตัวเว็บไซต์ 31panich.co.th",
+    "image": "",
+    "discountType": "fixed",
+    "discountValue": 20,
+    "giftDescription": "",
+    "category": null,
+    "minPurchase": 500,
+    "startDate": "2026-03-23T00:00:00.000Z",
+    "endDate": "2026-03-25T16:59:59.000Z",
+    "isActive": true,
+    "usageLimit": 50,
+    "id": "332966a7-a032-440a-be16-4ad5853a7fca",
+    "usageCount": 0,
+    "claimCount": 0,
+    "createdAt": "2026-03-23T01:47:42.715Z",
+    "updatedAt": "2026-03-23T01:54:29.570Z",
+    "stackWithPoints": true
+  }
+]
