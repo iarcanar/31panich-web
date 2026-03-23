@@ -1,5 +1,4 @@
 import { readJSON, writeJSON, withLock } from "./blob-store"
-import { addClaim } from "./coupon-claims"
 
 // ─── Types ───────────────────────────────────────────────
 export interface Coupon {
@@ -138,42 +137,6 @@ export async function deleteCoupon(id: string): Promise<boolean> {
     await writeAll(filtered)
     return true
   })
-}
-
-// ─── Claim: ลูกค้ากดรับ → ได้ serial 31-A1, 31-A2, ... ──
-// Serial number is derived from actual claim records (not a counter field)
-// This prevents duplicate serials across serverless instances
-export async function claimCoupon(
-  id: string,
-  ip = "unknown",
-  ua = "unknown",
-): Promise<{ coupon: Coupon; serial: string; claimedAt: string } | null> {
-  // Read coupon data (cache OK — we just need the prefix and code)
-  const coupons = await readAll()
-  const coupon = coupons.find((c) => c.id === id)
-  if (!coupon) return null
-
-  const prefix = coupon.serialPrefix || "A"
-
-  // Add claim record — this uses its own lock + noCache read for accuracy
-  const record = await addClaim(id, coupon.code, prefix, ip, ua)
-
-  // Update claimCount on coupon (best-effort sync, not critical for serial)
-  try {
-    await withLock(FILE, async () => {
-      const fresh = await readJSON<Coupon[]>(FILE, [], true) // noCache
-      const idx = fresh.findIndex((c) => c.id === id)
-      if (idx !== -1) {
-        fresh[idx].claimCount = (fresh[idx].claimCount || 0) + 1
-        fresh[idx].updatedAt = new Date().toISOString()
-        await writeJSON(FILE, fresh)
-      }
-    })
-  } catch {
-    // Non-critical — serial is already generated from claims store
-  }
-
-  return { coupon, serial: record.serial, claimedAt: record.claimedAt }
 }
 
 export async function incrementUsage(id: string): Promise<Coupon | null> {

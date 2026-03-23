@@ -1,4 +1,4 @@
-import { readJSON, writeJSON } from "./blob-store"
+import { readJSON, writeJSON, withLock } from "./blob-store"
 
 interface AiConfig {
   instructions: string
@@ -11,5 +11,7 @@ export async function getAiConfig(): Promise<AiConfig> {
 }
 
 export async function saveAiConfig(config: AiConfig): Promise<void> {
-  await writeJSON(FILE, config)
+  await withLock(FILE, async () => {
+    await writeJSON(FILE, config)
+  })
 }
