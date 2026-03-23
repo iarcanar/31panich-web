@@ -65,7 +65,7 @@ export default function RewardsCarousel() {
   const dotCount = Math.min(totalCards, 6)
 
   return (
-    <section className="bg-gradient-to-b from-[#0e0e14] via-[#12121f] to-[#0e0e14] py-10 md:py-14">
+    <section className="bg-gradient-to-b from-[#0e0e14] via-[#12121f] to-[#0e0e14] py-8 md:py-14">
       <div className="container mx-auto px-4">
         <ScrollGlowFrame offsetTop={-20} color={[217, 158, 40]} shapes={SHAPE_PRESETS.golden}>
           <div className="pt-4 pb-2 md:pt-8 md:pb-4">

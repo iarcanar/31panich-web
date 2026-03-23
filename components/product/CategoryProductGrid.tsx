@@ -48,11 +48,58 @@ export default function CategoryProductGrid({ products, categoryLabel, categoryV
 
   if (products.length === 0) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-16">
         <svg className="w-16 h-16 mx-auto text-[#2a2a3a] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
-        <p className="text-gray-500">ยังไม่มีสินค้าในหมวด{categoryLabel}</p>
+        <p className="text-gray-400 mb-1">ยังไม่มีสินค้าในหมวด{categoryLabel}</p>
+        <p className="text-gray-500 text-sm mb-6">กำลังเพิ่มสินค้าเร็วๆ นี้ — สอบถามสินค้าได้ทาง LINE</p>
+        <div className="flex items-center justify-center gap-3">
+          <ContactLink
+            type="line"
+            className="inline-flex items-center gap-2 bg-[#06C755] text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-[#05b34d] transition-colors shadow-lg shadow-green-500/20"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.271.173-.508.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+            </svg>
+            สอบถามสินค้า
+          </ContactLink>
+          <Link href="/products" className="text-cyan-400/70 hover:text-cyan-300 text-sm transition-colors">
+            ดูหมวดอื่น &rarr;
+          </Link>
+        </div>
+
+        {/* Show recommended products even when this category is empty */}
+        {recommended.length > 0 && (
+          <div className="mt-12 text-left">
+            <h2 className="text-lg font-bold text-white mb-1">สินค้าหมวดอื่นที่น่าสนใจ</h2>
+            <p className="text-gray-500 text-sm mb-5">เลือกดูสินค้าจากหมวดหมู่อื่นๆ</p>
+            <div className="relative">
+              <div
+                className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {recommended.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/products/${item.category}/${encodeURIComponent(item.slug)}`}
+                    className="flex-shrink-0 w-32 md:w-36 snap-start bg-[#1a1a28] rounded-xl border border-white/10 overflow-hidden hover:border-cyan-400/20 hover:-translate-y-0.5 transition-all duration-200 group"
+                  >
+                    <div className="aspect-square bg-[#1e2035] relative overflow-hidden">
+                      <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="144px" />
+                    </div>
+                    <div className="p-2 md:p-2.5">
+                      <span className="text-[10px] text-cyan-400">{item.categoryLabel}</span>
+                      <h3 className="text-[11px] md:text-xs font-medium text-white mt-0.5 line-clamp-2 leading-snug">{item.name}</h3>
+                      <p className="text-amber-400 text-xs font-bold mt-1">฿{item.price.toLocaleString()}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-[#0e0e14] to-transparent pointer-events-none md:hidden" />
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -409,38 +456,40 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
             </div>
           )}
 
-          {/* CTA */}
+          {/* CTA — clear hierarchy: primary → secondary → tertiary */}
           <div className="mt-5 flex flex-col sm:flex-row gap-2.5">
             <ContactLink
               type="line"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-center gap-2 bg-[#06C755] text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-[#05b34d] transition-colors shadow-lg shadow-green-500/20"
+              className="flex items-center justify-center gap-2 bg-[#06C755] text-white font-bold px-6 py-3.5 rounded-xl text-sm hover:bg-[#05b34d] transition-colors shadow-lg shadow-green-500/20"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.271.173-.508.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
               </svg>
               สั่งซื้อผ่าน LINE
             </ContactLink>
-            <ContactLink
-              type="phone"
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-center gap-2 bg-[#1a1a28] text-white font-semibold px-6 py-3 rounded-xl text-sm border border-white/10 hover:border-cyan-400/30 hover:text-cyan-400 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              โทรสอบถาม
-            </ContactLink>
-            <Link
-              href={`/products/${categoryValue}/${encodeURIComponent(p.slug)}`}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-sm font-medium px-4 py-3 rounded-xl transition-colors"
-            >
-              ดูหน้าสินค้าเต็ม
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
+            <div className="flex gap-2.5">
+              <ContactLink
+                type="phone"
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 flex items-center justify-center gap-2 text-white/70 font-medium px-4 py-2.5 rounded-xl text-xs border border-white/10 hover:border-white/20 hover:text-white transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                โทร
+              </ContactLink>
+              <Link
+                href={`/products/${categoryValue}/${encodeURIComponent(p.slug)}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 flex items-center justify-center gap-1.5 text-cyan-400/70 hover:text-cyan-300 text-xs font-medium px-4 py-2.5 rounded-xl transition-colors"
+              >
+                ดูหน้าเต็ม
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

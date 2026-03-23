@@ -78,7 +78,7 @@ export default function CategorySlideshow({ slides }: Props) {
   if (slides.length === 0) return null
 
   return (
-    <section className="bg-[#0e0e14] py-6 md:py-8">
+    <section className="bg-[#0e0e14] py-8 md:py-14">
       {/* Section label */}
       <div className="container mx-auto px-4 mb-4 md:mb-5">
         <div className="flex items-center gap-3">
