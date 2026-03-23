@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "code required" }, { status: 400 })
     }
 
-    const coupon = getCouponByCode(code)
+    const coupon = await getCouponByCode(code)
     if (!coupon) {
       return NextResponse.json({ valid: false, reason: "ไม่พบรหัสคูปองนี้" })
     }
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     // Redeem: increment usage count
     if (redeem) {
-      const updated = incrementUsage(coupon.id)
+      const updated = await incrementUsage(coupon.id)
       return NextResponse.json({ valid: true, reason: "ยืนยันการใช้คูปองสำเร็จ", coupon: updated })
     }
 

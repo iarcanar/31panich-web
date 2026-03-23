@@ -6,9 +6,9 @@ import ScrollGlowFrame from "@/components/ui/ScrollGlowFrame"
 import ScrollAccentLine from "@/components/ui/ScrollAccentLine"
 import DevEditLink from "./DevEditLink"
 
-export default function NewProductsSection() {
-  const products = getNewProducts(8)
-  const hero = getNewPinnedProduct()
+export default async function NewProductsSection() {
+  const products = await getNewProducts(8)
+  const hero = await getNewPinnedProduct()
 
   if (products.length === 0 && !hero) return null
 

@@ -1,5 +1,4 @@
-import fs from "fs"
-import path from "path"
+import { readJSON, writeJSON } from "./blob-store"
 export { CATEGORIES } from "./categories"
 import { CATEGORIES } from "./categories"
 
@@ -31,25 +30,15 @@ export type ProductInput = Omit<Product, "id" | "slug" | "createdAt" | "updatedA
 
 // CATEGORIES is re-exported from ./categories (single source of truth)
 
-// ─── File helpers (cached read, invalidate on write) ────
-const DATA_PATH = path.join(process.cwd(), "data", "products.json")
+// ─── Data helpers (async, dual-mode via blob-store) ─────
+const FILE = "products.json"
 
-let _cache: Product[] | null = null
-let _cacheMtime = 0
-
-function readAll(): Product[] {
-  const stat = fs.statSync(DATA_PATH)
-  const mtime = stat.mtimeMs
-  if (_cache && mtime === _cacheMtime) return JSON.parse(JSON.stringify(_cache))
-  const raw = fs.readFileSync(DATA_PATH, "utf-8")
-  _cache = JSON.parse(raw)
-  _cacheMtime = mtime
-  return JSON.parse(JSON.stringify(_cache))
+async function readAll(): Promise<Product[]> {
+  return await readJSON<Product[]>(FILE, [])
 }
 
-function writeAll(products: Product[]) {
-  fs.writeFileSync(DATA_PATH, JSON.stringify(products, null, 2), "utf-8")
-  _cache = null // invalidate cache
+async function writeAll(products: Product[]): Promise<void> {
+  await writeJSON(FILE, products)
 }
 
 function toSlug(name: string): string {
@@ -71,28 +60,28 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 // ─── CRUD ────────────────────────────────────────────────
-export function getProducts(): Product[] {
-  return readAll().sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+export async function getProducts(): Promise<Product[]> {
+  return (await readAll()).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
-export function getProductById(id: string): Product | undefined {
-  return readAll().find((p) => p.id === id)
+export async function getProductById(id: string): Promise<Product | undefined> {
+  return (await readAll()).find((p) => p.id === id)
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return readAll().find((p) => p.slug === slug)
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  return (await readAll()).find((p) => p.slug === slug)
 }
 
-export function getProductsByCategory(category: string): Product[] {
-  return readAll()
+export async function getProductsByCategory(category: string): Promise<Product[]> {
+  return (await readAll())
     .filter((p) => p.category === category)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
-export function searchProducts(query: string): Product[] {
+export async function searchProducts(query: string): Promise<Product[]> {
   const tokens = query.toLowerCase().replace(/\s+/g, " ").trim().split(" ")
   if (tokens.length === 0 || tokens[0] === "") return []
-  return readAll()
+  return (await readAll())
     .filter((p) => {
       const hay = `${p.name} ${p.brand} ${p.sku} ${p.description} ${p.category}`.toLowerCase()
       return tokens.every((t) => hay.includes(t))
@@ -100,16 +89,16 @@ export function searchProducts(query: string): Product[] {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
-export function getNewProducts(limit = 8): Product[] {
-  const all = readAll().filter((p) => p.price > 0 && p.stock > 0)
+export async function getNewProducts(limit = 8): Promise<Product[]> {
+  const all = (await readAll()).filter((p) => p.price > 0 && p.stock > 0)
   // Flagged สุ่มลำดับ, เติมด้วย rest สุ่ม
   const flagged = shuffle(all.filter((p) => p.isNew))
   const rest = shuffle(all.filter((p) => !p.isNew))
   return [...flagged, ...rest].slice(0, limit)
 }
 
-export function getBestsellers(limit = 8): Product[] {
-  const all = readAll().filter((p) => p.price > 0 && p.stock > 0)
+export async function getBestsellers(limit = 8): Promise<Product[]> {
+  const all = (await readAll()).filter((p) => p.price > 0 && p.stock > 0)
   // Flagged สุ่มลำดับ, เติมด้วย rest สุ่ม
   const flagged = shuffle(all.filter((p) => p.isBestseller))
   const rest = shuffle(all.filter((p) => !p.isBestseller))
@@ -117,13 +106,13 @@ export function getBestsellers(limit = 8): Product[] {
 }
 
 // Zone-specific pinned hero: isNew + isPinned
-export function getNewPinnedProduct(): Product | null {
-  return readAll().find((p) => p.isPinned && p.isNew && p.price > 0 && p.stock > 0) ?? null
+export async function getNewPinnedProduct(): Promise<Product | null> {
+  return (await readAll()).find((p) => p.isPinned && p.isNew && p.price > 0 && p.stock > 0) ?? null
 }
 
 // Zone-specific pinned hero: isBestseller + isPinned
-export function getBestsellerPinnedProduct(): Product | null {
-  return readAll().find((p) => p.isPinned && p.isBestseller && p.price > 0 && p.stock > 0) ?? null
+export async function getBestsellerPinnedProduct(): Promise<Product | null> {
+  return (await readAll()).find((p) => p.isPinned && p.isBestseller && p.price > 0 && p.stock > 0) ?? null
 }
 
 // Clear conflicting pins: only 1 pinned per zone (isNew / isBestseller)
@@ -137,8 +126,8 @@ function clearConflictingPins(products: Product[], target: { isNew: boolean; isB
   }
 }
 
-export function createProduct(input: ProductInput): Product {
-  const products = readAll()
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const products = await readAll()
 
   // Prevent hero card in both zones: pinned product can only be isNew OR isBestseller, not both
   if (input.isPinned && input.isNew && input.isBestseller) {
@@ -159,12 +148,12 @@ export function createProduct(input: ProductInput): Product {
     updatedAt: now,
   }
   products.push(product)
-  writeAll(products)
+  await writeAll(products)
   return product
 }
 
-export function updateProduct(id: string, input: Partial<ProductInput>): Product | null {
-  const products = readAll()
+export async function updateProduct(id: string, input: Partial<ProductInput>): Promise<Product | null> {
+  const products = await readAll()
   const idx = products.findIndex((p) => p.id === id)
   if (idx === -1) return null
 
@@ -190,14 +179,14 @@ export function updateProduct(id: string, input: Partial<ProductInput>): Product
   if (input.name) {
     products[idx].slug = toSlug(input.name)
   }
-  writeAll(products)
+  await writeAll(products)
   return products[idx]
 }
 
-export function deleteProduct(id: string): boolean {
-  const products = readAll()
+export async function deleteProduct(id: string): Promise<boolean> {
+  const products = await readAll()
   const filtered = products.filter((p) => p.id !== id)
   if (filtered.length === products.length) return false
-  writeAll(filtered)
+  await writeAll(filtered)
   return true
 }

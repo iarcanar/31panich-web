@@ -1,21 +1,15 @@
-import fs from "fs"
-import path from "path"
+import { readJSON, writeJSON } from "./blob-store"
 
 interface AiConfig {
   instructions: string
 }
 
-const CONFIG_PATH = path.join(process.cwd(), "data", "ai-config.json")
+const FILE = "ai-config.json"
 
-export function getAiConfig(): AiConfig {
-  try {
-    const raw = fs.readFileSync(CONFIG_PATH, "utf-8")
-    return JSON.parse(raw)
-  } catch {
-    return { instructions: "" }
-  }
+export async function getAiConfig(): Promise<AiConfig> {
+  return await readJSON<AiConfig>(FILE, { instructions: "" })
 }
 
-export function saveAiConfig(config: AiConfig): void {
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), "utf-8")
+export async function saveAiConfig(config: AiConfig): Promise<void> {
+  await writeJSON(FILE, config)
 }

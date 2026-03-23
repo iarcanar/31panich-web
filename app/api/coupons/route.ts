@@ -5,7 +5,7 @@ import { getCoupons, getActiveCoupons, createCoupon } from "@/lib/coupons"
 export async function GET(req: NextRequest) {
   try {
     const active = req.nextUrl.searchParams.get("active")
-    const coupons = active === "true" ? getActiveCoupons() : getCoupons()
+    const coupons = active === "true" ? await getActiveCoupons() : await getCoupons()
     return NextResponse.json(coupons)
   } catch {
     return NextResponse.json({ error: "internal error" }, { status: 500 })
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "invalid usageLimit" }, { status: 400 })
     }
 
-    const coupon = createCoupon({
+    const coupon = await createCoupon({
       code: body.code || "",
       title: body.title,
       description: body.description ?? "",

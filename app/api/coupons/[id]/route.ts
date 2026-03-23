@@ -6,7 +6,7 @@ import { getSessionUser, canPerform } from "@/lib/auth"
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const coupon = getCouponById(id)
+    const coupon = await getCouponById(id)
     if (!coupon) return NextResponse.json({ error: "not found" }, { status: 404 })
     return NextResponse.json(coupon)
   } catch {
@@ -18,7 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params
     const body = await req.json()
-    const coupon = updateCoupon(id, body)
+    const coupon = await updateCoupon(id, body)
     if (!coupon) return NextResponse.json({ error: "not found" }, { status: 404 })
     revalidatePath("/")
     revalidatePath("/promotions")
@@ -35,7 +35,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "forbidden" }, { status: 403 })
     }
     const { id } = await params
-    const ok = deleteCoupon(id)
+    const ok = await deleteCoupon(id)
     if (!ok) return NextResponse.json({ error: "not found" }, { status: 404 })
     revalidatePath("/")
     revalidatePath("/promotions")

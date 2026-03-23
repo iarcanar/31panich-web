@@ -16,8 +16,8 @@ function extractNameTerms(name: string): string[] {
 }
 
 /** Score products against query — bidirectional matching for Thai */
-function scoreProducts(userQuery: string, allProducts?: Product[]): ScoredProduct[] {
-  const products = allProducts || getProducts()
+function scoreProducts(userQuery: string, allProducts: Product[]): ScoredProduct[] {
+  const products = allProducts
   const query = userQuery.toLowerCase().replace(/[^\u0E00-\u0E7Fa-z0-9\s]/g, "")
 
   // Forward: space-separated tokens from user query
@@ -79,8 +79,8 @@ function scoreProducts(userQuery: string, allProducts?: Product[]): ScoredProduc
 }
 
 /** Build product context for AI */
-export function buildChatContextWithProducts(userQuery: string) {
-  const products = getProducts()
+export async function buildChatContextWithProducts(userQuery: string) {
+  const products = await getProducts()
 
   // Category summary (single pass)
   const catCountMap: Record<string, number> = {}
@@ -119,8 +119,8 @@ export function buildChatContextWithProducts(userQuery: string) {
 }
 
 /** Build context for admin product enrichment */
-export function buildEnrichContext(product: Product): string {
-  const similar = getProductsByCategory(product.category)
+export async function buildEnrichContext(product: Product): Promise<string> {
+  const similar = (await getProductsByCategory(product.category))
     .filter((p) => p.id !== product.id && p.price > 0)
     .slice(0, 5)
 

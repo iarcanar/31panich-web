@@ -126,12 +126,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "ข้อมูลไม่ถูกต้อง" }, { status: 400 })
     }
 
-    const product = getProductById(productId)
+    const product = await getProductById(productId)
     if (!product) {
       return NextResponse.json({ error: "ไม่พบสินค้า" }, { status: 404 })
     }
 
-    const context = buildEnrichContext(product)
+    const context = await buildEnrichContext(product)
 
     // Layer 1: Research from internet (search by name + brand, skip SKU which is store-specific)
     const searchQuery = `${product.name} ${product.brand || ""}`.trim()

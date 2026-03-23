@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import sharp from "sharp"
-import path from "path"
-import { writeFile, mkdir } from "fs/promises"
+import { writeFile } from "@/lib/blob-store"
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "products")
 const MAX_WIDTH = 800
 const QUALITY = 80
 
@@ -24,17 +22,15 @@ export async function POST(req: NextRequest) {
     .webp({ quality: QUALITY })
     .toBuffer()
 
-  // Save
-  await mkdir(UPLOAD_DIR, { recursive: true })
+  // Save via blob-store (blob on production, local fs on dev)
   const filename = `${crypto.randomUUID()}.webp`
-  const filepath = path.join(UPLOAD_DIR, filename)
-  await writeFile(filepath, processed)
+  const url = await writeFile(`products/${filename}`, processed, "image/webp")
 
   const originalKB = Math.round(buffer.length / 1024)
   const optimizedKB = Math.round(processed.length / 1024)
 
   return NextResponse.json({
-    url: `/products/${filename}`,
+    url,
     originalSize: `${originalKB} KB`,
     optimizedSize: `${optimizedKB} KB`,
     saved: `${Math.round((1 - processed.length / buffer.length) * 100)}%`,

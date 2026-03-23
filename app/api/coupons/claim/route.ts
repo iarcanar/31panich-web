@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "id required" }, { status: 400 })
     }
 
-    const coupon = getCouponById(id)
+    const coupon = await getCouponById(id)
     if (!coupon) {
       return NextResponse.json({ error: "not found" }, { status: 404 })
     }
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "coupon fully used" }, { status: 400 })
     }
 
-    const result = claimCoupon(id)
+    const result = await claimCoupon(id)
     if (!result) {
       return NextResponse.json({ error: "claim failed" }, { status: 500 })
     }

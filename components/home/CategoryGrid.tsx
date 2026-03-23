@@ -3,10 +3,10 @@ import Link from "next/link"
 import { getProductsByCategory, CATEGORIES } from "@/lib/products"
 
 
-export default function CategoryGrid() {
+export default async function CategoryGrid() {
   /* Build category cards with a random product image per category */
-  const cards = CATEGORIES.map((cat) => {
-    const products = getProductsByCategory(cat.value).filter((p) => p.image)
+  const cards = await Promise.all(CATEGORIES.map(async (cat) => {
+    const products = (await getProductsByCategory(cat.value)).filter((p) => p.image)
     const pick = products.length > 0
       ? products[Math.floor(Math.random() * products.length)]
       : null
@@ -16,7 +16,7 @@ export default function CategoryGrid() {
       image: pick?.image ?? "",
       count: products.length,
     }
-  })
+  }))
 
   return (
     <section className="relative bg-[#0e0e14] text-white py-10 md:py-14 overflow-hidden">

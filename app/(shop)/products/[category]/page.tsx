@@ -21,10 +21,10 @@ export default async function CategoryPage({ params }: Props) {
   const cat = CATEGORIES.find((c) => c.value === category)
   if (!cat) notFound()
 
-  const products = getProductsByCategory(category)
+  const products = await getProductsByCategory(category)
 
   // Recommended: products from other categories (with image & in-stock)
-  const recommended = getProducts()
+  const recommended = (await getProducts())
     .filter((p) => p.category !== category && p.price > 0 && p.stock > 0 && p.image)
     .slice(0, 16)
     .map((p) => ({

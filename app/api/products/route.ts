@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache"
 import { getProducts, createProduct } from "@/lib/products"
 
 export async function GET() {
-  return NextResponse.json(getProducts())
+  return NextResponse.json(await getProducts())
 }
 
 export async function POST(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "name, category, price required" }, { status: 400 })
   }
 
-  const product = createProduct({
+  const product = await createProduct({
     name: body.name,
     description: body.description ?? "",
     price: Number(body.price),

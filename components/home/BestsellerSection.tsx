@@ -7,9 +7,9 @@ import ScrollAccentLine from "@/components/ui/ScrollAccentLine"
 import { SHAPE_PRESETS } from "@/components/ui/ScrollGlowFrame"
 import DevEditLink from "./DevEditLink"
 
-export default function BestsellerSection() {
-  const products = getBestsellers(8)
-  const hero = getBestsellerPinnedProduct()
+export default async function BestsellerSection() {
+  const products = await getBestsellers(8)
+  const hero = await getBestsellerPinnedProduct()
 
   if (products.length === 0 && !hero) return null
 

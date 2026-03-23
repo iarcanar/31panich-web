@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAiConfig, saveAiConfig } from "@/lib/ai-config"
 
 export async function GET() {
-  return NextResponse.json(getAiConfig())
+  return NextResponse.json(await getAiConfig())
 }
 
 export async function PUT(request: NextRequest) {
@@ -11,6 +11,6 @@ export async function PUT(request: NextRequest) {
   if (!instructions) {
     return NextResponse.json({ error: "คำแนะนำห้ามว่าง" }, { status: 400 })
   }
-  saveAiConfig({ instructions })
+  await saveAiConfig({ instructions })
   return NextResponse.json({ ok: true })
 }

@@ -8,7 +8,7 @@ type Props = { params: Promise<{ category: string; slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const product = getProductBySlug(decodeURIComponent(slug))
+  const product = await getProductBySlug(decodeURIComponent(slug))
   if (!product) return {}
   const catLabel = CATEGORIES.find((c) => c.value === product.category)?.label ?? product.category
   const desc = product.description?.split("\n").filter(Boolean).join(" ").slice(0, 160)
@@ -27,11 +27,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug, category } = await params
-  const product = getProductBySlug(decodeURIComponent(slug))
+  const product = await getProductBySlug(decodeURIComponent(slug))
   if (!product) notFound()
 
   const categoryLabel = CATEGORIES.find((c) => c.value === category)?.label ?? category
-  const relatedProducts = getProductsByCategory(category).filter((p) => p.id !== product.id).slice(0, 4)
+  const relatedProducts = (await getProductsByCategory(category)).filter((p) => p.id !== product.id).slice(0, 4)
 
   const seller = { "@type": "Organization", name: "สามหนึ่งพานิช" }
   const offers = product.variants?.length

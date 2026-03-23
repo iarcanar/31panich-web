@@ -34,11 +34,11 @@ export default async function ProductsPage({ searchParams }: Props) {
   }
 
   // Search mode
-  const results = searchProducts(query)
+  const results = await searchProducts(query)
 
   const recommended = results.length > 0
     ? []
-    : getProducts()
+    : (await getProducts())
         .filter((p) => p.price > 0 && p.stock > 0 && p.image)
         .slice(0, 16)
         .map((p) => ({

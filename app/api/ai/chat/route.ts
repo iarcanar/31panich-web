@@ -101,10 +101,10 @@ export async function POST(request: NextRequest) {
     const session = getSession(sessionId)!
 
     // Build product context for AI
-    const { context: productContext } = buildChatContextWithProducts(message)
+    const { context: productContext } = await buildChatContextWithProducts(message)
     const knowledge = getRelevantKnowledge(message)
     const now = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "full", timeStyle: "short" })
-    const { instructions } = getAiConfig()
+    const { instructions } = await getAiConfig()
     const systemInstruction = SYSTEM_TEMPLATE
       .replace("{INSTRUCTIONS}", instructions)
       .replace("{PRODUCTS}", productContext + knowledge)
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     // Log for admin analytics
     const forwarded = request.headers.get("x-forwarded-for")
     const ip = forwarded ? forwarded.split(",")[0].trim() : "localhost"
-    try { logChat(ip, message, reply) } catch { /* never break chat */ }
+    try { await logChat(ip, message, reply) } catch { /* never break chat */ }
 
     return NextResponse.json({
       sessionId, reply, isNew,

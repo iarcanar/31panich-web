@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   description: "โปรโมชั่นลดราคาสินค้า วัสดุก่อสร้าง เครื่องมือช่าง ร้านสามหนึ่งพานิช ลพบุรี",
 }
 
-export default function PromotionsPage() {
-  const coupons = getActiveCoupons()
+export default async function PromotionsPage() {
+  const coupons = await getActiveCoupons()
 
   return (
     <div className="bg-[#0e0e14] min-h-screen">
