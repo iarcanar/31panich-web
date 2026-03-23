@@ -107,20 +107,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-[10px] text-[#475569] font-mono mr-3">
               b {process.env.NEXT_PUBLIC_ADMIN_VERSION}
             </span>
-            {user && badge && (
+            {user && (
               <div className="flex items-center gap-2 mr-2">
-                <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${badge.color}`}>
-                  {badge.label}
-                </span>
+                {badge && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${badge.color}`}>
+                    {badge.label}
+                  </span>
+                )}
                 <span className="text-[11px] text-[#94a3b8]">{user.id}</span>
               </div>
             )}
             <button
               onClick={handleLogout}
               disabled={loggingOut}
-              className="px-3 py-1.5 rounded-md text-xs font-medium text-[#64748b] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+              className="shrink-0 px-3 py-1.5 rounded-md text-xs font-medium text-[#64748b] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer whitespace-nowrap"
             >
-              {loggingOut ? "..." : "ออกจากระบบ"}
+              {loggingOut ? "กำลังออก..." : "ออกจากระบบ"}
             </button>
           </div>
         </nav>
