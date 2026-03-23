@@ -72,7 +72,7 @@ const EMPTY_FORM = {
   category: "",
   minPurchase: "0",
   startDate: new Date().toISOString().slice(0, 10),
-  endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+  endDate: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
   isActive: true,
   usageLimit: "0",
   stackWithPoints: true,
