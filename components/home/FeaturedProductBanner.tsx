@@ -11,26 +11,29 @@ export default function FeaturedProductBanner() {
           <h2 className="text-lg md:text-2xl font-bold text-white">โปรโมชั่นล่าสุด</h2>
         </div>
         <div className="space-y-16">
-          {/* === BEWON LED Promo — Facebook Reel === */}
+          {/* === BEWON LED Promo — Static Image + Facebook Link === */}
           <div className="relative rounded-2xl overflow-hidden bg-[#1a1a28] border border-white/10 shadow-lg">
-            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-              <iframe
-                src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F1668814937620528%2F&show_text=false&width=560&t=0&autoplay=1&mute=1"
-                style={{ border: "none", overflow: "hidden", position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
-                scrolling="no"
-                frameBorder="0"
-                allowFullScreen
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            <a
+              href="https://www.facebook.com/reel/1668814937620528"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <Image
+                src="/promotions/bewon-led.webp"
+                alt="BEWON LED หลอดไฟ LED สว่างนาน ไม่กลัวดับ โปรโมชั่นพิเศษ"
+                width={1200}
+                height={670}
+                className="w-full h-auto"
+                priority
               />
-            </div>
+            </a>
 
-            {/* ข้อมูลด้านล่าง + Like button */}
+            {/* ข้อมูลด้านล่าง + Facebook / LINE / โทร */}
             <div className="px-6 py-4 md:px-8 md:py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-blue-200/80 text-sm italic mb-0.5">สว่างนาน...ไม่กลัวดับ!</p>
-                  <p className="text-white/50 text-xs">วันนี้ - 31 มี.ค. 69 หรือจนกว่าสินค้าจะหมด</p>
-                </div>
+              <div>
+                <p className="text-blue-200/80 text-sm italic mb-0.5">สว่างนาน...ไม่กลัวดับ!</p>
+                <p className="text-white/50 text-xs">วันนี้ - 31 มี.ค. 69 หรือจนกว่าสินค้าจะหมด</p>
               </div>
               <div className="flex flex-wrap items-center gap-2 md:gap-3">
                 <a

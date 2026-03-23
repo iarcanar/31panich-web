@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import Image from "next/image"
 import JsBarcode from "jsbarcode"
+import { toJpeg } from "html-to-image"
 import type { Coupon } from "@/lib/coupons"
 
 interface Props {
@@ -54,7 +55,9 @@ function formatDate(iso: string): string {
 
 export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }: Props) {
   const barcodeRef = useRef<SVGSVGElement>(null)
+  const captureRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
+  const [saving, setSaving] = useState(false)
   const accent = ACCENT[coupon.discountType] || ACCENT.percent
 
   // Render barcode
@@ -110,6 +113,41 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
     }
   }
 
+  const handleSaveImage = useCallback(async () => {
+    if (!captureRef.current || saving) return
+    setSaving(true)
+    try {
+      const dataUrl = await toJpeg(captureRef.current, {
+        quality: 0.92,
+        backgroundColor: "#13131d",
+        pixelRatio: 2,
+      })
+
+      // Mobile: try share API with file (saves to gallery on iOS/Android)
+      if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+        const res = await fetch(dataUrl)
+        const blob = await res.blob()
+        const file = new File([blob], `coupon-${coupon.code}.jpg`, { type: "image/jpeg" })
+        try {
+          await navigator.share({ files: [file], title: `คูปอง ${coupon.code}` })
+        } catch {
+          // User cancelled share — still ok
+        }
+      } else {
+        // Desktop: trigger download (opens file explorer)
+        const link = document.createElement("a")
+        link.download = `coupon-${coupon.code}.jpg`
+        link.href = dataUrl
+        link.click()
+      }
+    } catch {
+      // Fallback: alert user to screenshot
+      alert("ไม่สามารถบันทึกภาพได้ กรุณา screenshot หน้าจอแทน")
+    } finally {
+      setSaving(false)
+    }
+  }, [coupon.code, saving])
+
   // Banknote-style wave guilloche
   const guillocheStyle = {
     backgroundImage: wavePatternUrl(accent.waveColor),
@@ -127,6 +165,7 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
         className="relative w-full max-w-md mx-auto bg-[#13131d] md:rounded-2xl rounded-t-2xl
           border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto"
         style={guillocheStyle}
+        ref={captureRef}
       >
         {/* Watermark 31 logo — center background */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
@@ -209,11 +248,19 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
         {/* Action buttons */}
         <div className="relative px-6 pb-4 space-y-2.5">
           <button
-            onClick={handleShare}
+            onClick={handleSaveImage}
+            disabled={saving}
             className={`w-full py-3 rounded-xl text-sm font-semibold text-white transition-all
-              ${accent.stripe} hover:brightness-110 active:scale-[0.98]`}
+              ${accent.stripe} hover:brightness-110 active:scale-[0.98] disabled:opacity-60`}
           >
-            📤 แชร์ / บันทึกคูปอง
+            {saving ? "กำลังบันทึก..." : "💾 บันทึกภาพคูปอง"}
+          </button>
+          <button
+            onClick={handleShare}
+            className="w-full py-3 rounded-xl text-sm font-semibold text-white/80 bg-white/10
+              hover:bg-white/15 active:scale-[0.98] transition-all"
+          >
+            📤 แชร์คูปอง
           </button>
           <button
             onClick={handleCopy}
@@ -227,7 +274,7 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
         {/* Hint */}
         <div className="relative px-6 pb-6 text-center">
           <p className="text-[11px] text-white/30">
-            💡 หรือ screenshot หน้าจอนี้เพื่อเก็บไว้ใช้ที่ร้าน
+            💡 กดบันทึกภาพเพื่อเซฟลงมือถือ หรือ screenshot หน้าจอนี้
           </p>
         </div>
       </div>
