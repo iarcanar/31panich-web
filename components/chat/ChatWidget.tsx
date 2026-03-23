@@ -39,6 +39,15 @@ export default function ChatWidget() {
   const panelRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
 
+  // Reset position when panel opens — always start anchored to bottom
+  useEffect(() => {
+    if (panelOpen) {
+      kbOpen.current = false
+      setBottomOffset(24)
+      setPanelHeight((h) => h || DEFAULT_HEIGHT)
+    }
+  }, [panelOpen])
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -57,30 +66,37 @@ export default function ChatWidget() {
     return () => { clearTimeout(timer); document.removeEventListener("mousedown", handleClick) }
   }, [panelOpen])
 
-  // Adjust panel when mobile keyboard opens/closes
+  // Adjust panel when mobile keyboard opens/closes — no CSS transition, snap directly
   useEffect(() => {
     if (!panelOpen || !window.visualViewport) return
+    let rafId = 0
     function handleResize() {
-      const vv = window.visualViewport!
-      const keyboardHeight = window.innerHeight - vv.height
-      if (keyboardHeight > 50) {
-        // Keyboard opened — save height on first open, then shrink
-        if (!kbOpen.current) {
-          preKbHeight.current = panelHeight
-          kbOpen.current = true
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        const vv = window.visualViewport!
+        const keyboardHeight = window.innerHeight - vv.height
+        if (keyboardHeight > 100) {
+          // Keyboard opened — save height on first open, then shrink
+          if (!kbOpen.current) {
+            preKbHeight.current = panelHeight
+            kbOpen.current = true
+          }
+          setBottomOffset(keyboardHeight + 8)
+          const maxH = vv.height - 40
+          setPanelHeight((h) => Math.min(h, maxH))
+        } else if (kbOpen.current) {
+          // Keyboard closed — restore saved height
+          kbOpen.current = false
+          setBottomOffset(24)
+          setPanelHeight(preKbHeight.current)
         }
-        setBottomOffset(keyboardHeight + 8)
-        const maxH = vv.height - 40
-        setPanelHeight((h) => Math.min(h, maxH))
-      } else if (kbOpen.current) {
-        // Keyboard closed — restore saved height
-        kbOpen.current = false
-        setBottomOffset(24)
-        setPanelHeight(preKbHeight.current)
-      }
+      })
     }
     window.visualViewport.addEventListener("resize", handleResize)
-    return () => window.visualViewport?.removeEventListener("resize", handleResize)
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.visualViewport?.removeEventListener("resize", handleResize)
+    }
   }, [panelOpen, panelHeight])
 
   // Scroll outside → collapse chat (not when keyboard causes scroll)
@@ -187,7 +203,7 @@ export default function ChatWidget() {
         <div
           ref={panelRef}
           style={{ height: panelHeight, bottom: bottomOffset }}
-          className="fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-[bottom] duration-200 ease-out"
+          className="fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         >
           {/* Resize handle */}
           <div
