@@ -64,6 +64,7 @@ export async function writeJSON<T>(filename: string, data: T): Promise<void> {
       await put(`data/${filename}`, json, {
         access: "public",
         addRandomSuffix: false,
+        allowOverwrite: true,
         contentType: "application/json",
       })
     } catch (err) {
@@ -91,6 +92,7 @@ export async function writeFile(
     const blob = await put(filepath, buffer, {
       access: "public",
       addRandomSuffix: false,
+      allowOverwrite: true,
       contentType,
     })
     return blob.url
@@ -114,6 +116,7 @@ async function seedFromLocal<T>(filename: string, fallback: T): Promise<T> {
     await put(`data/${filename}`, raw, {
       access: "public",
       addRandomSuffix: false,
+      allowOverwrite: true,
       contentType: "application/json",
     })
     cache.set(filename, { data, ts: Date.now() })

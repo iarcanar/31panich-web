@@ -28,6 +28,7 @@ export async function GET() {
       const result = await put("data/_test.json", testData, {
         access: "public",
         addRandomSuffix: false,
+        allowOverwrite: true,
         contentType: "application/json",
       })
       checks.writeTest = { ok: true, url: result.url }
