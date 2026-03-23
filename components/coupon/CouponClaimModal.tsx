@@ -69,6 +69,7 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
   const captureRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState("")
   const accent = ACCENT[coupon.discountType] || ACCENT.percent
 
   // Render barcode
@@ -124,19 +125,21 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
     }
   }
 
+  function showSaveMsg(msg: string) {
+    setSaveMsg(msg)
+    setTimeout(() => setSaveMsg(""), 3000)
+  }
+
   const handleSaveImage = useCallback(async () => {
     if (saving || !captureRef.current) return
     setSaving(true)
     try {
-      // Capture the modal content area as-is (screenshot style)
       const canvas = await html2canvas(captureRef.current, {
         backgroundColor: "#13131d",
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        // Ignore cross-origin images that might fail (the watermark logo)
         onclone: (doc) => {
-          // Remove any Next.js Image elements that might cause CORS issues
           const imgs = doc.querySelectorAll("img[src*='31-logo']")
           imgs.forEach((img) => img.remove())
         },
@@ -147,23 +150,33 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
       })
 
       const fileName = `coupon-${coupon.code}.jpg`
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent)
 
-      // Mobile: use share API with file (saves to gallery on iOS/Android)
-      if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
-        const file = new File([blob], fileName, { type: "image/jpeg" })
-        if (navigator.canShare?.({ files: [file] })) {
-          try {
+      // 1. Try Web Share API with file (shows native save/share on mobile)
+      if (isMobile && navigator.share) {
+        try {
+          const file = new File([blob], fileName, { type: "image/jpeg" })
+          if (navigator.canShare?.({ files: [file] })) {
             await navigator.share({ files: [file], title: `คูปอง ${coupon.code}` })
-          } catch { /* user cancelled */ }
-        } else {
-          downloadBlob(blob, fileName)
+            return
+          }
+        } catch (e: unknown) {
+          const err = e as { name?: string }
+          if (err?.name === "AbortError") return // user cancelled — that's OK
+          // other share errors → fall through to download
         }
-      } else {
-        downloadBlob(blob, fileName)
+      }
+
+      // 2. Download file
+      downloadBlob(blob, fileName)
+
+      // 3. On mobile, show confirmation since download may be invisible
+      if (isMobile) {
+        showSaveMsg("บันทึกแล้ว — ดูได้ในโฟลเดอร์ Downloads")
       }
     } catch (err) {
       console.error("Save image error:", err)
-      alert("ไม่สามารถบันทึกภาพได้ กรุณา screenshot หน้าจอแทน")
+      showSaveMsg("บันทึกไม่สำเร็จ — กรุณา screenshot หน้าจอแทน")
     } finally {
       setSaving(false)
     }
@@ -264,6 +277,13 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
             <p className="text-[11px] text-white/30">สามหนึ่งพานิช — 31panich.co.th</p>
           </div>
         </div>
+
+        {/* Save message toast */}
+        {saveMsg && (
+          <div className="relative mx-6 mb-2 px-4 py-2.5 rounded-xl bg-white/10 border border-white/10 text-center">
+            <p className="text-xs text-white/80">{saveMsg}</p>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="relative px-6 pb-4 space-y-2.5">
