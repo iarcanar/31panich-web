@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { CATEGORIES } from "@/lib/categories"
 
 const NAV_ITEMS = [
@@ -24,13 +24,12 @@ const NAV_ITEMS = [
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
-  const [scrolled, setScrolled] = useState(false)
+  const [headerHidden, setHeaderHidden] = useState(false)
+  const lastScrollY = useRef(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const pathname = usePathname()
   const router = useRouter()
-  const isHome = pathname === "/"
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -56,20 +55,29 @@ export default function Header() {
     return () => { document.body.style.overflow = "" }
   }, [mobileOpen])
 
+  // Mobile: hide header on scroll down, show on scroll up
   useEffect(() => {
-    if (!isHome) return
-    const onScroll = () => setScrolled(window.scrollY > 10)
-    onScroll()
+    const onScroll = () => {
+      const y = window.scrollY
+      if (y < 60) {
+        setHeaderHidden(false)
+      } else if (y > lastScrollY.current + 5) {
+        setHeaderHidden(true)
+      } else if (y < lastScrollY.current - 5) {
+        setHeaderHidden(false)
+      }
+      lastScrollY.current = y
+    }
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [isHome])
+  }, [])
 
   // Mobile: always gradient (no solid bar). Desktop: solid bg + shadow.
   const headerBg = "bg-gradient-to-b from-black/80 to-transparent lg:bg-[#0a0a0f] lg:from-transparent lg:to-transparent lg:shadow-lg"
 
   return (
     <>
-    <header className={`sticky top-0 z-50 text-white transition-colors duration-300 ${headerBg}`}>
+    <header className={`sticky top-0 z-50 text-white transition-all duration-300 ${headerBg} ${headerHidden && !mobileOpen ? "-translate-y-full lg:translate-y-0" : "translate-y-0"}`}>
       <div className="flex items-center justify-between px-4 py-2 lg:justify-center lg:gap-3">
         {/* Mobile: Logo small + hamburger */}
         <Link href="/" className="lg:hidden">
