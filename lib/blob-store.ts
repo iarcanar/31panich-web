@@ -5,6 +5,9 @@ import path from "path"
 // ─── Dual-mode storage: Vercel Blob (production) / local fs (dev) ───
 const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN
 
+// Log storage mode on first load (visible in Vercel function logs)
+console.log(`[blob-store] mode=${useBlob ? "blob" : "local-fs"}, token=${useBlob ? "set" : "NOT SET"}`)
+
 // In-memory cache with TTL (helps warm serverless instances)
 const cache = new Map<string, { data: unknown; ts: number }>()
 const CACHE_TTL = 5_000 // 5 seconds
@@ -57,11 +60,16 @@ export async function writeJSON<T>(filename: string, data: T): Promise<void> {
   const json = JSON.stringify(data, null, 2)
 
   if (useBlob) {
-    await put(`data/${filename}`, json, {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: "application/json",
-    })
+    try {
+      await put(`data/${filename}`, json, {
+        access: "public",
+        addRandomSuffix: false,
+        contentType: "application/json",
+      })
+    } catch (err) {
+      console.error(`[blob-store] writeJSON FAILED for ${filename}:`, err)
+      throw new Error(`Blob write failed for ${filename}: ${err instanceof Error ? err.message : String(err)}`)
+    }
   } else {
     const fp = localPath(filename)
     const dir = path.dirname(fp)
