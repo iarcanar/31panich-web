@@ -7,6 +7,7 @@ import CouponCard from "@/components/coupon/CouponCard"
 
 export default function PromotionCouponsStrip() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [loading, setLoading] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(false)
@@ -16,6 +17,7 @@ export default function PromotionCouponsStrip() {
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setCoupons(data) })
       .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
   const updateScroll = useCallback(() => {
@@ -40,6 +42,19 @@ export default function PromotionCouponsStrip() {
   function scroll(dir: number) {
     scrollRef.current?.scrollBy({ left: dir * 300, behavior: "smooth" })
   }
+
+  if (loading) return (
+    <section className="py-6 md:py-10">
+      <div className="container mx-auto px-4">
+        <div className="h-5 w-32 bg-[#1a1a28] rounded mb-4 animate-pulse" />
+        <div className="flex gap-4 overflow-hidden">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="min-w-[280px] h-[140px] bg-[#1a1a28] rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
 
   if (coupons.length === 0) return null
 

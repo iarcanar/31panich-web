@@ -82,7 +82,7 @@ export default function CategoryProductGrid({ products, categoryLabel, categoryV
                 className={`cursor-pointer bg-[#1a1a28] rounded-2xl border overflow-hidden transition-all duration-300 group ${
                   isExpanded
                     ? "border-cyan-400/40 shadow-lg shadow-cyan-500/10 scale-[0.97]"
-                    : "border-white/10 hover:border-white/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/5"
+                    : "border-white/10 hover:border-white/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/5 active:scale-[0.97]"
                 }`}
               >
                 <div className="aspect-[4/3] bg-[#1e2035] relative overflow-hidden">

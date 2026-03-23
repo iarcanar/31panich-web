@@ -92,7 +92,7 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
             key={item.id}
             href={`/products/${item.category}/${encodeURIComponent(item.slug)}`}
             data-card
-            className={`flex-shrink-0 w-[72vw] sm:w-[45vw] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden ${accent.border} ${accent.shadow} hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group relative`}
+            className={`flex-shrink-0 w-[72vw] sm:w-[45vw] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden ${accent.border} ${accent.shadow} hover:-translate-y-1 hover:shadow-xl active:scale-[0.97] transition-all duration-300 group relative`}
           >
             {/* Badge */}
             {item.badge && (
@@ -177,19 +177,21 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
         </button>
       )}
 
-      {/* Dot indicators — mobile */}
-      <div className="flex justify-center gap-1.5 mt-4 md:hidden">
+      {/* Dot indicators — mobile (padded for 44px touch target) */}
+      <div className="flex justify-center mt-2 md:hidden">
         {Array.from({ length: dotCount }).map((_, i) => (
           <button
             key={i}
             onClick={() => scrollToIdx(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
+            className="py-4 px-1.5 flex items-center justify-center"
+            aria-label={`Go to slide ${i + 1}`}
+          >
+            <span className={`block h-1.5 rounded-full transition-all duration-300 ${
               i === activeIdx
                 ? `w-6 ${accent.dot}`
                 : "w-1.5 bg-white/20"
-            }`}
-            aria-label={`Go to slide ${i + 1}`}
-          />
+            }`} />
+          </button>
         ))}
       </div>
     </div>

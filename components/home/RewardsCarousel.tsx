@@ -102,7 +102,7 @@ export default function RewardsCarousel() {
                 data-card
                 className="flex-shrink-0 w-[55vw] sm:w-[40vw] md:w-[calc(25%-1rem)] lg:w-[calc(20%-1rem)] snap-start group"
               >
-                <div className="bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden hover:border-amber-400/30 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
+                <div className="bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden hover:border-amber-400/30 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 active:scale-[0.97] transition-all duration-300">
                   {/* Image */}
                   <div className="aspect-square bg-[#252540] relative overflow-hidden">
                     <Image
@@ -160,16 +160,19 @@ export default function RewardsCarousel() {
             </button>
           )}
 
-          {/* Dots — mobile */}
-          <div className="flex justify-center gap-1.5 mt-4 md:hidden">
+          {/* Dots — mobile (padded for 44px touch target) */}
+          <div className="flex justify-center mt-2 md:hidden">
             {Array.from({ length: dotCount }).map((_, i) => (
               <button
                 key={i}
                 onClick={() => scrollToIdx(i)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
+                className="py-4 px-1.5 flex items-center justify-center"
+                aria-label={`Go to slide ${i + 1}`}
+              >
+                <span className={`block h-1.5 rounded-full transition-all duration-300 ${
                   i === activeIdx ? "w-6 bg-amber-400" : "w-1.5 bg-white/20"
-                }`}
-              />
+                }`} />
+              </button>
             ))}
           </div>
         </div>
