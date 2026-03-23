@@ -805,52 +805,23 @@ export default function AdminProductsPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-[#f1f5f9]">
       {/* ─── Header bar ─── */}
-      <header className="sticky top-0 z-30 bg-[#14141f]/92 backdrop-blur-xl border-b border-[#2a2a3a]">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image src="/logo.webp" alt="31 พานิช" width={32} height={32} className="w-8 h-8 rounded-lg object-contain" />
-            <div>
-              <h1 className="text-sm font-bold tracking-wide">PRODUCT MANAGER</h1>
-              <p className="text-[10px] text-[#64748b]">{products.length} สินค้า</p>
-            </div>
-          </div>
+      <header className="bg-[#14141f] border-b border-[#2a2a3a]">
+        <div className="max-w-6xl mx-auto px-3 h-10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {!showForm && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleExportJSON}
-                  className="flex items-center gap-1.5 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-[#94a3b8] hover:text-white text-xs font-medium px-3 py-2 rounded-lg border border-[#2a2a3a] transition-colors"
-                  title="Export products.json"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Export
-                </button>
-                <button
-                  onClick={() => importRef.current?.click()}
-                  disabled={importing}
-                  className="flex items-center gap-1.5 bg-[#1e1e2e] hover:bg-[#2a2a3a] text-[#94a3b8] hover:text-white text-xs font-medium px-3 py-2 rounded-lg border border-[#2a2a3a] transition-colors disabled:opacity-50"
-                  title="Import products.json (แทนที่ทั้งหมด — 1 Blob write)"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                  {importing ? "กำลังนำเข้า..." : "Import"}
-                </button>
-                <input ref={importRef} type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
-                <button
-                  onClick={() => { scrollPosRef.current = window.scrollY; setForm(EMPTY_FORM); setEditingId(null); setShowForm(true); setUploadInfo(""); setDiscountInput(""); setFormSnapshot("") }}
-                  className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors duration-150"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5" />
-                  </svg>
-                  เพิ่มสินค้า
-                </button>
-              </div>
-            )}
+            <Image src="/logo.webp" alt="31" width={24} height={24} className="w-6 h-6 rounded object-contain" />
+            <span className="text-[11px] text-[#64748b]">{products.length} สินค้า</span>
           </div>
+          {!showForm && (
+            <button
+              onClick={() => { scrollPosRef.current = window.scrollY; setForm(EMPTY_FORM); setEditingId(null); setShowForm(true); setUploadInfo(""); setDiscountInput(""); setFormSnapshot("") }}
+              className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors duration-150"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5" />
+              </svg>
+              เพิ่มสินค้า
+            </button>
+          )}
         </div>
       </header>
 
@@ -1498,37 +1469,37 @@ export default function AdminProductsPage() {
         </div>
 
         {/* ═══════════════ FILTER — Mobile collapsible ═══════════════ */}
-        <div className="md:hidden mb-4 relative">
+        <div className="md:hidden mb-3 relative">
           <button
             onClick={() => setCatFilterOpen(!catFilterOpen)}
-            className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#14141f] border border-[#2a2a3a] rounded-xl text-sm transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 bg-[#14141f] border border-[#2a2a3a] rounded-lg text-sm transition-colors"
           >
             <div className="flex items-center gap-2">
               {filterCat !== "all" && (
-                <Image src={`/category-icons/${filterCat}.svg`} alt="" width={16} height={16} className="w-4 h-4 opacity-70" />
+                <Image src={`/category-icons/${filterCat}.svg`} alt="" width={14} height={14} className="w-3.5 h-3.5 opacity-70" />
               )}
-              <span className="text-white font-medium">
+              <span className="text-white text-xs font-medium">
                 {filterCat === "all" ? "ทั้งหมด" : catLabel(filterCat)}
               </span>
-              <span className="text-[#64748b] text-xs">
-                {filterCat === "all" ? products.length : catCounts[filterCat] || 0} รายการ
+              <span className="text-[#64748b] text-[10px]">
+                {filterCat === "all" ? products.length : catCounts[filterCat] || 0}
               </span>
             </div>
-            <svg className={`w-4 h-4 text-[#64748b] transition-transform duration-200 ${catFilterOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className={`w-3.5 h-3.5 text-[#64748b] transition-transform duration-200 ${catFilterOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
           {catFilterOpen && (
-            <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-[#14141f] border border-[#2a2a3a] rounded-xl shadow-xl overflow-hidden">
+            <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-[#14141f] border border-[#2a2a3a] rounded-xl shadow-xl overflow-hidden max-h-[60vh] overflow-y-auto">
               <button
                 onClick={() => { setFilterCat("all"); setCatFilterOpen(false) }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
+                className={`w-full flex items-center justify-between px-4 py-2 text-xs transition-colors ${
                   filterCat === "all" ? "bg-white/10 text-white" : "text-[#94a3b8] active:bg-white/5"
                 }`}
               >
                 <span>ทั้งหมด</span>
-                <span className="text-xs text-[#64748b]">{products.length}</span>
+                <span className="text-[10px] text-[#64748b]">{products.length}</span>
               </button>
               {CATEGORIES.map((c) => {
                 const count = catCounts[c.value] || 0
@@ -1536,15 +1507,15 @@ export default function AdminProductsPage() {
                   <button
                     key={c.value}
                     onClick={() => { setFilterCat(c.value); setCatFilterOpen(false) }}
-                    className={`w-full flex items-center justify-between px-4 py-2.5 text-sm border-t border-[#2a2a3a]/50 transition-colors ${
+                    className={`w-full flex items-center justify-between px-4 py-2 text-xs border-t border-[#2a2a3a]/50 transition-colors ${
                       filterCat === c.value ? "bg-white/10 text-white" : "text-[#94a3b8] active:bg-white/5"
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <Image src={`/category-icons/${c.value}.svg`} alt="" width={16} height={16} className="w-4 h-4 opacity-60" />
+                      <Image src={`/category-icons/${c.value}.svg`} alt="" width={14} height={14} className="w-3.5 h-3.5 opacity-60" />
                       {c.label}
                     </span>
-                    <span className="text-xs text-[#64748b]">{count}</span>
+                    <span className="text-[10px] text-[#64748b]">{count}</span>
                   </button>
                 )
               })}
@@ -1552,10 +1523,10 @@ export default function AdminProductsPage() {
           )}
         </div>
 
-        {/* ═══════════════ SORT & SEARCH ═══════════════ */}
-        <div className="space-y-2 md:space-y-0 md:flex md:flex-wrap md:items-center md:gap-2 mb-5">
-          {/* Search — mobile first */}
-          <div className="md:order-2 md:flex-1 md:min-w-[180px] relative">
+        {/* ═══════════════ SEARCH + SORT/FILTER (2 lines on mobile) ═══════════════ */}
+        <div className="mb-4 space-y-2">
+          {/* Line 1: Search */}
+          <div className="relative">
             <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748b] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
@@ -1564,7 +1535,7 @@ export default function AdminProductsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="ค้นหาสินค้า ชื่อ SKU แบรนด์..."
-              className="w-full bg-[#14141f] border border-[#2a2a3a] rounded-lg text-sm md:text-[11px] text-[#f1f5f9] placeholder-[#64748b] pl-8 pr-8 py-2 md:py-1.5 focus:outline-none focus:border-cyan-500/50 transition-colors"
+              className="w-full bg-[#14141f] border border-[#2a2a3a] rounded-lg text-xs text-[#f1f5f9] placeholder-[#64748b] pl-8 pr-8 py-2 focus:outline-none focus:border-cyan-500/50 transition-colors"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-white">
@@ -1575,64 +1546,61 @@ export default function AdminProductsPage() {
             )}
           </div>
 
-          {/* Sort buttons */}
-          <div className="flex items-center gap-1.5 md:order-1 overflow-x-auto scrollbar-hide">
-          {([
-            ["quality", "ข้อมูลไม่ครบก่อน"],
-            ["updated", "แก้ไขล่าสุด"],
-          ] as const).map(([val, label]) => (
-            <button
-              key={val}
-              onClick={() => setSortBy(val)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap shrink-0 ${
-                sortBy === val
-                  ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
-                  : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8 hover:text-[#94a3b8]"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-          <button
-            onClick={() => setSortBy(sortBy === "price-desc" ? "price-asc" : sortBy === "price-asc" ? "quality" : "price-desc")}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap shrink-0 ${
-              sortBy === "price-desc" || sortBy === "price-asc"
-                ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
-                : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8 hover:text-[#94a3b8]"
-            }`}
-          >
-            ราคา {sortBy === "price-asc" ? "↑" : "↓"}
-          </button>
-
-          {/* Divider */}
-          <div className="hidden md:block w-px h-4 bg-white/10 shrink-0" />
-
-          {/* Flag filters */}
-          {([
-            ["isNew", "สินค้าใหม่", "emerald"],
-            ["isBestseller", "ขายดี", "amber"],
-            ["isPinned", "ปักหมุด", "cyan"],
-          ] as const).map(([val, label, color]) => {
-            const count = products.filter((p) => (filterCat === "all" || p.category === filterCat) && p[val]).length
-            const active = filterFlag === val
-            const colorMap = {
-              emerald: active ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8 hover:text-[#94a3b8]",
-              amber: active ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8 hover:text-[#94a3b8]",
-              cyan: active ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30" : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8 hover:text-[#94a3b8]",
-            }
-            return (
+          {/* Line 2: Sort + Flag filters — all visible, wrapping */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {([
+              ["quality", "ไม่ครบก่อน"],
+              ["updated", "ล่าสุด"],
+            ] as const).map(([val, label]) => (
               <button
                 key={val}
-                onClick={() => setFilterFlag(filterFlag === val ? "all" : val)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap shrink-0 ${colorMap[color]}`}
+                onClick={() => setSortBy(val)}
+                className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors whitespace-nowrap ${
+                  sortBy === val
+                    ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
+                    : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8"
+                }`}
               >
-                {label} {count}
+                {label}
               </button>
-            )
-          })}
+            ))}
+            <button
+              onClick={() => setSortBy(sortBy === "price-desc" ? "price-asc" : sortBy === "price-asc" ? "quality" : "price-desc")}
+              className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors whitespace-nowrap ${
+                sortBy === "price-desc" || sortBy === "price-asc"
+                  ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
+                  : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8"
+              }`}
+            >
+              ราคา {sortBy === "price-asc" ? "↑" : "↓"}
+            </button>
 
-          {/* Result count */}
-          <span className="text-[10px] text-[#64748b] md:order-3">{filtered.length} รายการ</span>
+            <div className="w-px h-3.5 bg-white/10" />
+
+            {([
+              ["isNew", "ใหม่", "emerald"],
+              ["isBestseller", "ขายดี", "amber"],
+              ["isPinned", "ปักหมุด", "cyan"],
+            ] as const).map(([val, label, color]) => {
+              const count = products.filter((p) => (filterCat === "all" || p.category === filterCat) && p[val]).length
+              const active = filterFlag === val
+              const colorMap = {
+                emerald: active ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8",
+                amber: active ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8",
+                cyan: active ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30" : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8",
+              }
+              return (
+                <button
+                  key={val}
+                  onClick={() => setFilterFlag(filterFlag === val ? "all" : val)}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors whitespace-nowrap ${colorMap[color]}`}
+                >
+                  {label} {count}
+                </button>
+              )
+            })}
+
+            <span className="text-[10px] text-[#64748b] ml-auto">{filtered.length} รายการ</span>
           </div>
         </div>
 

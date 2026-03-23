@@ -65,65 +65,64 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <AuthContext value={{ user, isAdmin }}>
       <div className="min-h-screen bg-[#0e0e14]">
-        {/* Admin nav bar */}
-        <nav className="sticky top-0 z-50 bg-[#13131d] border-b border-white/10 px-4">
-          <div className="max-w-7xl mx-auto flex items-center gap-1 h-11">
-            <span className="text-[11px] text-[#64748b] font-medium mr-3 uppercase tracking-wider">Admin</span>
-            {NAV.map((item) => {
-              const active = pathname.startsWith(item.href)
-              const restricted = "adminOnly" in item && item.adminOnly && !isAdmin
-              return (
-                <Link
-                  key={item.href}
-                  href={restricted ? "#" : item.href}
-                  onClick={restricted ? (e) => e.preventDefault() : undefined}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    restricted
-                      ? "text-[#475569] cursor-not-allowed"
-                      : active
-                        ? "bg-white/10 text-white"
-                        : "text-[#94a3b8] hover:text-white hover:bg-white/5"
-                  }`}
-                  title={restricted ? "เฉพาะ Admin เท่านั้น" : undefined}
+        {/* Admin nav bar — mobile-friendly 2-row layout */}
+        <nav className="sticky top-0 z-50 bg-[#13131d] border-b border-white/10">
+          <div className="max-w-7xl mx-auto px-3">
+            {/* Row 1: nav tabs + user */}
+            <div className="flex items-center justify-between h-10">
+              <div className="flex items-center gap-0.5">
+                {NAV.map((item) => {
+                  const active = pathname.startsWith(item.href)
+                  const restricted = "adminOnly" in item && item.adminOnly && !isAdmin
+                  return (
+                    <Link
+                      key={item.href}
+                      href={restricted ? "#" : item.href}
+                      onClick={restricted ? (e) => e.preventDefault() : undefined}
+                      className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        restricted
+                          ? "text-[#475569] cursor-not-allowed"
+                          : active
+                            ? "bg-white/10 text-white"
+                            : "text-[#94a3b8] hover:text-white hover:bg-white/5"
+                      }`}
+                      title={restricted ? "เฉพาะ Admin เท่านั้น" : undefined}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                })}
+                <a
+                  href="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2 py-1.5 rounded-md text-[11px] font-medium text-[#64748b] hover:text-white hover:bg-white/5 transition-colors"
+                  title="เปิดหน้าเว็บ (แท็บใหม่)"
                 >
-                  {item.label}
-                </Link>
-              )
-            })}
-
-            {/* ดูหน้าเว็บ */}
-            <a
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-md text-xs font-medium text-[#64748b] hover:text-white hover:bg-white/5 transition-colors"
-              title="เปิดหน้าเว็บ (แท็บใหม่)"
-            >
-              ดูหน้าเว็บ ↗
-            </a>
-
-            {/* Spacer + Version + User info + Logout */}
-            <div className="flex-1" />
-            <span className="text-[10px] text-[#475569] font-mono mr-3">
-              b {process.env.NEXT_PUBLIC_ADMIN_VERSION}
-            </span>
-            {user && (
-              <div className="flex items-center gap-2 mr-2">
-                {badge && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${badge.color}`}>
+                  เว็บ ↗
+                </a>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="hidden sm:inline text-[10px] text-[#475569] font-mono">
+                  b {process.env.NEXT_PUBLIC_ADMIN_VERSION}
+                </span>
+                {user && badge && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${badge.color}`}>
                     {badge.label}
                   </span>
                 )}
-                <span className="text-[11px] text-[#94a3b8]">{user.id}</span>
+                {user && (
+                  <span className="hidden sm:inline text-[10px] text-[#94a3b8]">{user.id}</span>
+                )}
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium text-[#64748b] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  {loggingOut ? "..." : "ออก"}
+                </button>
               </div>
-            )}
-            <button
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="shrink-0 px-3 py-1.5 rounded-md text-xs font-medium text-[#64748b] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer whitespace-nowrap"
-            >
-              {loggingOut ? "กำลังออก..." : "ออกจากระบบ"}
-            </button>
+            </div>
           </div>
         </nav>
         {children}
