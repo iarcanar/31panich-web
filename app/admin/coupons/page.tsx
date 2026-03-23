@@ -297,12 +297,20 @@ export default function AdminCouponsPage() {
 
   // ─── Form actions ──────────────────────────────────────
 
+  const DISCOUNT_MAX: Record<string, number> = { percent: 50, fixed: 500 }
+
   async function handleSave() {
     if (!form.title || !form.discountType) return
+    const val = Number(form.discountValue || 0)
+    const max = DISCOUNT_MAX[form.discountType]
+    if (max && val > max) {
+      alert(`${form.discountType === "percent" ? "เปอร์เซ็นต์ลด" : "จำนวนเงินลด"}ห้ามเกิน ${max}${form.discountType === "percent" ? "%" : " บาท"}`)
+      return
+    }
     setSaving(true)
     const body = {
       ...form,
-      discountValue: Number(form.discountValue || 0),
+      discountValue: val,
       minPurchase: Number(form.minPurchase || 0),
       usageLimit: Number(form.usageLimit || 0),
       category: form.category || null,
@@ -448,8 +456,13 @@ export default function AdminCouponsPage() {
               </div>
               {form.discountType !== "gift" && (
                 <div>
-                  <FieldLabel>{form.discountType === "percent" ? "เปอร์เซ็นต์ลด" : "จำนวนเงินลด (บาท)"}</FieldLabel>
-                  <TextInput value={form.discountValue} onChange={(v) => setForm({ ...form, discountValue: v })} type="number" placeholder={form.discountType === "percent" ? "10" : "50"} />
+                  <FieldLabel>{form.discountType === "percent" ? "เปอร์เซ็นต์ลด (สูงสุด 50%)" : "จำนวนเงินลด (สูงสุด 500 บาท)"}</FieldLabel>
+                  <TextInput value={form.discountValue} onChange={(v) => {
+                    const max = form.discountType === "percent" ? 50 : 500
+                    const num = Number(v)
+                    if (v && num > max) return
+                    setForm({ ...form, discountValue: v })
+                  }} type="number" placeholder={form.discountType === "percent" ? "10" : "50"} />
                 </div>
               )}
               {form.discountType === "gift" && (
