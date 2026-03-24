@@ -78,11 +78,11 @@ function PromoCardSmall({ promo }: { promo: Promotion }) {
           src={promo.image}
           alt={promo.title}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 768px) 50vw, 33vw"
         />
         {promo.badge && (
-          <span className="absolute top-2 left-2 bg-gradient-to-r from-purple-400 to-fuchsia-500 text-white text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-md shadow">
+          <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-md shadow">
             {promo.badge}
           </span>
         )}
