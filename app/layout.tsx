@@ -41,6 +41,9 @@ export const metadata: Metadata = {
     description: "ร้านวัสดุก่อสร้าง เครื่องมือช่าง อุปกรณ์ไฟฟ้า ประปา ครบวงจร จ.ลพบุรี",
     images: ["/banner.webp"],
   },
+  verification: {
+    google: "kWYaFy2-JaEjGsKFb4FL8FGqFczYZRLDvrKYdaPVC04",
+  },
   robots: { index: true, follow: true },
 }
 
