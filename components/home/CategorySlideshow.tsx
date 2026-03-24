@@ -54,7 +54,7 @@ export default function CategorySlideshow({ slides }: Props) {
     let raf: number
     function step() {
       if (autoScrollRef.current && el) {
-        el.scrollLeft += 0.5
+        el.scrollLeft += 0.25
         if (el.scrollLeft >= el.scrollWidth / 2) {
           el.scrollLeft = 0
         }
