@@ -49,15 +49,15 @@ const PRODUCT_SECTIONS = [
 ]
 
 const BRAND_LOGOS = [
-  { src: "/brands/makita.webp", name: "Makita" },
+  { src: "/brands/makita.webp", name: "Makita", bg: "#d40a1e" },
   { src: "/brands/bosch.webp", name: "Bosch" },
   { src: "/brands/dongcheng.webp", name: "Dongcheng(DC)" },
   { src: "/brands/pumpkin.webp", name: "Pumpkin" },
-  { src: "/brands/ingco.webp", name: "iNGCO" },
+  { src: "/brands/ingco.webp", name: "iNGCO", bg: "#f58220" },
   { src: "/brands/sumo.webp", name: "SUMO" },
-  { src: "/brands/maktec.webp", name: "Maktec" },
-  { src: "/brands/hugong.webp", name: "Hugong" },
-  { src: "/brands/powertex.webp", name: "Powertex" },
+  { src: "/brands/maktec.webp", name: "Maktec", bg: "#e5712a" },
+  { src: "/brands/hugong.webp", name: "Hugong", bg: "#f2c80a" },
+  { src: "/brands/powertex.webp", name: "Powertex", bg: "#2e9e82" },
   { src: "/brands/toshiba.webp", name: "Toshiba" },
   { src: "/brands/philips.webp", name: "Philips" },
   { src: "/brands/national.webp", name: "National" },
@@ -212,7 +212,8 @@ export default function AboutPage() {
               {BRAND_LOGOS.map((brand) => (
                 <div
                   key={brand.name}
-                  className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-white border-2 border-white/10 flex items-center justify-center p-4 shadow-lg shadow-black/20 hover:scale-110 hover:border-cyan-400/50 hover:shadow-cyan-400/10 transition-all duration-300"
+                  className="w-24 h-24 md:w-28 md:h-28 rounded-full border-2 border-white/10 flex items-center justify-center p-4 shadow-lg shadow-black/20 hover:scale-110 hover:border-cyan-400/50 hover:shadow-cyan-400/10 transition-all duration-300"
+                  style={{ backgroundColor: brand.bg || "#ffffff" }}
                   title={brand.name}
                 >
                   <Image
