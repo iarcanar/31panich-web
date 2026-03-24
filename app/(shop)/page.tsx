@@ -67,6 +67,9 @@ export default function HomePage() {
       {/* Google Review Strip — ใต้ banner */}
       <GoogleReviewStrip />
 
+      {/* คูปองพิเศษ — ต่อจาก review strip */}
+      <PromotionCouponsStrip />
+
       {/* สินค้าขายดี */}
       <BestsellerSection />
 
@@ -84,11 +87,6 @@ export default function HomePage() {
 
       {/* โปรโมชั่นล่าสุด */}
       <PromoGrid promotions={promotions} />
-
-      <div className="border-t border-white/5" />
-
-      {/* คูปองพิเศษ */}
-      <PromotionCouponsStrip />
 
       <div className="border-t border-white/5" />
 
