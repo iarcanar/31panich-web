@@ -31,7 +31,7 @@ export default function ScrollToTop() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className={`fixed bottom-[8rem] md:bottom-8 right-5 z-40 w-10 h-10 rounded-full bg-[#1a1a28]/80 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all duration-300 shadow-lg ${
+      className={`fixed bottom-[8rem] md:bottom-24 right-5 z-40 w-10 h-10 rounded-full bg-[#1a1a28]/80 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all duration-300 shadow-lg ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
       }`}
       aria-label="กลับขึ้นบน"
