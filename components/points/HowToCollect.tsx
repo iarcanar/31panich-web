@@ -128,8 +128,29 @@ export default function HowToCollect() {
               <>
                 {item.icon ? (
                   <div className="w-16 h-16 bg-gradient-to-br from-violet-600 to-fuchsia-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-violet-500/30 border border-violet-400/30 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-violet-500/50">
-                    <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    <svg className="w-12 h-12" viewBox="0 0 36 36" fill="none">
+                      {/* เหรียญใหญ่ — ซ้ายล่าง เอียง */}
+                      <ellipse cx="13" cy="20" rx="8.5" ry="9.5" fill="url(#coinG1)" stroke="#fbbf24" strokeWidth={1.3} transform="rotate(-12 13 20)" />
+                      <ellipse cx="13" cy="20" rx="6" ry="7" fill="none" stroke="#fde68a" strokeWidth={0.7} strokeDasharray="2 1.5" transform="rotate(-12 13 20)" />
+                      {/* เหรียญกลาง — ขวาบน เอียงตรงข้าม */}
+                      <ellipse cx="25" cy="11" rx="6.5" ry="7" fill="url(#coinG2)" stroke="#fbbf24" strokeWidth={1.2} transform="rotate(10 25 11)" />
+                      <ellipse cx="25" cy="11" rx="4.5" ry="5" fill="none" stroke="#fde68a" strokeWidth={0.6} strokeDasharray="1.8 1.2" transform="rotate(10 25 11)" />
+                      {/* เหรียญเล็ก — ขวาล่าง */}
+                      <ellipse cx="28" cy="27" rx="4" ry="4.5" fill="url(#coinG2)" stroke="#fbbf24" strokeWidth={1} transform="rotate(-5 28 27)" />
+                      {/* ประกาย */}
+                      <circle cx="6" cy="8" r="1" fill="#fde68a" opacity={0.7} />
+                      <circle cx="33" cy="20" r="0.8" fill="#fde68a" opacity={0.5} />
+                      <defs>
+                        <linearGradient id="coinG1" x1="4" y1="10" x2="22" y2="30">
+                          <stop offset="0%" stopColor="#fef3c7" />
+                          <stop offset="45%" stopColor="#f59e0b" />
+                          <stop offset="100%" stopColor="#b45309" />
+                        </linearGradient>
+                        <linearGradient id="coinG2" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#fde68a" />
+                          <stop offset="100%" stopColor="#d97706" />
+                        </linearGradient>
+                      </defs>
                     </svg>
                   </div>
                 ) : (
