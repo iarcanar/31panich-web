@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import ContactLink from "@/components/ui/ContactLink"
 import SectionHeading from "@/components/ui/SectionHeading"
 import { PHONE } from "@/lib/store-config"
@@ -107,6 +108,47 @@ export default function FeaturedProductBanner() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+          {/* === ของแลกแต้ม 100 แต้ม — ชิ้นใหม่ === */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Image src="/31point.webp" alt="31 Points" width={36} height={36} className="drop-shadow-[0_0_8px_rgba(217,158,40,0.5)]" />
+              <div>
+                <p className="text-amber-400 text-[10px] font-bold tracking-widest uppercase">31 POINTS</p>
+                <p className="text-white text-sm md:text-base font-bold">ของแลกแต้มชิ้นใหม่!</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:gap-6">
+              {[
+                { image: "/points/reward-100-cooker.webp", name: "หม้ออเนกประสงค์ SMARTHOME Multi Cooker", points: 100 },
+                { image: "/points/reward-100-zootopia.webp", name: "ชุดผ้าปูที่นอน Zootopia ครบเซ็ท", points: 100 },
+              ].map((item) => (
+                <Link
+                  key={item.name}
+                  href="/points"
+                  className="bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden hover:border-amber-400/30 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300 group"
+                >
+                  <div className="aspect-square bg-[#252540] relative overflow-hidden">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 50vw, 40vw"
+                    />
+                  </div>
+                  <div className="p-3 md:p-5">
+                    <h4 className="text-white text-xs md:text-base font-bold leading-snug line-clamp-2">{item.name}</h4>
+                    <div className="flex items-center justify-between mt-2 md:mt-3">
+                      <span className="bg-gradient-to-r from-purple-400 to-fuchsia-500 text-white text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-md">
+                        {item.points} แต้ม
+                      </span>
+                      <span className="text-amber-400 text-[10px] md:text-xs font-medium">ดูรายละเอียด →</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </div>
