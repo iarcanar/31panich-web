@@ -61,7 +61,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* สินค้าขายดี — ย้ายขึ้นมาให้เห็นก่อน */}
+      {/* Google Review Strip — ใต้ banner */}
+      <GoogleReviewStrip />
+
+      {/* สินค้าขายดี */}
       <BestsellerSection />
 
       <div className="border-t border-white/5" />
@@ -88,9 +91,6 @@ export default function HomePage() {
 
       {/* แลกแต้ม 31 POINTS */}
       <RewardsCarousel />
-
-      {/* Google Review Strip — social proof ก่อน footer */}
-      <GoogleReviewStrip />
     </>
   )
 }
