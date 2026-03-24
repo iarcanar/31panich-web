@@ -1,0 +1,45 @@
+[
+  {
+    "id": "bewon-led-2026",
+    "active": true,
+    "order": 1,
+    "image": "/promotions/bewon-led.webp",
+    "title": "BEWON LED สว่างนาน...ไม่กลัวดับ!",
+    "subtitle": "วันนี้ - 31 มี.ค. 69 หรือจนกว่าสินค้าจะหมด",
+    "badge": "HOT",
+    "ctaFacebook": "https://www.facebook.com/reel/1668814937620528",
+    "ctaLine": "line",
+    "ctaPhone": "phone"
+  },
+  {
+    "id": "ison-lock-2026",
+    "active": true,
+    "order": 2,
+    "image": "/promotions/ison-lock.webp",
+    "title": "IS-ON กุญแจ แพ็คเกจรักษ์โลก",
+    "subtitle": "แข็งแรง ทนทาน ล็อคบ้าน ล็อครั้ว ล็อคโกดัง จบ!",
+    "badge": "SALE",
+    "ctaLine": "line",
+    "ctaPhone": "phone"
+  },
+  {
+    "id": "reward-cooker-2026",
+    "active": true,
+    "order": 3,
+    "image": "/points/reward-100-cooker.webp",
+    "title": "หม้ออเนกประสงค์ SMARTHOME",
+    "subtitle": "ของแลกแต้มชิ้นใหม่!",
+    "badge": "100 แต้ม",
+    "link": "/points"
+  },
+  {
+    "id": "reward-zootopia-2026",
+    "active": true,
+    "order": 4,
+    "image": "/points/reward-100-zootopia.webp",
+    "title": "ชุดผ้าปูที่นอน Zootopia",
+    "subtitle": "ของแลกแต้มชิ้นใหม่!",
+    "badge": "100 แต้ม",
+    "link": "/points"
+  }
+]

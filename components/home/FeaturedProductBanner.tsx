@@ -64,7 +64,7 @@ export default function FeaturedProductBanner() {
                 {/* Image — ชนขอบล่าง card */}
                 <div className="relative w-[120px] md:w-[280px] shrink-0 self-end">
                   <Image
-                    src="https://res.cloudinary.com/docoo51xb/image/upload/v1768380684/ison_pack06_oexfv3.png"
+                    src="/promotions/ison-lock.webp"
                     alt="กุญแจ IS-ON แพ็คเกจรักษ์โลก"
                     width={400}
                     height={400}

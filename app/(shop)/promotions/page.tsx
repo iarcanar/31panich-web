@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 import Image from "next/image"
-import FeaturedProductBanner from "@/components/home/FeaturedProductBanner"
+import PromoGrid from "@/components/home/PromoGrid"
+import { getActivePromotions } from "@/lib/promotions"
 import ContactLink from "@/components/ui/ContactLink"
 import { getActiveCoupons } from "@/lib/coupons"
 import CouponGrid from "@/components/coupon/CouponGrid"
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 }
 
 export default async function PromotionsPage() {
+  const promotions = getActivePromotions()
   const coupons = await getActiveCoupons()
 
   return (
@@ -36,7 +38,7 @@ export default async function PromotionsPage() {
       </section>
 
       {/* Current Promotion */}
-      <FeaturedProductBanner />
+      <PromoGrid promotions={promotions} />
 
       {/* Coupons Section */}
       {coupons.length > 0 && (

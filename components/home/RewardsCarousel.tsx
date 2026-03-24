@@ -7,13 +7,13 @@ import ScrollGlowFrame from "@/components/ui/ScrollGlowFrame"
 import ScrollAccentLine from "@/components/ui/ScrollAccentLine"
 import { SHAPE_PRESETS } from "@/components/ui/ScrollGlowFrame"
 
-// แสดงแค่ 5 รายการไฮไลท์ เพื่อให้หน้าแรกโหลดเร็ว
+// ไม่รวม cooker + zootopia เพราะแสดงในโซนโปรโมชั่นแล้ว
 const REWARDS = [
   { image: "/points/reward-200.webp", name: "สว่านกระแทกไร้สาย BOXER 128V 3 ระบบ", points: 200 },
-  { image: "/points/reward-100-cooker.webp", name: "หม้ออเนกประสงค์ SMARTHOME Multi Cooker", points: 100 },
-  { image: "/points/reward-100-zootopia.webp", name: "ชุดผ้าปูที่นอน Zootopia ครบเซ็ท", points: 100 },
   { image: "/points/reward-50.webp", name: "กล่องตั้งแคมป์ อเนกประสงค์ พับเก็บได้", points: 50 },
   { image: "/points/reward-40-60.webp", name: "เก้าอี้แคมป์ปิ้ง พับเก็บได้", points: 40 },
+  { image: "/points/reward-40-lamp.webp", name: "โคมตะเกียงแคมป์ปิ้ง ชาร์จแบต/ใส่ถ่าน", points: 40 },
+  { image: "/points/reward-20-glass.webp", name: "แก้วเก็บความเย็น เย็นนาน เย็นเจี๊ยบ", points: 20 },
 ]
 
 export default function RewardsCarousel() {

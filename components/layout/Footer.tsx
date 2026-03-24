@@ -24,6 +24,15 @@ export default function Footer() {
               <p><a href={FB_URL} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-cyan-400 transition">FB {STORE_NAME}</a></p>
             </div>
           </div>
+
+          {/* Quick links */}
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-400">
+            <Link href="/products" className="hover:text-cyan-400 transition">สินค้า</Link>
+            <Link href="/promotions" className="hover:text-cyan-400 transition">โปรโมชั่น</Link>
+            <Link href="/warranty" className="hover:text-cyan-400 transition">รับประกัน</Link>
+            <Link href="/catalog" className="hover:text-cyan-400 transition">แคตตาล็อก</Link>
+            <Link href="/contact" className="hover:text-cyan-400 transition">ติดต่อ</Link>
+          </div>
         </div>
       </div>
 

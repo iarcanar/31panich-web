@@ -1,13 +1,6 @@
 "use client"
 
-const REVIEWS = [
-  { name: "Supachai K.", text: "ของครบ ราคาดี พนักงานแนะนำสินค้าได้เป็นอย่างดี", rating: 5 },
-  { name: "Nattapong S.", text: "ร้านใหญ่มาก ของเยอะ มีทุกอย่างที่ต้องการ ราคาไม่แพง", rating: 5 },
-  { name: "Somkid P.", text: "สินค้าคุณภาพดี ราคาถูกกว่าที่อื่น บริการดีมาก", rating: 5 },
-  { name: "Wichai T.", text: "ร้านวัสดุก่อสร้างที่ดีที่สุดในลพบุรี ครบจบที่เดียว", rating: 5 },
-  { name: "Pranee M.", text: "ซื้อสีผสมที่นี่ทุกครั้ง สีสวย ตรงเฉด บริการดี", rating: 5 },
-  { name: "Kittisak R.", text: "เครื่องมือช่างของแท้ ราคาส่ง มีรับประกันด้วย", rating: 5 },
-]
+import REVIEWS from "@/data/reviews.json"
 
 const REVIEW_LINK = "https://g.page/r/CQqFVNTPITMGEBM/review"
 

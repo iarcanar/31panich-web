@@ -5,13 +5,16 @@ import BestsellerSection from "@/components/home/BestsellerSection"
 import NewProductsSection from "@/components/home/NewProductsSection"
 import CategorySlideshowSection from "@/components/home/CategorySlideshowSection"
 import RewardsCarousel from "@/components/home/RewardsCarousel"
-import FeaturedProductBanner from "@/components/home/FeaturedProductBanner"
+import PromoGrid from "@/components/home/PromoGrid"
+import { getActivePromotions } from "@/lib/promotions"
 import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
 import PromotionCouponsStrip from "@/components/home/PromotionCouponsStrip"
 import { localBusinessSchema } from "@/lib/structured-data"
 import { PHONE } from "@/lib/store-config"
 
 export default function HomePage() {
+  const promotions = getActivePromotions()
+
   return (
     <>
       <script
@@ -80,7 +83,7 @@ export default function HomePage() {
       <div className="border-t border-white/5" />
 
       {/* โปรโมชั่นล่าสุด */}
-      <FeaturedProductBanner />
+      <PromoGrid promotions={promotions} />
 
       <div className="border-t border-white/5" />
 
