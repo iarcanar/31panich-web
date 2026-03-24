@@ -9,7 +9,7 @@ export default function FeaturedProductBanner() {
     <section className="bg-[#0e0e14] py-10 md:py-16 px-4">
       <div className="max-w-6xl mx-auto">
         <SectionHeading accentColor="from-orange-400 to-red-500" className="mb-8 md:mb-10">โปรโมชั่นล่าสุด</SectionHeading>
-        <div className="space-y-16">
+        <div className="space-y-6 md:space-y-10">
           {/* === BEWON LED Promo — Static Image + Facebook Link === */}
           <div className="relative rounded-2xl overflow-hidden bg-[#1a1a28] border border-white/10 shadow-lg">
             <a
@@ -112,13 +112,7 @@ export default function FeaturedProductBanner() {
           </div>
           {/* === ของแลกแต้ม 100 แต้ม — ชิ้นใหม่ === */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Image src="/31point.webp" alt="31 Points" width={36} height={36} className="drop-shadow-[0_0_8px_rgba(217,158,40,0.5)]" />
-              <div>
-                <p className="text-amber-400 text-[10px] font-bold tracking-widest uppercase">31 POINTS</p>
-                <p className="text-white text-sm md:text-base font-bold">ของแลกแต้มชิ้นใหม่!</p>
-              </div>
-            </div>
+            <p className="text-amber-400 text-xs font-bold mb-3">ของแลกแต้มชิ้นใหม่!</p>
             <div className="grid grid-cols-2 gap-3 md:gap-6">
               {[
                 { image: "/points/reward-100-cooker.webp", name: "หม้ออเนกประสงค์ SMARTHOME Multi Cooker", points: 100 },
