@@ -77,7 +77,7 @@ export default function AboutPage() {
           priority
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-[#0e0e14]/50 to-[#0e0e14]/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-[#0e0e14]/50 to-[#0e0e14]/50" />
         <div className="relative container mx-auto px-4 pt-36 pb-24 md:py-32 text-center min-h-[280px]">
           <Image src="/logo.webp" alt="31 พานิช" width={80} height={80} className="mx-auto mb-6" />
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">เกี่ยวกับสามหนึ่ง</h1>
