@@ -29,7 +29,7 @@ export default function HomePage() {
           sizes="100vw"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent flex items-end pb-5 px-5">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent flex items-end pb-5 px-5 pl-16">
           <div>
             <p className="text-white font-bold text-xl drop-shadow-lg">สามหนึ่งพานิช</p>
             <p className="text-gray-300 text-xs mt-1">สี วัสดุก่อสร้าง เครื่องมือช่าง จ.ลพบุรี</p>
