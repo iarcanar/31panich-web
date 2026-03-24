@@ -20,7 +20,7 @@ export default function HomePage() {
       />
 
       {/* Hero Banner — Mobile: full-bleed behind header + CTA overlay */}
-      <section className="lg:hidden -mt-16 relative w-full aspect-[5/2]">
+      <section className="lg:hidden -mt-16 relative w-full aspect-[2/1]">
         <Image
           src="/banner-mobile.webp"
           alt="ร้านสามหนึ่งพานิช วัสดุก่อสร้าง เครื่องมือช่าง ลพบุรี"
