@@ -49,15 +49,15 @@ const PRODUCT_SECTIONS = [
 ]
 
 const BRAND_LOGOS = [
-  { src: "/brands/makita.webp", name: "Makita", bg: "#d40a1e" },
+  { src: "/brands/makita.webp", name: "Makita", bg: "#fe0000" },
   { src: "/brands/bosch.webp", name: "Bosch" },
   { src: "/brands/dongcheng.webp", name: "Dongcheng(DC)" },
   { src: "/brands/pumpkin.webp", name: "Pumpkin" },
-  { src: "/brands/ingco.webp", name: "iNGCO", bg: "#f58220" },
+  { src: "/brands/ingco.webp", name: "iNGCO", bg: "#fd9927" },
   { src: "/brands/sumo.webp", name: "SUMO" },
-  { src: "/brands/maktec.webp", name: "Maktec", bg: "#e5712a" },
-  { src: "/brands/hugong.webp", name: "Hugong", bg: "#f2c80a" },
-  { src: "/brands/powertex.webp", name: "Powertex", bg: "#2e9e82" },
+  { src: "/brands/maktec.webp", name: "Maktec", bg: "#f37021" },
+  { src: "/brands/hugong.webp", name: "Hugong", bg: "#fdd50a" },
+  { src: "/brands/powertex.webp", name: "Powertex", bg: "#379e7f" },
   { src: "/brands/toshiba.webp", name: "Toshiba" },
   { src: "/brands/philips.webp", name: "Philips" },
   { src: "/brands/national.webp", name: "National" },
