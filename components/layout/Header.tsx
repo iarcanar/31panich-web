@@ -72,8 +72,8 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // Mobile: clear glass (โปร่งใส เห็นคอนเทนต์ผ่าน). Desktop: solid bg + shadow.
-  const headerBg = "bg-[#0a0a0f]/35 border-b border-white/10 lg:bg-[#0a0a0f] lg:border-transparent lg:shadow-lg"
+  // Mobile: clear glass ไม่มี border (เนียนกับ hero). Desktop: solid + border + shadow.
+  const headerBg = "bg-[#0a0a0f]/35 lg:bg-[#0a0a0f] lg:border-b lg:border-white/10 lg:shadow-lg"
 
   return (
     <>

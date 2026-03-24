@@ -59,7 +59,7 @@ export default function AboutPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
       {/* Hero */}
-      <section className="relative overflow-hidden -mt-14 lg:mt-0">
+      <section className="relative overflow-hidden -mt-16 lg:mt-0">
         <Image
           src="/front-store.webp"
           alt="หน้าร้านสามหนึ่งพานิช ลพบุรี"

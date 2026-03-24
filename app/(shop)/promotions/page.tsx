@@ -18,7 +18,7 @@ export default async function PromotionsPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
       {/* Hero Banner */}
-      <section className="relative overflow-hidden -mt-14 lg:mt-0">
+      <section className="relative overflow-hidden -mt-16 lg:mt-0">
         <Image
           src="/bg-promotion.webp"
           alt=""
