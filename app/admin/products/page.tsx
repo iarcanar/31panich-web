@@ -155,7 +155,7 @@ function StepperInput({
   )
 }
 
-function DescriptionTextarea({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function DescriptionTextarea({ value, onChange, flash }: { value: string; onChange: (v: string) => void; flash?: boolean }) {
   const ref = useRef<HTMLTextAreaElement>(null)
   const cursorRef = useRef<number | null>(null)
 
@@ -165,6 +165,12 @@ function DescriptionTextarea({ value, onChange }: { value: string; onChange: (v:
       cursorRef.current = null
     }
   }, [value])
+
+  useEffect(() => {
+    if (flash && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [flash])
 
   const ROW_H = 22
   const PAD = 16
@@ -219,7 +225,7 @@ function DescriptionTextarea({ value, onChange }: { value: string; onChange: (v:
         rows={6}
         data-field="description"
         style={{ minHeight: 6 * ROW_H + PAD, maxHeight: 25 * ROW_H + PAD }}
-        className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-sm transition-colors duration-150 focus:border-[#94a3b8] outline-none resize-y leading-relaxed"
+        className={`w-full px-3 py-2 bg-[#1e1e2e] border rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-sm transition-all duration-150 focus:border-[#94a3b8] outline-none resize-y leading-relaxed ${flash ? "border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)] animate-ai-flash" : "border-[#2a2a3a]"}`}
         placeholder="รายละเอียดสินค้า... (Tab = bullet • | วางข้อความจะลบบรรทัดว่างอัตโนมัติ)"
       />
       <div className="flex items-center justify-between mt-1.5">
@@ -276,6 +282,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [descFlash, setDescFlash] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -1363,11 +1370,16 @@ export default function AdminProductsPage() {
                   <DescriptionTextarea
                     value={form.description}
                     onChange={(v) => setForm((f) => ({ ...f, description: v }))}
+                    flash={descFlash}
                   />
                   <AiEnrichButton
                     productId={editingId}
                     currentDescription={form.description}
                     onDescriptionChange={(desc) => setForm((f) => ({ ...f, description: desc }))}
+                    onFlash={() => {
+                      setDescFlash(true)
+                      setTimeout(() => setDescFlash(false), 1500)
+                    }}
                   />
                 </div>
 

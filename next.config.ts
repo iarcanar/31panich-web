@@ -5,13 +5,14 @@ const pad = (n: number) => String(n).padStart(2, "0")
 const now = new Date()
 const buildDate = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`
 
-const ADMIN_VERSION = "1.0.0"
-
+// Version source of truth: package.json
+// - pkg.version      → frontend (หน้าบ้าน)  e.g. "1.4.9"
+// - pkg.adminVersion → backend  (admin)      e.g. "1.0.1"
 const nextConfig: NextConfig = {
   devIndicators: false,
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
-    NEXT_PUBLIC_ADMIN_VERSION: ADMIN_VERSION,
+    NEXT_PUBLIC_ADMIN_VERSION: (pkg as unknown as { adminVersion?: string }).adminVersion || "0.0.0",
     NEXT_PUBLIC_BUILD_DATE: buildDate,
   },
   images: {
