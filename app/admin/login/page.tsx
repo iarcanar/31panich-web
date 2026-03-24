@@ -13,7 +13,11 @@ export default function AdminLoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!username.trim() || !password.trim()) return
+    // Read from form elements directly as fallback for browser autofill
+    const form = e.target as HTMLFormElement
+    const user = username.trim() || (form.elements.namedItem("username") as HTMLInputElement)?.value.trim() || ""
+    const pass = password.trim() || (form.elements.namedItem("password") as HTMLInputElement)?.value.trim() || ""
+    if (!user || !pass) return
     setLoading(true)
     setError("")
 
@@ -21,7 +25,7 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/admin/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: user, password: pass }),
       })
       const data = await res.json()
 
@@ -55,6 +59,7 @@ export default function AdminLoginPage() {
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="text"
+            name="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="ชื่อผู้ใช้"
@@ -66,6 +71,7 @@ export default function AdminLoginPage() {
           />
           <input
             type="password"
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="รหัสผ่าน"
@@ -81,7 +87,7 @@ export default function AdminLoginPage() {
 
           <button
             type="submit"
-            disabled={loading || !username.trim() || !password.trim()}
+            disabled={loading}
             className="w-full py-3 rounded-xl bg-white/10 text-white text-sm font-medium
               hover:bg-white/20 active:scale-[0.98] transition-all disabled:opacity-40"
           >
