@@ -14,7 +14,7 @@ const HOSTING = {
 }
 
 const LINKS = {
-  vercel: "https://vercel.com",
+  vercel: "https://vercel.com/teeiarcanar-9511s-projects",
   github: "https://github.com/iarcanar/31panich-web",
   domain: "31panich.co.th",
 }
@@ -296,7 +296,7 @@ export default function SettingsPage() {
           </div>
         )}
         <div className="mt-4 flex gap-2">
-          <ExtLink href="https://console.upstash.com">Upstash Console</ExtLink>
+          <ExtLink href="https://vercel.com/teeiarcanar-9511s-projects/~/integrations/upstash/icfg_4oNuiVOTqUo00P1HrGVHcNPh/resources/storage/store_Vo58V26BNz4Rf4jI/guides">Upstash Console</ExtLink>
         </div>
       </Card>
 
