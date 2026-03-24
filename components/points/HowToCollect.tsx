@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useRef, useEffect } from "react"
+import { LINE_POINTS_URL } from "@/lib/store-config"
 
 /* ─── Floating purple particle shapes ─── */
 const SHAPES = [
@@ -84,7 +85,7 @@ export default function HowToCollect() {
   const items = [
     { image: "/points/deco-31stone.webp", title: "ช้อปครบ 500 บาท", sub: "รับทันที 1 แต้ม" },
     { image: "/points/deco-treasure.webp", title: "สะสมได้ไม่อั้น", sub: "ยิ่งช้อปยิ่งได้แต้มเยอะ" },
-    { icon: true, title: "เก็บแต้มใน LINE", sub: "หรือรับเป็นสมุดสะสม" },
+    { icon: true, title: "เช็คแต้มคงเหลือ", sub: "กดเพื่อตรวจสอบแต้มของคุณ", link: LINE_POINTS_URL },
   ]
 
   return (
@@ -122,23 +123,34 @@ export default function HowToCollect() {
       <div className="relative z-10">
         <h2 className="text-2xl font-bold text-white mb-6 text-center">สะสมแต้มง่ายๆ</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {items.map((item, i) => (
-            <div key={i} className="text-center group cursor-default">
-              {item.icon ? (
-                <div className="w-16 h-16 bg-gradient-to-br from-violet-600 to-fuchsia-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-violet-500/30 border border-violet-400/30 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-violet-500/50">
-                  <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </div>
-              ) : (
-                <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-3 overflow-hidden transition-transform duration-300 group-hover:scale-110">
-                  <Image src={item.image!} alt="" width={80} height={80} className="w-full h-full object-contain" />
-                </div>
-              )}
-              <p className="text-white font-semibold">{item.title}</p>
-              <p className="text-gray-400 text-sm mt-1">{item.sub}</p>
-            </div>
-          ))}
+          {items.map((item, i) => {
+            const content = (
+              <>
+                {item.icon ? (
+                  <div className="w-16 h-16 bg-gradient-to-br from-violet-600 to-fuchsia-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-violet-500/30 border border-violet-400/30 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-violet-500/50">
+                    <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-3 overflow-hidden transition-transform duration-300 group-hover:scale-110">
+                    <Image src={item.image!} alt="" width={80} height={80} className="w-full h-full object-contain" />
+                  </div>
+                )}
+                <p className="text-white font-semibold">{item.title}</p>
+                <p className="text-gray-400 text-sm mt-1">{item.sub}</p>
+              </>
+            )
+            return item.link ? (
+              <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="text-center group cursor-pointer">
+                {content}
+              </a>
+            ) : (
+              <div key={i} className="text-center group cursor-default">
+                {content}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

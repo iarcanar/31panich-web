@@ -8,6 +8,7 @@ export const PHONE_RAW = "0638764427"
 
 export const LINE_URL = "https://lin.ee/ndhXQiIT"
 export const LINE_ID = "@31PANICH"
+export const LINE_POINTS_URL = "https://liff.line.me/1654883656-XqwKRkd4/accounts/856vywqr/shopcards/01HG7XYVY32H817BW44QE8059Z?utm_source=snsshare&utm_medium=referral&utm_campaign=url_copy"
 
 export const FB_URL = "https://www.facebook.com/31panichPR"
 export const EMAIL = "31panich@gmail.com"

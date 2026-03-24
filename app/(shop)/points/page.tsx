@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import Image from "next/image"
-import ContactLink from "@/components/ui/ContactLink"
 import HowToCollect from "@/components/points/HowToCollect"
+import { LINE_POINTS_URL } from "@/lib/store-config"
 
 export const metadata: Metadata = {
   title: "แต้มสามหนึ่ง",
@@ -99,13 +99,15 @@ export default function PointsPage() {
             className="w-full max-w-md h-auto mx-auto rounded-xl mb-6"
           />
           <h3 className="text-2xl font-bold text-white mb-4">ตรวจสอบแต้มคงเหลือ</h3>
-          <p className="text-gray-300 mb-6">เช็คแต้มสะสมของคุณได้ง่ายๆ ผ่าน LINE Official</p>
-          <ContactLink
-            type="line"
+          <p className="text-gray-300 mb-6">เช็คแต้มสะสมของคุณได้ง่ายๆ กดปุ่มด้านล่าง</p>
+          <a
+            href={LINE_POINTS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#06C755] text-white font-semibold px-8 py-3 rounded-full hover:brightness-110 transition text-lg"
           >
-            💬 เช็คแต้มผ่าน LINE
-          </ContactLink>
+            เช็คแต้มคงเหลือ
+          </a>
         </div>
       </section>
     </div>
