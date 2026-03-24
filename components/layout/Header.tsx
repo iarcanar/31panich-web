@@ -72,8 +72,8 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // Mobile: solid dark + blur. Desktop: solid bg + shadow.
-  const headerBg = "bg-[#0a0a0f]/90 backdrop-blur-md lg:bg-[#0a0a0f] lg:backdrop-blur-none lg:shadow-lg"
+  // Mobile: gradient โปร่งใส (ไม่บังคอนเทนต์). Desktop: solid bg + shadow.
+  const headerBg = "bg-gradient-to-b from-black/80 to-transparent lg:bg-[#0a0a0f] lg:from-transparent lg:to-transparent lg:shadow-lg"
 
   return (
     <>
