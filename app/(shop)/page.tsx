@@ -46,7 +46,7 @@ export default function HomePage() {
       {/* Hero Banner — Desktop + CTA overlay */}
       <section className="hidden lg:block w-full relative">
         <Image
-          src="/banner.webp"
+          src="/site2026.webp"
           alt="ร้านสามหนึ่งพานิช ศูนย์รับผสมสี วัสดุก่อสร้าง ประปา"
           width={1920}
           height={600}
