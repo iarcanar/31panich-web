@@ -212,7 +212,7 @@ export default function AboutPage() {
               {BRAND_LOGOS.map((brand) => (
                 <div
                   key={brand.name}
-                  className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-white/90 border-2 border-white/10 flex items-center justify-center p-4 shadow-lg shadow-black/20 hover:scale-110 hover:border-cyan-400/50 hover:shadow-cyan-400/10 transition-all duration-300"
+                  className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-white border-2 border-white/10 flex items-center justify-center p-4 shadow-lg shadow-black/20 hover:scale-110 hover:border-cyan-400/50 hover:shadow-cyan-400/10 transition-all duration-300"
                   title={brand.name}
                 >
                   <Image
