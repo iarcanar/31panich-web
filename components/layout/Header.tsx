@@ -72,20 +72,20 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // Mobile: always gradient (no solid bar). Desktop: solid bg + shadow.
-  const headerBg = "bg-gradient-to-b from-black/80 to-transparent lg:bg-[#0a0a0f] lg:from-transparent lg:to-transparent lg:shadow-lg"
+  // Mobile: solid dark + blur. Desktop: solid bg + shadow.
+  const headerBg = "bg-[#0a0a0f]/90 backdrop-blur-md lg:bg-[#0a0a0f] lg:backdrop-blur-none lg:shadow-lg"
 
   return (
     <>
     <header className={`sticky top-0 z-50 text-white transition-all duration-300 ${headerBg} ${headerHidden && !mobileOpen ? "-translate-y-full lg:translate-y-0" : "translate-y-0"}`}>
       <div className="flex items-center justify-between px-4 py-2 lg:justify-center lg:gap-3">
-        {/* Mobile: Logo small + hamburger */}
-        <Link href="/" className="lg:hidden">
+        {/* Logo — mobile & desktop */}
+        <Link href="/" className="shrink-0">
           <Image src="/logo.webp" alt="31 พานิช" width={40} height={40} priority />
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-0.5 shrink-0">
+        <nav className="hidden lg:flex items-center gap-1.5 shrink-0">
           {NAV_ITEMS.map((item) => (
             <div key={item.href} className="relative group">
               <Link
@@ -152,6 +152,7 @@ export default function Header() {
           className="lg:hidden p-2"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="เปิดเมนู"
+          aria-expanded={mobileOpen}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {mobileOpen ? (

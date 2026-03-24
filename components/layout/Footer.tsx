@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import ContactLink from "@/components/ui/ContactLink"
 import { LINE_URL, PHONE, HOURS_TEXT, EMAIL, FB_URL, LINE_ID, STORE_NAME, STORE_NAME_FULL } from "@/lib/store-config"
 
@@ -27,9 +28,9 @@ export default function Footer() {
       </div>
 
       {/* === Desktop layout === */}
-      <div className="hidden lg:block max-w-5xl mx-auto px-8 py-12">
-        <div className="flex items-start justify-between gap-12">
-          {/* Left — Store name + hours */}
+      <div className="hidden lg:block max-w-6xl mx-auto px-8 py-12">
+        <div className="flex items-start justify-between gap-10">
+          {/* Store name + hours */}
           <div>
             <p className="text-white font-bold text-xl tracking-tight mb-3">{STORE_NAME_FULL}</p>
             <p className="text-sm text-gray-500">ร้านวัสดุก่อสร้างครบวงจร จ.ลพบุรี</p>
@@ -37,7 +38,17 @@ export default function Footer() {
             <p className="text-sm text-white mt-2">เปิดทุกวัน {HOURS_TEXT}</p>
           </div>
 
-          {/* Center — Contact */}
+          {/* Quick links */}
+          <div className="space-y-2.5 text-sm">
+            <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">ลิงก์ด่วน</p>
+            <Link href="/products" className="block text-white hover:text-cyan-400 transition">สินค้าทั้งหมด</Link>
+            <Link href="/promotions" className="block text-white hover:text-cyan-400 transition">โปรโมชั่น</Link>
+            <Link href="/warranty" className="block text-white hover:text-cyan-400 transition">การรับประกัน</Link>
+            <Link href="/catalog" className="block text-white hover:text-cyan-400 transition">แคตตาล็อก</Link>
+            <Link href="/contact" className="block text-white hover:text-cyan-400 transition">ติดต่อเรา</Link>
+          </div>
+
+          {/* Contact */}
           <div className="space-y-2.5 text-sm">
             <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">ติดต่อ</p>
             <ContactLink type="phone" className="block text-white hover:text-cyan-400 transition">{PHONE}</ContactLink>
@@ -45,7 +56,7 @@ export default function Footer() {
             <a href={FB_URL} target="_blank" rel="noopener noreferrer" className="block text-white hover:text-cyan-400 transition">Facebook — {STORE_NAME}</a>
           </div>
 
-          {/* Right — LINE QR */}
+          {/* LINE QR */}
           <div className="flex flex-col items-center gap-2">
             <a href={LINE_URL} target="_blank" rel="noopener noreferrer">
               <Image src="/line-qr.webp" alt={`LINE ${LINE_ID}`} width={96} height={96} className="rounded-lg" />
