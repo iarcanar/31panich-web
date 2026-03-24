@@ -293,8 +293,9 @@ export default function AdminProductsPage() {
   const scrollPosRef = useRef(0)
   const [filterCat, setFilterCat] = useState("all")
   const [catFilterOpen, setCatFilterOpen] = useState(false)
-  const [sortBy, setSortBy] = useState<"quality" | "price-asc" | "price-desc" | "updated">("quality")
+  const [sortBy, setSortBy] = useState<"price-asc" | "price-desc" | "updated">("updated")
   const [filterFlag, setFilterFlag] = useState<"all" | "isNew" | "isBestseller" | "isPinned">("all")
+  const [filterQuality, setFilterQuality] = useState<"all" | "incomplete" | "complete">("all")
   const [perPage, setPerPage] = useState(20)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
@@ -377,7 +378,7 @@ export default function AdminProductsPage() {
   }, [products])
 
   // ─── Reset to page 1 when filters/search/sort change
-  useEffect(() => { setCurrentPage(1) }, [filterCat, filterFlag, searchQuery, sortBy, perPage])
+  useEffect(() => { setCurrentPage(1) }, [filterCat, filterFlag, filterQuality, searchQuery, sortBy, perPage])
 
   // ─── Focus on field when form opens via status label click
   useEffect(() => {
@@ -727,6 +728,13 @@ export default function AdminProductsPage() {
       list = list.filter((p) => p[filterFlag])
     }
 
+    // Quality filter — ข้อมูลครบ / ไม่ครบ
+    if (filterQuality === "incomplete") {
+      list = list.filter((p) => dataQuality(p).label !== "ข้อมูลครบ")
+    } else if (filterQuality === "complete") {
+      list = list.filter((p) => dataQuality(p).label === "ข้อมูลครบ")
+    }
+
     // Search — split query into tokens and match all of them (order-independent)
     if (searchQuery.trim()) {
       const tokens = searchQuery.toLowerCase().replace(/\s+/g, " ").trim().split(" ")
@@ -737,24 +745,17 @@ export default function AdminProductsPage() {
     }
 
     // Sort
-    if (sortBy === "quality") {
-      const q = dataQuality
-      list.sort((a, b) => {
-        const pa = q(a).label === "ไม่มีราคา" ? 0 : q(a).label === "ไม่มีข้อมูลสินค้า" ? 1 : 2
-        const pb = q(b).label === "ไม่มีราคา" ? 0 : q(b).label === "ไม่มีข้อมูลสินค้า" ? 1 : 2
-        if (pa !== pb) return pa - pb
-        return b.updatedAt.localeCompare(a.updatedAt)
-      })
-    } else if (sortBy === "price-asc") {
+    if (sortBy === "price-asc") {
       list.sort((a, b) => a.price - b.price)
     } else if (sortBy === "price-desc") {
       list.sort((a, b) => b.price - a.price)
-    } else if (sortBy === "updated") {
+    } else {
+      // default: updated — ล่าสุดก่อน
       list.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     }
 
     return list
-  }, [products, filterCat, filterFlag, searchQuery, sortBy])
+  }, [products, filterCat, filterFlag, filterQuality, searchQuery, sortBy])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const safePage = Math.min(currentPage, totalPages)
@@ -1609,26 +1610,49 @@ export default function AdminProductsPage() {
             )}
           </div>
 
-          {/* Line 2: Sort + Flag filters — all visible, wrapping */}
+          {/* Line 2: Quality filter + Sort + Flag filters — all combinable */}
           <div className="flex flex-wrap items-center gap-1.5">
+            {/* Quality filter (toggle) */}
             {([
-              ["quality", "ไม่ครบก่อน"],
-              ["updated", "ล่าสุด"],
-            ] as const).map(([val, label]) => (
-              <button
-                key={val}
-                onClick={() => setSortBy(val)}
-                className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors whitespace-nowrap ${
-                  sortBy === val
-                    ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
-                    : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+              ["incomplete", "ไม่ครบ"],
+              ["complete", "ครบแล้ว"],
+            ] as const).map(([val, label]) => {
+              const active = filterQuality === val
+              const count = products.filter((p) => {
+                const inCat = filterCat === "all" || p.category === filterCat
+                if (!inCat) return false
+                return val === "incomplete" ? dataQuality(p).label !== "ข้อมูลครบ" : dataQuality(p).label === "ข้อมูลครบ"
+              }).length
+              return (
+                <button
+                  key={val}
+                  onClick={() => setFilterQuality((prev) => prev === val ? "all" : val)}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors whitespace-nowrap ${
+                    active
+                      ? val === "incomplete" ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                      : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8"
+                  }`}
+                >
+                  {label} {count}
+                </button>
+              )
+            })}
+
+            <div className="w-px h-3.5 bg-white/10" />
+
+            {/* Sort */}
             <button
-              onClick={() => setSortBy(sortBy === "price-desc" ? "price-asc" : sortBy === "price-asc" ? "quality" : "price-desc")}
+              onClick={() => setSortBy("updated")}
+              className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors whitespace-nowrap ${
+                sortBy === "updated"
+                  ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
+                  : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8"
+              }`}
+            >
+              ล่าสุด
+            </button>
+            <button
+              onClick={() => setSortBy(sortBy === "price-desc" ? "price-asc" : "price-desc")}
               className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors whitespace-nowrap ${
                 sortBy === "price-desc" || sortBy === "price-asc"
                   ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
@@ -1640,6 +1664,7 @@ export default function AdminProductsPage() {
 
             <div className="w-px h-3.5 bg-white/10" />
 
+            {/* Flag filters */}
             {([
               ["isNew", "ใหม่", "emerald"],
               ["isBestseller", "ขายดี", "amber"],
