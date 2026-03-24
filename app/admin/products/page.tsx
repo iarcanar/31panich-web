@@ -296,6 +296,7 @@ export default function AdminProductsPage() {
   const [editingStockId, setEditingStockId] = useState<string | null>(null)
   const [editingStockValue, setEditingStockValue] = useState("")
   const [copiedSku, setCopiedSku] = useState<string | null>(null)
+  const [showBarcode, setShowBarcode] = useState(false)
   const focusFieldRef = useRef<string | null>(null)
 
   // ─── Dirty tracking: ปุ่มจางเมื่อไม่มีการเปลี่ยนแปลง
@@ -1600,6 +1601,22 @@ export default function AdminProductsPage() {
               )
             })}
 
+            <div className="w-px h-3.5 bg-white/10 hidden lg:block" />
+
+            <button
+              onClick={() => setShowBarcode(!showBarcode)}
+              className={`hidden lg:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors whitespace-nowrap ${
+                showBarcode
+                  ? "bg-white/10 text-[#f1f5f9] border-white/20"
+                  : "bg-white/5 text-[#64748b] border-transparent hover:bg-white/8"
+              }`}
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h.75c.621 0 1.125.504 1.125 1.125v14.25c0 .621-.504 1.125-1.125 1.125h-.75a1.125 1.125 0 01-1.125-1.125V4.875zm5.25 0c0-.621.504-1.125 1.125-1.125h.375c.621 0 1.125.504 1.125 1.125v14.25c0 .621-.504 1.125-1.125 1.125H10.125A1.125 1.125 0 019 19.125V4.875zm4.5 0c0-.621.504-1.125 1.125-1.125h.75c.621 0 1.125.504 1.125 1.125v14.25c0 .621-.504 1.125-1.125 1.125h-.75a1.125 1.125 0 01-1.125-1.125V4.875zm5.25 0c0-.621.504-1.125 1.125-1.125h.375c.621 0 1.125.504 1.125 1.125v14.25c0 .621-.504 1.125-1.125 1.125h-.375a1.125 1.125 0 01-1.125-1.125V4.875z" />
+              </svg>
+              Barcode
+            </button>
+
             <span className="text-[10px] text-[#64748b] ml-auto">{filtered.length} รายการ</span>
           </div>
         </div>
@@ -1662,7 +1679,7 @@ export default function AdminProductsPage() {
                 <thead>
                   <tr className="border-b border-[#2a2a3a]">
                     <th className="text-left px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">สินค้า</th>
-                    <th className="text-center px-2 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider hidden lg:table-cell">Barcode</th>
+                    {showBarcode && <th className="text-center px-2 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">Barcode</th>}
                     <th className="text-left px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">หมวด</th>
                     <th className="text-right px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">ราคา</th>
                     <th className="text-center px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">สต็อก</th>
@@ -1690,9 +1707,11 @@ export default function AdminProductsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 py-0 text-center hidden lg:table-cell">
-                        <Barcode value={p.sku} />
-                      </td>
+                      {showBarcode && (
+                        <td className="px-2 py-0 text-center">
+                          <Barcode value={p.sku} />
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-[#94a3b8] text-xs">{catLabel(p.category)}</td>
                       <td className="px-4 py-3 text-right">
                         <span className="text-amber-400 font-semibold font-mono">฿{p.price.toLocaleString()}</span>
