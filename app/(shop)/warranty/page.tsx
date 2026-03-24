@@ -2,11 +2,22 @@ import { Metadata } from "next"
 import Image from "next/image"
 import ContactLink from "@/components/ui/ContactLink"
 import { PHONE } from "@/lib/store-config"
+import { breadcrumbSchema } from "@/lib/structured-data"
 
 export const metadata: Metadata = {
   title: "การรับประกัน",
-  description: "นโยบายการรับประกันสินค้า ร้านสามหนึ่งพานิช ลพบุรี",
+  description: "นโยบายการรับประกันสินค้า Makita Dongcheng iNGCO Pumpkin ร้านสามหนึ่งพานิช ลพบุรี",
+  openGraph: {
+    title: "การรับประกันสินค้า สามหนึ่งพานิช",
+    description: "ลงทะเบียนรับประกัน Makita Dongcheng iNGCO Pumpkin ออนไลน์",
+    images: [{ url: "/bg-warranty.webp", width: 1920, height: 800, alt: "การรับประกันสินค้า สามหนึ่งพานิช" }],
+  },
 }
+
+const breadcrumb = breadcrumbSchema([
+  { name: "หน้าแรก", url: "/" },
+  { name: "การรับประกัน" },
+])
 
 const brands = [
   {
@@ -39,6 +50,7 @@ const brands = [
 export default function WarrantyPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {/* Hero Banner */}
       <section className="relative overflow-hidden -mt-16 lg:mt-0">
         <Image

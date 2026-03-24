@@ -2,13 +2,23 @@ import { Metadata } from "next"
 import Image from "next/image"
 import ContactLink from "@/components/ui/ContactLink"
 import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
-import { localBusinessSchema } from "@/lib/structured-data"
+import { localBusinessSchema, breadcrumbSchema } from "@/lib/structured-data"
 import { PHONE, EMAIL, FB_URL, GOOGLE_MAPS_URL, GEO, LINE_ID, LINE_URL, HOURS_TEXT, STORE_NAME } from "@/lib/store-config"
 
 export const metadata: Metadata = {
   title: "ติดต่อสามหนึ่ง",
   description: `ติดต่อร้านสามหนึ่งพานิช ${PHONE} LINE ${LINE_ID} ลพบุรี เปิดทุกวัน ${HOURS_TEXT}`,
+  openGraph: {
+    title: "ติดต่อร้านสามหนึ่งพานิช",
+    description: `โทร ${PHONE} LINE ${LINE_ID} เปิดทุกวัน ${HOURS_TEXT}`,
+    images: [{ url: "/bg-contact.webp", width: 1920, height: 800, alt: "ร้านสามหนึ่งพานิช ลพบุรี" }],
+  },
 }
+
+const breadcrumb = breadcrumbSchema([
+  { name: "หน้าแรก", url: "/" },
+  { name: "ติดต่อเรา" },
+])
 
 /* Inline SVG icons — consistent size + color, no emoji rendering issues */
 function IconPin({ className }: { className?: string }) {
@@ -33,11 +43,9 @@ function IconFacebook({ className }: { className?: string }) {
 export default function ContactPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
-      {/* P5: LocalBusiness JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-      />
+      {/* P5: LocalBusiness + Breadcrumb JSON-LD */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
 
       {/* P3: Hero — enhanced with hours + phone + CTA */}
       <section className="relative overflow-hidden -mt-16 lg:mt-0">

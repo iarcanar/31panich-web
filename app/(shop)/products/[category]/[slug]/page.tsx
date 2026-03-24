@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getProductBySlug, getProductsByCategory, CATEGORIES } from "@/lib/products"
 import { getCatalogById } from "@/lib/catalogs"
+import { breadcrumbSchema } from "@/lib/structured-data"
 import ProductDetailView from "@/components/product/ProductDetailView"
 
 type Props = { params: Promise<{ category: string; slug: string }> }
@@ -55,9 +56,17 @@ export default async function ProductPage({ params }: Props) {
     offers: offers.length === 1 ? offers[0] : { "@type": "AggregateOffer", lowPrice: Math.min(...offers.map((o) => o.price)), highPrice: Math.max(...offers.map((o) => o.price)), priceCurrency: "THB", offerCount: offers.length, offers },
   }
 
+  const breadcrumb = breadcrumbSchema([
+    { name: "หน้าแรก", url: "/" },
+    { name: "สินค้า", url: "/products" },
+    { name: categoryLabel, url: `/products/${category}` },
+    { name: product.name },
+  ])
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <ProductDetailView product={product} categoryLabel={categoryLabel} relatedProducts={relatedProducts} catalog={product.catalogId ? getCatalogById(product.catalogId) : null} />
     </>
   )

@@ -1,15 +1,27 @@
 import { Metadata } from "next"
 import Image from "next/image"
 import CatalogSection from "@/components/home/CatalogSection"
+import { breadcrumbSchema } from "@/lib/structured-data"
 
 export const metadata: Metadata = {
   title: "แคตตาล็อก",
   description: "แคตตาล็อกสินค้า EMTOP Dongcheng(DC) iNGCO Beger ATM Spray เครื่องมือช่าง สีทาบ้าน สีสเปรย์ ร้านสามหนึ่งพานิช ลพบุรี",
+  openGraph: {
+    title: "แคตตาล็อกสินค้า สามหนึ่งพานิช",
+    description: "แคตตาล็อกเครื่องมือช่าง สี วัสดุก่อสร้าง EMTOP Dongcheng iNGCO Beger",
+    images: [{ url: "/bg-catalog.webp", width: 1920, height: 823, alt: "แคตตาล็อกสินค้า สามหนึ่งพานิช" }],
+  },
 }
+
+const breadcrumb = breadcrumbSchema([
+  { name: "หน้าแรก", url: "/" },
+  { name: "แคตตาล็อก" },
+])
 
 export default function CatalogPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {/* Hero Banner */}
       <section className="relative overflow-hidden -mt-16 lg:mt-0">
         <Image

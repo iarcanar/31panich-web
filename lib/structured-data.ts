@@ -32,6 +32,22 @@ export const localBusinessSchema = {
   sameAs: [FB_URL, LINE_URL],
 }
 
+const BASE = "https://31panich.co.th"
+
+/** BreadcrumbList JSON-LD — Google แสดง breadcrumb ใน search results */
+export function breadcrumbSchema(items: { name: string; url?: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      ...(item.url ? { item: item.url.startsWith("/") ? `${BASE}${item.url}` : item.url } : {}),
+    })),
+  }
+}
+
 export function productSchema(product: {
   title: string
   description?: string

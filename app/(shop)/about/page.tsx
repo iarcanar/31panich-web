@@ -4,10 +4,16 @@ import Link from "next/link"
 import ContactLink from "@/components/ui/ContactLink"
 import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
 import { PHONE } from "@/lib/store-config"
+import { breadcrumbSchema } from "@/lib/structured-data"
 
 export const metadata: Metadata = {
   title: "เกี่ยวกับสามหนึ่ง",
-  description: "ร้านสามหนึ่งพานิช วัสดุก่อสร้าง เครื่องมือช่าง อุปกรณ์ไฟฟ้า ประปา ศูนย์ผสมสี Beger TOA ลพบุรี",
+  description: "ร้านสามหนึ่งพานิช วัสดุก่อสร้าง เครื่องมือช่าง อุปกรณ์ไฟฟ้า ประปา ศูนย์ผสมสี Beger TOA ลพบุรี ตัวแทน Makita Dongcheng iNGCO",
+  openGraph: {
+    title: "เกี่ยวกับสามหนึ่งพานิช",
+    description: "ร้านวัสดุก่อสร้าง เครื่องมือช่าง ครบวงจร จ.ลพบุรี ศูนย์ผสมสี Beger TOA",
+    images: [{ url: "/front-store.webp", width: 1920, height: 800, alt: "หน้าร้านสามหนึ่งพานิช ลพบุรี" }],
+  },
 }
 
 const PRODUCT_SECTIONS = [
@@ -64,9 +70,15 @@ const BRAND_LOGOS = [
   { src: "/brands/thai-pipe.webp", name: "ท่อน้ำไทย" },
 ]
 
+const breadcrumb = breadcrumbSchema([
+  { name: "หน้าแรก", url: "/" },
+  { name: "เกี่ยวกับเรา" },
+])
+
 export default function AboutPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {/* Hero — P6: mobile taller via min-h + reduced gradient */}
       <section className="relative overflow-hidden -mt-16 lg:mt-0">
         <Image

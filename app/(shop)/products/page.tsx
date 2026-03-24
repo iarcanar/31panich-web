@@ -3,6 +3,7 @@ import Link from "next/link"
 import CategoryGrid from "@/components/home/CategoryGrid"
 import { searchProducts, getProducts, CATEGORIES } from "@/lib/products"
 import CategoryProductGrid from "@/components/product/CategoryProductGrid"
+import { breadcrumbSchema } from "@/lib/structured-data"
 
 type Props = { searchParams: Promise<{ search?: string }> }
 
@@ -17,8 +18,17 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title: "หมวดหมู่สินค้า",
     description: "สินค้าวัสดุก่อสร้าง เครื่องมือช่าง อุปกรณ์ไฟฟ้า ประปา สี ร้านสามหนึ่งพานิช ลพบุรี",
+    openGraph: {
+      title: "สินค้าวัสดุก่อสร้าง เครื่องมือช่าง — สามหนึ่งพานิช",
+      description: "สินค้าวัสดุก่อสร้าง เครื่องมือช่าง อุปกรณ์ไฟฟ้า ประปา สี ลพบุรี",
+    },
   }
 }
+
+const breadcrumb = breadcrumbSchema([
+  { name: "หน้าแรก", url: "/" },
+  { name: "สินค้า" },
+])
 
 export default async function ProductsPage({ searchParams }: Props) {
   const { search } = await searchParams
@@ -28,6 +38,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   if (!query) {
     return (
       <div>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
         <CategoryGrid />
       </div>
     )

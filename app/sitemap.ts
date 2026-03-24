@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next"
 import { CATEGORIES } from "@/lib/categories"
+import { getProducts } from "@/lib/products"
 
 const BASE = "https://31panich.co.th"
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 },
     { url: `${BASE}/points`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
@@ -21,7 +22,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }))
 
-  // TODO: เพิ่ม product pages แบบ dynamic จาก Medusa API
+  // Dynamic product pages
+  let productPages: MetadataRoute.Sitemap = []
+  try {
+    const products = await getProducts()
+    productPages = products.map((p) => ({
+      url: `${BASE}/products/${p.category}/${p.slug}`,
+      lastModified: new Date(p.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }))
+  } catch {
+    // fallback: skip product pages if fetch fails
+  }
 
-  return [...staticPages, ...categoryPages]
+  return [...staticPages, ...categoryPages, ...productPages]
 }

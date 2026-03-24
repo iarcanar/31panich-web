@@ -33,6 +33,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "th_TH",
     siteName: "ร้านสามหนึ่งพานิช",
+    images: [{ url: "/banner.webp", width: 1200, height: 600, alt: "ร้านสามหนึ่งพานิช วัสดุก่อสร้าง เครื่องมือช่าง ลพบุรี" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ร้านสามหนึ่งพานิช | วัสดุก่อสร้าง เครื่องมือช่าง ลพบุรี",
+    description: "ร้านวัสดุก่อสร้าง เครื่องมือช่าง อุปกรณ์ไฟฟ้า ประปา ครบวงจร จ.ลพบุรี",
+    images: ["/banner.webp"],
   },
   robots: { index: true, follow: true },
 }

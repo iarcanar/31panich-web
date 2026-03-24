@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getProductsByCategory, getProducts, CATEGORIES } from "@/lib/products"
 import CategoryProductGrid from "@/components/product/CategoryProductGrid"
+import { breadcrumbSchema } from "@/lib/structured-data"
 
 type Props = { params: Promise<{ category: string }> }
 
@@ -13,6 +14,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${cat.label} | สามหนึ่งพานิช`,
     description: `สินค้า${cat.label} คุณภาพดี ราคาถูก ที่ สามหนึ่งพานิช ลพบุรี`,
+    openGraph: {
+      title: `${cat.label} — สามหนึ่งพานิช`,
+      description: `สินค้า${cat.label} คุณภาพดี ราคาถูก ร้านสามหนึ่งพานิช ลพบุรี`,
+    },
   }
 }
 
@@ -37,8 +42,15 @@ export default async function CategoryPage({ params }: Props) {
       image: p.image,
     }))
 
+  const breadcrumb = breadcrumbSchema([
+    { name: "หน้าแรก", url: "/" },
+    { name: "สินค้า", url: "/products" },
+    { name: cat.label },
+  ])
+
   return (
     <div className="bg-[#0e0e14] min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 pt-4 pb-2">
         <nav className="flex items-center gap-2 text-sm text-gray-500">

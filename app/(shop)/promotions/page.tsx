@@ -5,13 +5,24 @@ import { getActivePromotions } from "@/lib/promotions"
 import ContactLink from "@/components/ui/ContactLink"
 import { getActiveCoupons } from "@/lib/coupons"
 import CouponGrid from "@/components/coupon/CouponGrid"
+import { breadcrumbSchema } from "@/lib/structured-data"
 
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "โปรโมชั่น",
   description: "โปรโมชั่นลดราคาสินค้า วัสดุก่อสร้าง เครื่องมือช่าง ร้านสามหนึ่งพานิช ลพบุรี",
+  openGraph: {
+    title: "โปรโมชั่น สามหนึ่งพานิช",
+    description: "โปรโมชั่นลดราคา วัสดุก่อสร้าง เครื่องมือช่าง ลพบุรี",
+    images: [{ url: "/bg-promotion.webp", width: 1920, height: 800, alt: "โปรโมชั่นร้านสามหนึ่งพานิช" }],
+  },
 }
+
+const breadcrumb = breadcrumbSchema([
+  { name: "หน้าแรก", url: "/" },
+  { name: "โปรโมชั่น" },
+])
 
 export default async function PromotionsPage() {
   const promotions = getActivePromotions()
@@ -19,6 +30,7 @@ export default async function PromotionsPage() {
 
   return (
     <div className="bg-[#0e0e14] min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {/* Hero Banner */}
       <section className="relative overflow-hidden -mt-16 lg:mt-0">
         <Image

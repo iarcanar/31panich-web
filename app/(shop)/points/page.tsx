@@ -2,11 +2,22 @@ import { Metadata } from "next"
 import Image from "next/image"
 import HowToCollect from "@/components/points/HowToCollect"
 import { LINE_POINTS_URL } from "@/lib/store-config"
+import { breadcrumbSchema } from "@/lib/structured-data"
 
 export const metadata: Metadata = {
   title: "แต้มสามหนึ่ง",
-  description: "สะสมแต้มสามหนึ่ง ซื้อสินค้าครบ 500 บาท รับ 1 แต้ม แลกของรางวัลมากมาย",
+  description: "สะสมแต้มสามหนึ่ง ซื้อสินค้าครบ 500 บาท รับ 1 แต้ม แลกของรางวัลมากมาย ร้านสามหนึ่งพานิช ลพบุรี",
+  openGraph: {
+    title: "แต้มสามหนึ่ง — สะสมแต้มแลกรางวัล",
+    description: "ซื้อสินค้าครบ 500 บาท รับ 1 แต้ม แลกของรางวัลมากมาย",
+    images: [{ url: "/31point.webp", alt: "แต้มสามหนึ่ง" }],
+  },
 }
+
+const breadcrumb = breadcrumbSchema([
+  { name: "หน้าแรก", url: "/" },
+  { name: "แต้มสามหนึ่ง" },
+])
 
 const REWARDS = [
   { image: "/points/reward-200.webp", name: "สว่านกระแทกไร้สาย BOXER 128V 3 ระบบ", points: 200 },
@@ -23,6 +34,7 @@ const REWARDS = [
 export default function PointsPage() {
   return (
     <div className="min-h-screen relative">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <Image
