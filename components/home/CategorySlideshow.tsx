@@ -48,15 +48,23 @@ export default function CategorySlideshow({ slides }: Props) {
   }
 
   // Mobile: auto-scroll via JS (allows touch swipe override)
+  // Uses fractional accumulator because mobile browsers round scrollLeft to integers
   useEffect(() => {
     const el = mobileTrackRef.current
     if (!el) return
     let raf: number
+    let acc = 0
+    const speed = 0.5 // px per frame (~30px/s at 60fps)
     function step() {
       if (autoScrollRef.current && el) {
-        el.scrollLeft += 0.25
+        acc += speed
+        if (acc >= 1) {
+          const px = Math.floor(acc)
+          el.scrollLeft += px
+          acc -= px
+        }
         if (el.scrollLeft >= el.scrollWidth / 2) {
-          el.scrollLeft = 0
+          el.scrollLeft -= el.scrollWidth / 2
         }
       }
       raf = requestAnimationFrame(step)
