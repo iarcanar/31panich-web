@@ -49,7 +49,7 @@ export default async function NewProductsSection() {
       <div className="container mx-auto px-4">
         <ScrollGlowFrame offsetTop={-20}>
           <div className="py-1.5 md:pt-8 md:pb-4">
-            <h2 className="text-lg md:text-3xl font-bold text-center text-white">
+            <h2 className="text-xl md:text-3xl font-bold text-center text-white">
               สินค้าใหม่
             </h2>
             <ScrollAccentLine />

@@ -31,7 +31,7 @@ export default function ContactPage() {
 
       <section className="container mx-auto px-4 py-12 md:py-16">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {/* ข้อมูลติดต่อ */}
           <div className="bg-[#1a1a28] border border-white/10 rounded-2xl p-8">
             <h2 className="text-xl font-bold text-white mb-6">ร้าน{STORE_NAME}</h2>

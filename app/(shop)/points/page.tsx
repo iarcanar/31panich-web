@@ -61,7 +61,7 @@ export default function PointsPage() {
         </h2>
         <div className="w-24 h-1 bg-gradient-to-r from-red-500 to-amber-500 mx-auto mt-3 mb-10 rounded-full" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {REWARDS.map((item) => (
             <div
               key={item.name}

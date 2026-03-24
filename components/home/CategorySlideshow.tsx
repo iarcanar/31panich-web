@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useRef, useEffect } from "react"
+import SectionHeading from "@/components/ui/SectionHeading"
 
 interface CategorySlide {
   category: string
@@ -81,10 +82,7 @@ export default function CategorySlideshow({ slides }: Props) {
     <section className="bg-[#0e0e14] py-8 md:py-14">
       {/* Section label */}
       <div className="container mx-auto px-4 mb-4 md:mb-5">
-        <div className="flex items-center gap-3">
-          <div className="h-5 w-1 rounded-full bg-gradient-to-b from-cyan-400 to-blue-500" />
-          <h2 className="text-sm md:text-lg font-bold text-white/80">เลือกดูตามหมวดหมู่</h2>
-        </div>
+        <SectionHeading>เลือกดูตามหมวดหมู่</SectionHeading>
       </div>
       {/* ─── Mobile: auto-scroll + touch swipe ─── */}
       <div
@@ -93,13 +91,13 @@ export default function CategorySlideshow({ slides }: Props) {
         onTouchStart={onMobileTouchStart}
         onTouchEnd={onMobileTouchEnd}
       >
-        <div className="flex gap-[2px] w-max">
+        <div className="flex gap-[3px] w-max">
           {loopSlides.map((slide, i) => (
             <Link
               key={`m-${slide.category}-${i}`}
               href={`/products/${slide.category}`}
               className="flex-shrink-0 relative overflow-hidden"
-              style={{ width: "calc(100vw / 5.6)", height: "clamp(60px, 7.5vw, 85px)" }}
+              style={{ width: "calc(100vw / 4)", height: "clamp(80px, 22vw, 110px)" }}
             >
               {slide.image ? (
                 <Image
@@ -107,7 +105,7 @@ export default function CategorySlideshow({ slides }: Props) {
                   alt={slide.label}
                   fill
                   className="object-cover"
-                  sizes="20vw"
+                  sizes="25vw"
                 />
               ) : (
                 <div className="absolute inset-0 bg-[#1e2035]" />
@@ -116,13 +114,14 @@ export default function CategorySlideshow({ slides }: Props) {
                 className="absolute inset-0"
                 style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 100%)" }}
               />
-              <div className="absolute inset-[3px] flex items-center justify-center">
-                <span className="bg-black/50 backdrop-blur-sm rounded-md w-full h-full inline-flex items-center justify-center border border-white/10">
+              <div className="absolute inset-[3px] flex flex-col items-center justify-center gap-1">
+                <span className="bg-black/50 backdrop-blur-sm rounded-md w-full h-full inline-flex flex-col items-center justify-center gap-1 border border-white/10 px-1">
                   <img
                     src={`/category-icons/${slide.category}.svg`}
-                    alt={slide.label}
-                    className="h-[20px] w-[20px] opacity-90"
+                    alt=""
+                    className="h-[24px] w-[24px] opacity-90"
                   />
+                  <span className="text-white/80 text-[9px] font-medium leading-tight text-center line-clamp-1">{slide.label}</span>
                 </span>
               </div>
             </Link>

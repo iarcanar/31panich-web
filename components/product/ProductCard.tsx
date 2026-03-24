@@ -19,27 +19,27 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link
       href={`/products/${categorySlug}/${product.handle}`}
-      className="bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition group"
+      className="bg-[#1a1a28] rounded-xl overflow-hidden border border-white/10 hover:border-cyan-400/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 group"
     >
-      <div className="aspect-square relative bg-gray-100">
+      <div className="aspect-square relative bg-[#252540] overflow-hidden">
         {product.thumbnail ? (
           <Image
             src={product.thumbnail}
             alt={product.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 768px) 50vw, 25vw"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+          <div className="absolute inset-0 flex items-center justify-center text-gray-600">
             No Image
           </div>
         )}
       </div>
       <div className="p-3">
-        <h3 className="font-medium text-sm text-gray-900 line-clamp-2">{product.title}</h3>
+        <h3 className="font-medium text-sm text-white line-clamp-2">{product.title}</h3>
         {price && (
-          <p className="mt-1 text-lg font-bold text-blue-700">
+          <p className="mt-1 text-lg font-bold text-amber-400">
             ฿{(price.amount / 100).toLocaleString()}
           </p>
         )}

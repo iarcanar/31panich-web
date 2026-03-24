@@ -64,17 +64,27 @@ export default function HomePage() {
       {/* สินค้าขายดี — ย้ายขึ้นมาให้เห็นก่อน */}
       <BestsellerSection />
 
+      <div className="border-t border-white/5" />
+
       {/* สินค้าใหม่ */}
       <NewProductsSection />
+
+      <div className="border-t border-white/5" />
 
       {/* สไลด์โชว์ประเภทสินค้า */}
       <CategorySlideshowSection />
 
+      <div className="border-t border-white/5" />
+
       {/* โปรโมชั่นล่าสุด */}
       <FeaturedProductBanner />
 
+      <div className="border-t border-white/5" />
+
       {/* คูปองพิเศษ */}
       <PromotionCouponsStrip />
+
+      <div className="border-t border-white/5" />
 
       {/* แลกแต้ม 31 POINTS */}
       <RewardsCarousel />

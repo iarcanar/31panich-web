@@ -81,7 +81,7 @@ export default function AboutPage() {
 
       {/* Product & Brand Categories */}
       <section className="container mx-auto px-4 pb-16 -mt-4 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-6xl mx-auto">
           {PRODUCT_SECTIONS.slice(0, 3).map((section) => (
             <div key={section.title} className="bg-[#1a1a28] border border-white/10 rounded-2xl overflow-hidden">
               <div className={`bg-gradient-to-r ${section.gradient} px-5 py-4`}>
@@ -101,7 +101,7 @@ export default function AboutPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto mt-4">
           {PRODUCT_SECTIONS.slice(3).map((section) => (
             <div key={section.title} className="bg-[#1a1a28] border border-white/10 rounded-2xl overflow-hidden">
               <div className={`bg-gradient-to-r ${section.gradient} px-5 py-4`}>

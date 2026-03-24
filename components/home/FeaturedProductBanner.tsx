@@ -1,15 +1,13 @@
 import Image from "next/image"
 import ContactLink from "@/components/ui/ContactLink"
+import SectionHeading from "@/components/ui/SectionHeading"
 import { PHONE } from "@/lib/store-config"
 
 export default function FeaturedProductBanner() {
   return (
     <section className="bg-[#0e0e14] py-10 md:py-16 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 mb-8 md:mb-10">
-          <div className="h-6 w-1 rounded-full bg-gradient-to-b from-orange-400 to-red-500" />
-          <h2 className="text-lg md:text-2xl font-bold text-white">โปรโมชั่นล่าสุด</h2>
-        </div>
+      <div className="max-w-6xl mx-auto">
+        <SectionHeading accentColor="from-orange-400 to-red-500" className="mb-8 md:mb-10">โปรโมชั่นล่าสุด</SectionHeading>
         <div className="space-y-16">
           {/* === BEWON LED Promo — Static Image + Facebook Link === */}
           <div className="relative rounded-2xl overflow-hidden bg-[#1a1a28] border border-white/10 shadow-lg">

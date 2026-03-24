@@ -64,7 +64,7 @@ export default function PromotionCouponsStrip() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg md:text-xl font-bold text-white">🎟️ คูปองพิเศษ</h2>
+            <h2 className="text-xl md:text-3xl font-bold text-white">🎟️ คูปองพิเศษ</h2>
             <p className="text-xs text-white/40 mt-0.5">รับได้เฉพาะบนเว็บเท่านั้น</p>
           </div>
           <Link

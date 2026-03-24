@@ -17,7 +17,7 @@ export default function GoogleReviewStrip() {
 
   return (
     <section className="bg-[#0e0e14] overflow-hidden border-b border-white/[0.04]">
-      <div className="flex items-center gap-3 py-2.5 px-4 max-w-5xl mx-auto">
+      <div className="flex items-center gap-3 py-2.5 px-4 max-w-6xl mx-auto">
         {/* Left: static label */}
         <a
           href={REVIEW_LINK}

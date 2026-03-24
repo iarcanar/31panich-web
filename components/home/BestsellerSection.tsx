@@ -43,7 +43,7 @@ export default async function BestsellerSection() {
       <div className="container mx-auto px-4">
         <ScrollGlowFrame offsetTop={-20} color={[147, 51, 234]} shapes={SHAPE_PRESETS.cosmic}>
           <div className="py-1.5 md:pt-8 md:pb-4">
-            <h2 className="text-lg md:text-3xl font-bold text-center text-white">
+            <h2 className="text-xl md:text-3xl font-bold text-center text-white">
               สินค้าขายดี
             </h2>
             <ScrollAccentLine color={[147, 51, 234]} />
