@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation"
 // ─── Config: อัพเดตเมื่อต่ออายุ ─────────────────────────
 const HOSTING = {
   provider: "Thnic",
-  manageUrl: "https://client.thnic.co.th",
-  expiryDate: "2027-03-24",        // ← อัพเดตวันหมดอายุที่นี่
+  manageUrl: "https://thdomain.thnic.co.th/mydomain/266562",
+  expiryDate: "2027-03-22",        // ← อัพเดตวันหมดอายุที่นี่
   pricePerYear: 850,
   package: "Hosting + Domain .co.th",
 }
@@ -26,7 +26,6 @@ const STACK = [
   { name: "Tailwind CSS", version: "3", color: "text-teal-400" },
   { name: "Upstash Redis", version: "", color: "text-red-400" },
   { name: "Gemini AI", version: "2.5-flash", color: "text-amber-400" },
-  { name: "Vercel Blob", version: "", color: "text-purple-400" },
 ]
 
 // ─── Types ───────────────────────────────────────────────
@@ -43,6 +42,14 @@ interface VercelData {
   deployments?: Deployment[]
   usage?: Record<string, unknown>
   plan?: { name: string; username: string }
+  error?: string
+}
+
+interface UpstashData {
+  configured: boolean
+  memory?: { used: number; limit: number; usedMB: number; limitMB: number }
+  keys?: number
+  dailyCommands?: { used: number; limit: number }
   error?: string
 }
 
@@ -96,19 +103,27 @@ export default function SettingsPage() {
   const router = useRouter()
   const [vercel, setVercel] = useState<VercelData | null>(null)
   const [loadingVercel, setLoadingVercel] = useState(true)
+  const [upstash, setUpstash] = useState<UpstashData | null>(null)
+  const [loadingUpstash, setLoadingUpstash] = useState(true)
 
   // Admin-only guard
   useEffect(() => {
     if (user && !isAdmin) router.push("/admin")
   }, [user, isAdmin, router])
 
-  // Fetch Vercel data
+  // Fetch Vercel + Upstash data
   useEffect(() => {
     fetch("/api/admin/vercel-status")
       .then((r) => r.json())
       .then(setVercel)
       .catch(() => setVercel({ configured: false, error: "fetch failed" }))
       .finally(() => setLoadingVercel(false))
+
+    fetch("/api/admin/upstash-status")
+      .then((r) => r.json())
+      .then(setUpstash)
+      .catch(() => setUpstash({ configured: false, error: "fetch failed" }))
+      .finally(() => setLoadingUpstash(false))
   }, [])
 
   if (user && !isAdmin) return null
@@ -216,7 +231,76 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* ─── Row 3: Vercel + GitHub ─── */}
+      {/* ─── Row 3: Upstash Redis ─── */}
+      <Card title="Upstash Redis" icon="redis" className="mb-4">
+        {loadingUpstash ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 bg-white/5 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : !upstash?.configured ? (
+          <p className="text-xs text-white/40">ยังไม่ได้ตั้งค่า Upstash env vars</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Memory */}
+            {upstash.memory && (() => {
+              const pct = upstash.memory.limitMB > 0
+                ? Math.min(100, Math.round((upstash.memory.usedMB / upstash.memory.limitMB) * 100))
+                : 0
+              return (
+                <div className="rounded-xl p-4 bg-white/5 border border-white/10">
+                  <p className="text-[10px] text-white/40 mb-1 uppercase tracking-wider">Memory</p>
+                  <p className="text-lg font-bold text-white">
+                    {upstash.memory.usedMB}<span className="text-xs text-white/40 font-normal"> / {upstash.memory.limitMB} MB</span>
+                  </p>
+                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
+                    <div
+                      className={`h-full rounded-full ${pct > 80 ? "bg-red-500" : pct > 50 ? "bg-amber-500" : "bg-emerald-500"}`}
+                      style={{ width: `${Math.max(1, pct)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-white/25 mt-1">{pct}% used</p>
+                </div>
+              )
+            })()}
+
+            {/* Daily Commands */}
+            {upstash.dailyCommands && (() => {
+              const pct = upstash.dailyCommands.limit > 0
+                ? Math.min(100, Math.round((upstash.dailyCommands.used / upstash.dailyCommands.limit) * 100))
+                : 0
+              return (
+                <div className="rounded-xl p-4 bg-white/5 border border-white/10">
+                  <p className="text-[10px] text-white/40 mb-1 uppercase tracking-wider">Commands วันนี้</p>
+                  <p className="text-lg font-bold text-white">
+                    {upstash.dailyCommands.used.toLocaleString()}<span className="text-xs text-white/40 font-normal"> / {upstash.dailyCommands.limit.toLocaleString()}</span>
+                  </p>
+                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
+                    <div
+                      className={`h-full rounded-full ${pct > 80 ? "bg-red-500" : pct > 50 ? "bg-amber-500" : "bg-emerald-500"}`}
+                      style={{ width: `${Math.max(1, pct)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-white/25 mt-1">{pct}% used</p>
+                </div>
+              )
+            })()}
+
+            {/* Keys */}
+            <div className="rounded-xl p-4 bg-white/5 border border-white/10">
+              <p className="text-[10px] text-white/40 mb-1 uppercase tracking-wider">Keys</p>
+              <p className="text-lg font-bold text-white">{(upstash.keys || 0).toLocaleString()}</p>
+              <p className="text-[10px] text-white/25 mt-1">records in database</p>
+            </div>
+          </div>
+        )}
+        <div className="mt-4 flex gap-2">
+          <ExtLink href="https://console.upstash.com">Upstash Console</ExtLink>
+        </div>
+      </Card>
+
+      {/* ─── Row 4: Vercel + GitHub ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         {/* Vercel */}
         <Card title="Vercel" icon="vercel">
@@ -292,7 +376,7 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      {/* ─── Row 4: Quick Reference ─── */}
+      {/* ─── Row 5: Quick Reference ─── */}
       <Card title="Quick Reference" icon="book">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
           <InfoRow label="Admin Login" value="/admin/login" />
@@ -419,6 +503,8 @@ function CardIcon({ type }: { type: string }) {
       return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L12 12.75 6.429 9.75m11.142 0l4.179 2.25-9.75 5.25-9.75-5.25 4.179-2.25" /></svg>
     case "server":
       return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602l-2.268 9.64a4.5 4.5 0 00-.12 1.03v.228m19.5 0a3 3 0 01-3 3H5.25a3 3 0 01-3-3m19.5 0a3 3 0 00-3-3H5.25a3 3 0 00-3 3m16.5 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" /></svg>
+    case "redis":
+      return <svg className={cls} viewBox="0 0 24 24" fill="currentColor"><path d="M10.5 2.661l.54.997-1.797.644 2.409.218.748 1.246.467-1.08 2.237-.234-1.665-.749.44-.875-1.725.57-1.654-.737zm4.264 3.598l3.484 1.441-7.262 2.986L3.724 7.7l3.228-1.339.279.107 2.283.929 1.648-.562 3.602-1.576zm6.196 2.563l-4.985 2.036v5.088l4.985-2.243V8.822zM9.262 15.705v-5.12L3.04 8.204v5.093l6.223 2.408zm.857-5.482l5.145-2.072-5.145-2.123-5.017 2.153 5.017 2.042z" /></svg>
     case "vercel":
       return <svg className={cls} viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L24 22H0L12 1z" /></svg>
     case "github":
