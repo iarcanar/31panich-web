@@ -46,13 +46,14 @@ export default function HomePage() {
       {/* Hero Banner — Desktop + CTA overlay */}
       <section className="hidden lg:block w-full relative">
         <Image
-          src="/site2026.webp"
+          src="/site2026_R_space.webp"
           alt="ร้านสามหนึ่งพานิช ศูนย์รับผสมสี วัสดุก่อสร้าง ประปา"
           width={1920}
           height={600}
           className="w-full h-auto"
           priority
         />
+        {/* Left overlay — ชื่อร้าน + CTA */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/80 via-[#0a0a0f]/30 to-transparent flex items-center pl-[10%]">
           <div>
             <h1 className="text-white font-bold text-4xl drop-shadow-lg">ร้านสามหนึ่งพานิช ลพบุรี</h1>
@@ -61,6 +62,17 @@ export default function HomePage() {
               <a href={`tel:${PHONE.replace(/-/g, "")}`} className="inline-block border border-white/30 hover:border-cyan-400 hover:text-cyan-400 text-white text-sm font-medium px-6 py-2.5 rounded-full transition">โทรสั่งเลย</a>
             </div>
           </div>
+        </div>
+        {/* Right overlay — จุดเด่นร้าน */}
+        <div className="absolute right-[5%] top-1/2 -translate-y-1/2 -translate-x-10 text-center select-none pointer-events-none">
+          <p className="text-[#f5d000] font-semibold text-2xl xl:text-3xl drop-shadow-lg">ศูนย์รับผสมสีทาบ้าน</p>
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <span className="bg-[#f5d000] text-[#1a1a1a] font-bold text-base xl:text-lg px-4 py-1 rounded-md shadow-lg">Beger</span>
+            <span className="bg-[#f5d000] text-[#1a1a1a] font-bold text-base xl:text-lg px-4 py-1 rounded-md shadow-lg">TOA</span>
+          </div>
+          <p className="text-white font-light text-xl xl:text-2xl mt-3 tracking-wide drop-shadow-lg">ก่อสร้าง-ซ่อมแซม</p>
+          <p className="text-white font-light text-xl xl:text-2xl tracking-wide drop-shadow-lg">ไฟฟ้า/ประปา/สว่าน/ปั๊มน้ำ</p>
+          <p className="mt-3 font-bold text-2xl xl:text-3xl px-8 py-1.5 rounded-lg text-[#3a1366] inline-block" style={{ background: "linear-gradient(to right, transparent, #22d3ee 20%, #7dd3fc 80%, transparent)" }}>ราคาไม่แพง!</p>
         </div>
       </section>
 
