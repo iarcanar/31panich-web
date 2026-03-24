@@ -15,11 +15,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const desc = product.description?.split("\n").filter(Boolean).join(" ").slice(0, 160)
     || `${product.name} - ${catLabel} | สามหนึ่งพานิช ลพบุรี`
   return {
-    title: `${product.name} | สามหนึ่งพานิช`,
+    title: `${product.name} | ร้านสามหนึ่งพานิช ลพบุรี`,
     description: desc,
-    keywords: product.tags?.join(", "),
+    keywords: product.tags ? [...product.tags, "ลพบุรี", "สามหนึ่งพานิช"].join(", ") : undefined,
     openGraph: {
-      title: product.name,
+      title: `${product.name} — สามหนึ่งพานิช`,
       description: desc,
       images: product.images?.length ? product.images : product.image ? [product.image] : [],
     },

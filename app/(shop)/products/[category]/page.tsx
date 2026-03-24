@@ -12,11 +12,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cat = CATEGORIES.find((c) => c.value === category)
   if (!cat) return {}
   return {
-    title: `${cat.label} | สามหนึ่งพานิช`,
-    description: `สินค้า${cat.label} คุณภาพดี ราคาถูก ที่ สามหนึ่งพานิช ลพบุรี`,
+    title: `${cat.label} ลพบุรี | ร้านสามหนึ่งพานิช`,
+    description: `ซื้อ${cat.label} คุณภาพดี ราคาถูก ที่ร้านสามหนึ่งพานิช จ.ลพบุรี สินค้าแบรนด์แท้ มีรับประกัน เปิดทุกวัน`,
     openGraph: {
-      title: `${cat.label} — สามหนึ่งพานิช`,
-      description: `สินค้า${cat.label} คุณภาพดี ราคาถูก ร้านสามหนึ่งพานิช ลพบุรี`,
+      title: `${cat.label} — ร้านสามหนึ่งพานิช ลพบุรี`,
+      description: `สินค้า${cat.label} คุณภาพดี ราคาถูก ร้านสามหนึ่งพานิช จ.ลพบุรี`,
     },
   }
 }

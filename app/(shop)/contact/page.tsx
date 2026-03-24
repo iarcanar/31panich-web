@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import Image from "next/image"
 import ContactLink from "@/components/ui/ContactLink"
 import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
-import { localBusinessSchema, breadcrumbSchema } from "@/lib/structured-data"
+import { localBusinessSchema, breadcrumbSchema, faqSchema } from "@/lib/structured-data"
 import { PHONE, EMAIL, FB_URL, GOOGLE_MAPS_URL, GEO, LINE_ID, LINE_URL, HOURS_TEXT, STORE_NAME } from "@/lib/store-config"
 
 export const metadata: Metadata = {
@@ -19,6 +19,17 @@ const breadcrumb = breadcrumbSchema([
   { name: "หน้าแรก", url: "/" },
   { name: "ติดต่อเรา" },
 ])
+
+const STORE_FAQS = [
+  { question: "ร้านสามหนึ่งพานิช เปิดกี่โมง?", answer: `เปิดทุกวัน ไม่มีวันหยุด ตั้งแต่ ${HOURS_TEXT} ตั้งอยู่ที่ถนนพหลโยธิน ต.เขาพระงาม อ.เมือง จ.ลพบุรี` },
+  { question: "ร้านสามหนึ่งพานิช อยู่ที่ไหน?", answer: "99/1 หมู่ 7 ถนนพหลโยธิน ต.เขาพระงาม อ.เมือง จ.ลพบุรี 15160 เยื้องตลาดสดเสาธง หน้าทางเข้าค่ายภูมิพลฯ" },
+  { question: "ร้านสามหนึ่งมีบริการผสมสีไหม?", answer: "มีบริการศูนย์รับผสมสี Beger และ TOA เลือกเฉดสีได้ตามต้องการ รอรับได้ทันที" },
+  { question: "สั่งซื้อสินค้าได้ช่องทางไหนบ้าง?", answer: `โทร ${PHONE} หรือแอดไลน์ ${LINE_ID} สอบถามราคาและสั่งซื้อได้เลย` },
+  { question: "สินค้ามีรับประกันไหม?", answer: "สินค้าเครื่องมือช่างแบรนด์ Makita, Dongcheng, iNGCO, Pumpkin มีรับประกันตามเงื่อนไขของแต่ละแบรนด์ ดูรายละเอียดได้ที่หน้า การรับประกัน" },
+  { question: "ร้านสามหนึ่งมีสินค้าอะไรบ้าง?", answer: "วัสดุก่อสร้าง เครื่องมือช่าง สีทาบ้าน อุปกรณ์ไฟฟ้า ประปา ปั๊มน้ำ เหล็ก กาว เทป สีสเปรย์ และอื่นๆ กว่า 15 หมวดสินค้า ครบจบที่เดียว" },
+]
+
+const faqJsonLd = faqSchema(STORE_FAQS)
 
 /* Inline SVG icons — consistent size + color, no emoji rendering issues */
 function IconPin({ className }: { className?: string }) {
@@ -43,9 +54,10 @@ function IconFacebook({ className }: { className?: string }) {
 export default function ContactPage() {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
-      {/* P5: LocalBusiness + Breadcrumb JSON-LD */}
+      {/* P5: LocalBusiness + Breadcrumb + FAQ JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       {/* P3: Hero — enhanced with hours + phone + CTA */}
       <section className="relative overflow-hidden -mt-16 lg:mt-0">
@@ -177,6 +189,24 @@ export default function ContactPage() {
               referrerPolicy="no-referrer-when-downgrade"
               title="แผนที่ร้านสามหนึ่งพานิช"
             />
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section — SEO: Google FAQ rich snippet */}
+      <section className="container mx-auto px-4 pb-10 md:pb-14">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-xl font-bold text-white mb-6">คำถามที่พบบ่อย</h2>
+          <div className="space-y-3">
+            {STORE_FAQS.map((faq, i) => (
+              <details key={i} className="group bg-[#1a1a28] border border-white/10 rounded-xl overflow-hidden">
+                <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-sm font-medium text-white hover:bg-white/5 transition">
+                  {faq.question}
+                  <span className="text-gray-500 group-open:rotate-45 transition-transform text-lg ml-3">+</span>
+                </summary>
+                <div className="px-5 pb-4 text-sm text-gray-400 leading-relaxed">{faq.answer}</div>
+              </details>
+            ))}
           </div>
         </div>
       </section>
