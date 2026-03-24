@@ -67,7 +67,7 @@ export default function RewardsCarousel() {
   return (
     <section className="bg-gradient-to-b from-[#0e0e14] via-[#12121f] to-[#0e0e14] py-8 md:py-14">
       <div className="container mx-auto px-4">
-        <ScrollGlowFrame offsetTop={-20} color={[217, 158, 40]} shapes={SHAPE_PRESETS.golden}>
+        <ScrollGlowFrame offsetTop={-20} color={[217, 158, 40]} glowIntensity={1.5} glowSpread={90} glowAnchor={30} shapes={SHAPE_PRESETS.golden}>
           <div className="pt-4 pb-2 md:pt-8 md:pb-4">
         {/* Header */}
         <div className="flex items-end justify-between mb-2 pr-4 md:pr-8">

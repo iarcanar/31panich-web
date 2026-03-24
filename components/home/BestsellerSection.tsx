@@ -41,7 +41,7 @@ export default async function BestsellerSection() {
   return (
     <section className="bg-[#0e0e14] py-8 md:py-14">
       <div className="container mx-auto px-4">
-        <ScrollGlowFrame offsetTop={-20} color={[147, 51, 234]} shapes={SHAPE_PRESETS.cosmic}>
+        <ScrollGlowFrame offsetTop={-20} color={[147, 51, 234]} glowIntensity={1.5} glowSpread={90} glowAnchor={30} shapes={SHAPE_PRESETS.cosmic}>
           <div className="py-1.5 md:pt-8 md:pb-4">
             <h2 className="text-xl md:text-3xl font-bold text-center text-white">
               สินค้าขายดี

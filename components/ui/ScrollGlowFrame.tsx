@@ -91,6 +91,8 @@ export default function ScrollGlowFrame({
   color = [220, 38, 38],
   offsetTop = 0,
   glowAnchor = 15,
+  glowIntensity = 1,
+  glowSpread = 40,
   shapes = SHAPE_PRESETS.modern,
   className = "",
 }: {
@@ -98,6 +100,8 @@ export default function ScrollGlowFrame({
   color?: [number, number, number]
   offsetTop?: number
   glowAnchor?: number
+  glowIntensity?: number
+  glowSpread?: number
   shapes?: readonly string[]
   className?: string
 }) {
@@ -159,8 +163,11 @@ export default function ScrollGlowFrame({
       const progress = Math.max(0, Math.min(1, 1 - elementCenter / vh))
 
       const centeredness = 4 * progress * (1 - progress)
+      // Outside sweet spot → fully hidden
+      const inSweet = progress >= 0.15 && progress <= 0.9
+      const sweetFactor = inSweet ? centeredness : 0
 
-      const borderOpacity = 0.10 + centeredness * 0.54
+      const borderOpacity = Math.min(sweetFactor * 0.54 * glowIntensity, 0.9)
       const bc = `rgba(${r},${g},${b},${borderOpacity})`
       border!.style.borderTopColor = bc
       border!.style.borderLeftColor = bc
@@ -168,8 +175,8 @@ export default function ScrollGlowFrame({
 
       const drift = (progress - 0.5) * 24
       const glowY = glowAnchor + drift
-      const glowOpacity = 0.05 + centeredness * 0.27
-      glow!.style.background = `radial-gradient(ellipse 70% 40% at 50% ${glowY}%, rgba(${r},${g},${b},${glowOpacity}), transparent)`
+      const glowOpacity = Math.min(sweetFactor * 0.27 * glowIntensity, 0.7)
+      glow!.style.background = `radial-gradient(ellipse 70% ${glowSpread}% at 50% ${glowY}%, rgba(${r},${g},${b},${glowOpacity}), transparent)`
 
       // Stars: gradual spawn at sweet_spot, fade out when leaving
       const inRange = progress >= 0.2 && progress <= 0.85
@@ -201,14 +208,15 @@ export default function ScrollGlowFrame({
       window.removeEventListener("resize", update)
       if (spawnTimerRef.current) clearTimeout(spawnTimerRef.current)
     }
-  }, [color, glowAnchor, shapes])
+  }, [color, glowAnchor, glowIntensity, glowSpread, shapes])
 
   const [r, g, b] = color
   const framePos = { top: `${offsetTop}px`, left: 0, right: 0, bottom: 0 }
   const borderMask =
     "linear-gradient(to bottom, black 0%, black 8%, transparent 25%)"
+  const glowFade = glowSpread > 40 ? 70 : 50
   const glowMask =
-    "linear-gradient(to bottom, black 0%, black 20%, transparent 50%)"
+    `linear-gradient(to bottom, black 0%, black 25%, transparent ${glowFade}%)`
 
   // Responsive: smaller radius + star zone on mobile
   const radiusDesktop = 24

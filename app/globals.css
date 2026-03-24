@@ -25,3 +25,11 @@ body {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
+
+/* Shimmer — ใช้ JS-based animation (BannerShimmer component) */
+.banner-shimmer {
+  position: relative;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 25%, black 75%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 25%, black 75%, transparent 100%);
+}

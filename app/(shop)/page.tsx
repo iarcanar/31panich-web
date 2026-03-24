@@ -11,6 +11,7 @@ import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
 import PromotionCouponsStrip from "@/components/home/PromotionCouponsStrip"
 import { localBusinessSchema } from "@/lib/structured-data"
 import { PHONE } from "@/lib/store-config"
+import BannerShimmer from "@/components/home/BannerShimmer"
 
 export default function HomePage() {
   const promotions = getActivePromotions()
@@ -72,7 +73,7 @@ export default function HomePage() {
           </div>
           <p className="text-white font-light text-xl xl:text-2xl mt-3 tracking-wide drop-shadow-lg">ก่อสร้าง-ซ่อมแซม</p>
           <p className="text-white font-light text-xl xl:text-2xl tracking-wide drop-shadow-lg">ไฟฟ้า/ประปา/สว่าน/ปั๊มน้ำ</p>
-          <p className="mt-3 font-bold text-2xl xl:text-3xl px-8 py-1.5 rounded-lg text-[#3a1366] inline-block" style={{ background: "linear-gradient(to right, transparent, #22d3ee 20%, #7dd3fc 80%, transparent)" }}>ราคาไม่แพง!</p>
+          <p className="mt-3 font-bold text-2xl xl:text-3xl px-8 py-1.5 rounded-lg text-[#3a1366] inline-block banner-shimmer" style={{ background: "linear-gradient(to right, transparent, #22d3ee 20%, #7dd3fc 80%, transparent)" }}><span className="relative z-10">ราคาไม่แพง!</span><BannerShimmer /></p>
         </div>
       </section>
 

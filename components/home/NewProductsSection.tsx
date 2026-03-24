@@ -47,7 +47,7 @@ export default async function NewProductsSection() {
   return (
     <section className="bg-[#0e0e14] py-8 md:py-14">
       <div className="container mx-auto px-4">
-        <ScrollGlowFrame offsetTop={-20}>
+        <ScrollGlowFrame offsetTop={-20} color={[255, 30, 30]} glowIntensity={1.5} glowSpread={90} glowAnchor={30}>
           <div className="py-1.5 md:pt-8 md:pb-4">
             <h2 className="text-xl md:text-3xl font-bold text-center text-white">
               สินค้าใหม่
