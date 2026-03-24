@@ -159,7 +159,7 @@ export default function AboutPage() {
       </section>
 
       {/* Vision + Brand Logos with background image */}
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <Image
           src="/bg-about-store.webp"
           alt=""
@@ -169,44 +169,62 @@ export default function AboutPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0e0e14] via-[#0e0e14]/80 to-[#0e0e14]" />
 
-        {/* P4: Vision — trimmed text + stat bar */}
-        <section className="relative py-16 md:py-20">
-          <div className="max-w-3xl mx-auto px-6 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-8">เราบริหารงานโดยยึดหลัก</h2>
-            <blockquote className="relative">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-5xl text-purple-500/30 font-serif select-none">&ldquo;</div>
-              <p className="text-lg md:text-xl text-cyan-300 font-medium leading-relaxed pt-4">
-                ให้ความจริงใจ ความซื่อสัตย์<br />
-                แนะนำช่วยเหลือลูกค้าให้ถึงที่สุดเท่าที่เราจะช่วยได้
-              </p>
-              <div className="text-5xl text-purple-500/30 font-serif select-none mt-2">&rdquo;</div>
-            </blockquote>
-
-            <div className="mt-6 text-gray-400 text-sm leading-relaxed max-w-xl mx-auto space-y-2">
-              <p>ลูกค้าส่วนใหญ่เป็นลูกค้าประจำหลายปี — แนะนำกันปากต่อปาก</p>
-              <p className="text-white font-medium">เราไม่หยุดพัฒนาคุณภาพและบริการ เพื่อให้ลูกค้าได้รับสิ่งที่ดีที่สุด</p>
+        {/* P4: Vision — staff image left + text right */}
+        <section className="relative z-[2] py-16 md:py-20 overflow-visible">
+          <div className="max-w-5xl mx-auto px-6 relative overflow-visible">
+            {/* Staff image — absolute, ชิดล่างกับขอบ section (ต่อเนื่องถึง review strip) */}
+            <div className="hidden md:block absolute left-6 -top-8 -bottom-20 w-[500px] lg:w-[570px] z-0 pointer-events-none"
+              style={{
+                WebkitMaskImage: "linear-gradient(to right, black 40%, transparent 100%)",
+                maskImage: "linear-gradient(to right, black 40%, transparent 100%)",
+              }}
+            >
+              <Image
+                src="/staff-welcome.webp"
+                alt="พนักงานร้านสามหนึ่งพานิช"
+                fill
+                className="object-contain object-bottom drop-shadow-2xl"
+              />
             </div>
 
-            {/* Stat bar */}
-            <div className="mt-10 grid grid-cols-3 gap-4 max-w-lg mx-auto">
-              <div>
-                <p className="text-2xl md:text-3xl font-black text-white">20+</p>
-                <p className="text-gray-500 text-xs mt-1">ปีประสบการณ์</p>
+            {/* Text content — ขยับไปทางขวา, z สูงกว่าภาพ */}
+            <div className="md:ml-[320px] lg:ml-[380px] text-center md:text-left relative z-10">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-8">เราบริหารงานโดยยึดหลัก</h2>
+              <blockquote className="relative">
+                <div className="absolute -top-4 left-1/2 md:left-0 -translate-x-1/2 md:translate-x-0 md:-left-6 text-5xl text-purple-500/30 font-serif select-none">&ldquo;</div>
+                <p className="text-lg md:text-xl text-cyan-300 font-medium leading-relaxed pt-4">
+                  ให้ความจริงใจ ความซื่อสัตย์<br />
+                  แนะนำช่วยเหลือลูกค้าให้ถึงที่สุดเท่าที่เราจะช่วยได้
+                </p>
+                <div className="text-5xl text-purple-500/30 font-serif select-none mt-2 md:text-right">&rdquo;</div>
+              </blockquote>
+
+              <div className="mt-6 text-gray-400 text-sm leading-relaxed space-y-2">
+                <p>ลูกค้าส่วนใหญ่เป็นลูกค้าประจำหลายปี — แนะนำกันปากต่อปาก</p>
+                <p className="text-white font-medium">เราไม่หยุดพัฒนาคุณภาพและบริการ เพื่อให้ลูกค้าได้รับสิ่งที่ดีที่สุด</p>
               </div>
-              <div>
-                <p className="text-2xl md:text-3xl font-black text-white">50+</p>
-                <p className="text-gray-500 text-xs mt-1">แบรนด์ชั้นนำ</p>
-              </div>
-              <div>
-                <p className="text-2xl md:text-3xl font-black text-amber-400">4.9</p>
-                <p className="text-gray-500 text-xs mt-1">Google Rating</p>
+
+              {/* Stat bar */}
+              <div className="mt-10 grid grid-cols-3 gap-4 max-w-lg mx-auto md:mx-0">
+                <div>
+                  <p className="text-2xl md:text-3xl font-black text-white">20+</p>
+                  <p className="text-gray-500 text-xs mt-1">ปีประสบการณ์</p>
+                </div>
+                <div>
+                  <p className="text-2xl md:text-3xl font-black text-white">50+</p>
+                  <p className="text-gray-500 text-xs mt-1">แบรนด์ชั้นนำ</p>
+                </div>
+                <div>
+                  <p className="text-2xl md:text-3xl font-black text-amber-400">4.9</p>
+                  <p className="text-gray-500 text-xs mt-1">Google Rating</p>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* P8: Google Review strip — social proof */}
-        <div className="relative">
+        <div className="relative z-[2]">
           <GoogleReviewStrip />
         </div>
 
