@@ -598,54 +598,104 @@ export default function AdminProductsPage() {
     handleEdit(p)
   }
 
-  // ─── Auto-generate SEO tags — สร้างใหม่ทุกครั้งจากข้อมูลปัจจุบัน
+  // ─── Auto-generate SEO tags — v2: improved filtering + local SEO
   function buildTags(f: typeof form): string[] {
     const t = new Set<string>()
+
+    // คำที่ไม่ใช่ keyword — skip ทั้ง Thai + English
     const SKIP = new Set([
       "รุ่น", "แบบ", "ตัว", "ชิ้น", "อัน", "ชุด", "ขนาด", "สำหรับ", "ประเภท",
-      "สเปค", "จุดเด่น", "แบรนด์", "คุณสมบัติ", "รายละเอียด", "นิ้ว",
-      "type", "set", "for", "and", "with", "the",
+      "สเปค", "จุดเด่น", "แบรนด์", "คุณสมบัติ", "รายละเอียด", "นิ้ว", "มม.",
+      "เครื่อง", "พร้อม", "อย่าง", "ทั้งหมด", "ทั่วไป", "ต่างๆ", "หลากหลาย",
+      "คุณภาพ", "คุณภาพสูง", "ทนทาน", "สะดวก", "สะดวกสบาย", "ง่ายดาย",
+      "มืออาชีพ", "ประสิทธิภาพ", "ประสิทธิภาพสูง", "อเนกประสงค์",
+      "ออกแบบ", "ออกแบบมา", "เหมาะสำหรับ", "เหมาะสำหรับงาน",
+      "รับประกัน", "ประหยัด", "ยาวนาน", "เมื่อยล้า",
+      "มอเตอร์", "วัตต์", "ทรงพลัง", "ตัด", "ขัดผิว", "ขั้ว", "รอบ", "นาที",
+      "DIY", "E27", "มาพร้อม", "ใช้งาน", "กำลัง", "กำลังสูง",
+      "แรงดัน", "แรงดันไฟ", "แรงดันไฟฟ้า", "ความเร็ว", "ความเร็วรอบ",
+      "อายุการใช้งาน", "รายละเอียดสินค้า", "อุปกรณ์",
+      "type", "set", "for", "and", "with", "the", "pro", "max", "mini",
     ])
-    const FUNC = /^(เป็น|ใน|ที่|ของ|ให้|ได้|มี|จาก|กับ|ไม่|แล้ว|เพื่อ|โดย|อย่าง|และ|หรือ|คือ|แต่|ทั้ง|เช่น|จะ|การ|ความ|ช่วย|อีก|ก็|ถ้า|เมื่อ|ยัง)$/
+
+    // คำเชื่อม / function words — skip เสมอ
+    const FUNC = /^(เป็น|ใน|ที่|ของ|ให้|ได้|มี|จาก|กับ|ไม่|แล้ว|เพื่อ|โดย|อย่าง|และ|หรือ|คือ|แต่|ทั้ง|เช่น|จะ|การ|ความ|ช่วย|อีก|ก็|ถ้า|เมื่อ|ยัง|แค่|ทุก|บาง|อัน|ครั้ง|ยิ่ง|ด้วย|ต่อ|ไว้|แบบ|ตาม|เพียง)$/
+
+    // ตัวเลขล้วน, spec numbers, สั้นเกิน → skip
+    const isNoise = (w: string) =>
+      /^\d+$/.test(w) ||                              // ตัวเลขล้วน: "220", "450"
+      /^\d+[A-Za-z~\/]+/.test(w) ||                   // spec: "240V~50", "50/60Hz"
+      /^#\d+/.test(w) ||                              // #120, #2
+      /^[A-Za-z\d]{1,2}$/.test(w) ||                  // สั้นเกิน: "DC", "6A", "PD", "HI", "2T"
+      /^x\d/.test(w) ||                               // x6 etc.
+      /^\d+[A-Z]$/.test(w) ||                         // "24R"
+      w.startsWith("และ") ||                          // "และอิฐ", "และสะดวกสบาย"
+      w.startsWith("หรือ") ||                          // "หรือ..."
+      w.startsWith("เหมาะ") ||                        // "เหมาะสำหรับ..."
+      w.startsWith("ใช้งาน") ||                       // "ใช้งานง่าย", "ใช้งานสะดวก"
+      w.startsWith("พร้อม") ||                        // "พร้อมใช้งาน..."
+      w.startsWith("มาพร้อม") ||                      // "มาพร้อมมอเตอร์..."
+      w.startsWith("สะดวก") ||                        // "สะดวกต่อการใช้งาน"
+      w.startsWith("ประหยัด") ||                      // "ประหยัดไฟ..."
+      w.includes("ได้ทันที") || w.includes("มากกว่า") ||
+      w.includes("ประสิทธิภาพ") || w.includes("ฟังก์ชัน") ||
+      w.includes("BULB") || w.includes("มอเตอร์") || w.includes("วัตต์") ||
+      w.length > 20                                    // ยาวเกิน → ไม่ใช่ keyword
 
     // ชื่อเต็ม
     if (f.name) t.add(f.name)
     // แบรนด์
     if (f.brand) t.add(f.brand)
-    // SKU/รุ่น (ไม่ซ้ำกับแบรนด์)
-    if (f.sku && f.sku !== f.brand) t.add(f.sku)
-    if (f.brand && f.sku && f.brand !== f.sku) t.add(`${f.brand} ${f.sku}`)
+    // SKU/รุ่น — ไม่ซ้ำกับแบรนด์ และ SKU ไม่ขึ้นต้นด้วยแบรนด์
+    const skuIsBrand = !f.sku || f.sku === f.brand || f.sku.startsWith(f.brand)
+    if (f.sku && !skuIsBrand) t.add(f.sku)
+    if (f.brand && f.sku && !skuIsBrand) t.add(`${f.brand} ${f.sku}`)
+    // Model number จากชื่อ (ถ้า SKU ไม่ใช่ model จริง)
+    const modelMatch = f.name.match(/[A-Z]{1,5}[\-]?[A-Z0-9]{3,}[A-Z0-9\-]*/i)
+    if (modelMatch && modelMatch[0] !== f.brand && modelMatch[0] !== f.sku) t.add(modelMatch[0])
+
     // หมวดหมู่
     const cat = CATEGORIES.find((c) => c.value === f.category)?.label
     if (cat) t.add(cat)
 
     // คำจากชื่อสินค้า (ข้าม noise)
     const nameTokens = f.name
-      .split(/[\s\-\/\(\)\"\"]+/)
+      .split(/[\s\-\/\(\)\"\"\[\]【】]+/)
       .map((w) => w.replace(/[,.'"""]+$/g, ""))
-      .filter((w) => w.length >= 2 && !SKIP.has(w.toLowerCase()))
+      .filter((w) => w.length >= 2 && !SKIP.has(w.toLowerCase()) && !FUNC.test(w) && !isNoise(w))
     nameTokens.forEach((w) => t.add(w))
 
-    // ประเภทสินค้า + แบรนด์ (e.g. "ปั๊มดูดโคลน SUMO")
+    // ประเภทสินค้า + แบรนด์ (e.g. "สว่าน EMTOP", "เครื่องเจียร Makita")
     if (f.brand) {
       const typeName = nameTokens.find((w) => /[\u0E00-\u0E7F]/.test(w) && w.length >= 3)
-      if (typeName && typeName !== f.brand) t.add(`${typeName} ${f.brand}`)
+      if (typeName && typeName !== f.brand) {
+        t.add(`${typeName} ${f.brand}`)
+        t.add(`${typeName} ลพบุรี`)           // ← local SEO: "สว่าน ลพบุรี"
+      }
     }
 
-    // คำสำคัญจาก description — เฉพาะคำสั้น 3-15 ตัวอักษร ที่เป็นคำค้นหาได้จริง
+    // คำจาก description — เฉพาะ keyword ที่คนค้นหาจริง (ไม่เอา filler)
+    const isSearchable = (w: string) =>
+      (/[\u0E00-\u0E7F]/.test(w) && w.length >= 4) ||                       // Thai word >= 4 chars
+      (/^[A-Z][A-Za-z0-9\-]+$/.test(w) && w.length >= 3) ||                 // Brand/model
+      (w.length >= 3 && /[\u0E00-\u0E7F]/.test(w) && /[A-Za-z]/.test(w))    // Mixed
     if (f.description) {
-      f.description
-        .split(/[\s\-\/\(\)\"\"✦\n:,，.。]+/)
-        .map((w) => w.replace(/[,.'"""]+$/g, ""))
-        .forEach((w) => {
-          if (w.length >= 3 && w.length <= 15 && !SKIP.has(w.toLowerCase()) && !FUNC.test(w) && !t.has(w)) {
-            t.add(w)
-          }
-        })
+      const descWords = f.description
+        .split(/[\s\-\/\(\)\"\"\[\]【】✦•\n:,，.。;]+/)
+        .map((w) => w.replace(/[,.'"""✦•]+$/g, ""))
+        .filter((w) =>
+          w.length >= 3 && w.length <= 15 &&
+          !SKIP.has(w.toLowerCase()) && !SKIP.has(w) && !FUNC.test(w) &&
+          !isNoise(w) && !t.has(w) && isSearchable(w)
+        )
+      // จำกัดแค่ 4 คำจาก description — เอาเฉพาะ keyword จริงๆ
+      descWords.slice(0, 4).forEach((w) => t.add(w))
     }
 
+    // Default SEO tags — ลพบุรี + ร้าน
+    t.add("ลพบุรี")
     t.add("สามหนึ่งพานิช")
-    t.add("วัสดุก่อสร้าง ลพบุรี")
+    t.add("ร้านสามหนึ่ง")
     return Array.from(t).filter((s) => s.trim().length > 0).slice(0, 20)
   }
 
