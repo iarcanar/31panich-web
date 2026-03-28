@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useBusinessHours } from "@/hooks/useBusinessHours"
 import { PHONE_RAW, LINE_URL } from "@/lib/store-config"
@@ -155,6 +155,42 @@ export default function ChatWidget() {
     }
   }
 
+  // ── Scroll fade: transparent while scrolling, solid when idle ──
+  const [isScrolling, setIsScrolling] = useState(false)
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    function onScroll() {
+      setIsScrolling(true)
+      if (scrollTimer.current) clearTimeout(scrollTimer.current)
+      scrollTimer.current = setTimeout(() => setIsScrolling(false), 600)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      if (scrollTimer.current) clearTimeout(scrollTimer.current)
+    }
+  }, [])
+
+  // ── Random wiggle: subtle nudge at random intervals ──
+  const [wiggle, setWiggle] = useState(false)
+  const delays = useMemo(() => [6000, 10000, 15000], [])
+
+  useEffect(() => {
+    if (panelOpen) return
+    let timer: ReturnType<typeof setTimeout>
+    function scheduleWiggle() {
+      const delay = delays[Math.floor(Math.random() * delays.length)]
+      timer = setTimeout(() => {
+        setWiggle(true)
+        setTimeout(() => setWiggle(false), 600)
+        scheduleWiggle()
+      }, delay)
+    }
+    scheduleWiggle()
+    return () => clearTimeout(timer)
+  }, [panelOpen, delays])
+
   const showSuggestions = messages.length === 1
 
   function handlePhoneClick() {
@@ -171,12 +207,13 @@ export default function ChatWidget() {
       <button
         onClick={() => setPanelOpen(true)}
         style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
-        className={`fixed right-5 z-50 w-14 h-14 rounded-full shadow-2xl shadow-purple-900/40 border bg-purple-950 hover:bg-purple-900 border-purple-400/30 flex items-center justify-center transition-all duration-200 ${
-          panelOpen ? "opacity-0 pointer-events-none scale-75" : "opacity-100 scale-100"
-        }`}
+        className={`fixed right-4 z-50 rounded-full shadow-2xl shadow-purple-900/50 border-2 border-purple-400/60 bg-purple-950/90 hover:bg-purple-900 backdrop-blur-sm flex items-center gap-2 px-4 py-2.5 transition-all duration-500 ${
+          panelOpen ? "opacity-0 pointer-events-none scale-75" : ""
+        } ${isScrolling ? "opacity-30" : "opacity-100"} ${wiggle ? "animate-[wiggle_0.5s_ease-in-out]" : ""}`}
         aria-label="เปิดแชท AI"
       >
-        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <span className="text-white text-sm font-medium whitespace-nowrap">สอบถาม</span>
+        <svg className="w-5 h-5 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
       </button>

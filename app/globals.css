@@ -26,6 +26,14 @@ body {
   animation: fade-in 0.3s ease-out;
 }
 
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px) rotate(-1deg); }
+  40% { transform: translateX(2px) rotate(1deg); }
+  60% { transform: translateX(-1px) rotate(-0.5deg); }
+  80% { transform: translateX(1px) rotate(0.5deg); }
+}
+
 /* Shimmer — ใช้ JS-based animation (BannerShimmer component) */
 .banner-shimmer {
   position: relative;
