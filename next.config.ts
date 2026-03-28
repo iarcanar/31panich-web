@@ -27,6 +27,16 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.imgur.com" },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: "/:path*.(webp|png|jpg|jpeg|svg|ico|woff2)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig

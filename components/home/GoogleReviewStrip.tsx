@@ -1,11 +1,12 @@
 "use client"
 
+import { useMemo } from "react"
 import REVIEWS from "@/data/reviews.json"
 
 const REVIEW_LINK = "https://g.page/r/CQqFVNTPITMGEBM/review"
 
 export default function GoogleReviewStrip() {
-  const loopReviews = [...REVIEWS, ...REVIEWS]
+  const loopReviews = useMemo(() => [...REVIEWS, ...REVIEWS], [])
   const duration = REVIEWS.length * 8
 
   return (

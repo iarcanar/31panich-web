@@ -1,10 +1,36 @@
-import { getProducts, getProductById, getProductsByCategory, CATEGORIES, type Product } from "./products"
+import { getProducts, getProductsByCategory, CATEGORIES, type Product } from "./products"
 import { getCategoryLabel } from "./categories"
 
 interface ScoredProduct {
   product: Product
   score: number
 }
+
+// ─── Module-level cache (ลดการอ่านซ้ำใน API routes) ─────
+let _cachedProducts: Product[] | null = null
+let _cachedCatSummary: string | null = null
+let _cacheTs = 0
+const PRODUCT_CACHE_TTL = 5 * 60 * 1000 // 5 นาที
+
+async function getCachedProducts(): Promise<{ products: Product[]; catSummary: string }> {
+  const now = Date.now()
+  if (_cachedProducts && _cachedCatSummary && now - _cacheTs < PRODUCT_CACHE_TTL) {
+    return { products: _cachedProducts, catSummary: _cachedCatSummary }
+  }
+  const products = await getProducts()
+  const catCountMap: Record<string, number> = {}
+  for (const p of products) {
+    if (p.price > 0 && p.stock > 0) catCountMap[p.category] = (catCountMap[p.category] || 0) + 1
+  }
+  const catSummary = CATEGORIES.map((c) => `- ${c.label} (${catCountMap[c.value] || 0} รายการ)`).join("\n")
+  _cachedProducts = products
+  _cachedCatSummary = catSummary
+  _cacheTs = now
+  return { products, catSummary }
+}
+
+/** ข้อความที่ไม่เกี่ยวกับสินค้า — skip scoring เพื่อประหยัด CPU */
+const NON_PRODUCT_PATTERNS = /^(สวัสดี|หวัดดี|ดีครับ|ดีค่ะ|hello|hi|hey|ขอบคุณ|ขอบใจ|thanks|บาย|บ๊ายบาย|ลาก่อน|เปิดกี่โมง|ปิดกี่โมง|เปิดไหม|วันไหน|อยู่ไหน|แผนที่|ที่อยู่|เบอร์โทร|โทรศัพท์|ไลน์|line|จัดส่ง|ส่งของ|คืนสินค้า|เคลม|ประกัน|warranty|แต้ม|แลกแต้ม|สะสมแต้ม|point|reward|โปรโมชั่น|ลดราคา|คูปอง|coupon|ทำอะไรได้|ช่วยอะไร|คุณเป็นใคร|ชื่ออะไร)$/i
 
 /** Extract key terms from product name for reverse matching (Thai has no spaces) */
 function extractNameTerms(name: string): string[] {
@@ -80,14 +106,15 @@ function scoreProducts(userQuery: string, allProducts: Product[]): ScoredProduct
 
 /** Build product context for AI */
 export async function buildChatContextWithProducts(userQuery: string) {
-  const products = await getProducts()
+  const { products, catSummary } = await getCachedProducts()
 
-  // Category summary (single pass)
-  const catCountMap: Record<string, number> = {}
-  for (const p of products) {
-    if (p.price > 0 && p.stock > 0) catCountMap[p.category] = (catCountMap[p.category] || 0) + 1
+  // Skip scoring for non-product queries (greetings, store info, etc.)
+  const trimmed = userQuery.trim()
+  if (NON_PRODUCT_PATTERNS.test(trimmed)) {
+    return {
+      context: `หมวดหมู่สินค้าในร้าน:\n${catSummary}\n\n(ข้อความนี้ไม่เกี่ยวกับสินค้า)`,
+    }
   }
-  const catSummary = CATEGORIES.map((c) => `- ${c.label} (${catCountMap[c.value] || 0} รายการ)`).join("\n")
 
   const scored = scoreProducts(userQuery, products)
 

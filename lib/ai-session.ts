@@ -7,7 +7,7 @@ interface ChatSession {
 }
 
 const sessions = new Map<string, ChatSession>()
-const MAX_SESSIONS = 50
+const MAX_SESSIONS = 100
 const SESSION_TTL = 10 * 60 * 1000 // 10 minutes
 const MAX_HISTORY_TURNS = 10 // 10 pairs = 20 messages
 
