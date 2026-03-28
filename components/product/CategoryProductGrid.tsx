@@ -480,7 +480,7 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
                 โทร
               </ContactLink>
               <Link
-                href={`/products/${categoryValue}/${encodeURIComponent(p.slug)}`}
+                href={`/products/${p.category}/${encodeURIComponent(p.slug)}`}
                 onClick={(e) => e.stopPropagation()}
                 className="flex-1 flex items-center justify-center gap-1.5 text-cyan-400/70 hover:text-cyan-300 text-xs font-medium px-4 py-2.5 rounded-xl transition-colors"
               >
