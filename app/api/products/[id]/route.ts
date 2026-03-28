@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getSessionUser()
-    if (!user || !canPerform(user.role, "delete")) {
+    if (!user || !canPerform(user.role, "delete-product")) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 })
     }
     const { id } = await params

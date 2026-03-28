@@ -278,7 +278,8 @@ function Barcode({ value }: { value: string }) {
 // ─── Main page ──────────────────────────────────────────
 
 export default function AdminProductsPage() {
-  const { isAdmin } = useAuth()
+  const { user, isAdmin } = useAuth()
+  const canDeleteProduct = isAdmin || user?.role === "manager"
   const [products, setProducts] = useState<Product[]>([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -1771,7 +1772,7 @@ export default function AdminProductsPage() {
                     <th className="text-right px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">ราคา</th>
                     <th className="text-center px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">สต็อก</th>
                     <th className="text-center px-4 py-2.5 text-[10px] font-medium text-[#64748b] uppercase tracking-wider">สถานะ</th>
-                    {isAdmin && <th className="w-20 px-4 py-2.5" />}
+                    {canDeleteProduct && <th className="w-20 px-4 py-2.5" />}
                   </tr>
                 </thead>
                 <tbody>
@@ -1852,7 +1853,7 @@ export default function AdminProductsPage() {
                           )
                         })()}
                       </td>
-                      {isAdmin && (
+                      {canDeleteProduct && (
                         <td className="px-4 py-3">
                           <button
                             onClick={() => handleDelete(p.id)}
