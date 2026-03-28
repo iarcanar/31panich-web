@@ -24,7 +24,7 @@ console.log(`[blob-store] mode=${useRedis ? "redis" : useBlob ? "blob(legacy)" :
 
 // In-memory cache with TTL (helps warm serverless instances)
 const cache = new Map<string, { data: unknown; ts: number }>()
-const CACHE_TTL = 60_000 // 60 seconds
+const CACHE_TTL = 300_000 // 5 minutes (ลด Redis calls สำหรับข้อมูลที่เปลี่ยนไม่บ่อย)
 
 // Per-file write lock to prevent race conditions within the same instance
 const locks = new Map<string, Promise<void>>()

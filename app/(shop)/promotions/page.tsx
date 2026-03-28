@@ -7,7 +7,7 @@ import { getActiveCoupons } from "@/lib/coupons"
 import CouponGrid from "@/components/coupon/CouponGrid"
 import { breadcrumbSchema } from "@/lib/structured-data"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 300 // ISR: revalidate ทุก 5 นาที
 
 export const metadata: Metadata = {
   title: "โปรโมชั่น",

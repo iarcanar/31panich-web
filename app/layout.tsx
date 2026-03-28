@@ -5,13 +5,13 @@ import "./globals.css"
 const notoSansThai = Noto_Sans_Thai({
   subsets: ["thai"],
   variable: "--font-thai",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 })
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],
   variable: "--font-latin",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 })
 
 export const viewport: Viewport = {
@@ -55,6 +55,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="th" className={`${notoSansThai.variable} ${notoSans.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://i.imgur.com" />
+      </head>
       <body>{children}</body>
     </html>
   )

@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { readJSON, writeJSON, withLock } from "./blob-store"
 export { CATEGORIES } from "./categories"
 import { CATEGORIES } from "./categories"
@@ -33,9 +34,10 @@ export type ProductInput = Omit<Product, "id" | "slug" | "createdAt" | "updatedA
 // ─── Data helpers (async, dual-mode via blob-store) ─────
 const FILE = "products.json"
 
-async function readAll(): Promise<Product[]> {
+// React cache() = request-scoped dedup (18 calls → 1 read per render)
+const readAll = cache(async (): Promise<Product[]> => {
   return await readJSON<Product[]>(FILE, [])
-}
+})
 
 async function writeAll(products: Product[]): Promise<void> {
   await writeJSON(FILE, products)

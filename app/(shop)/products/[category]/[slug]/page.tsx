@@ -1,11 +1,18 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { getProductBySlug, getProductsByCategory, CATEGORIES } from "@/lib/products"
+import { getProducts, getProductBySlug, getProductsByCategory, CATEGORIES } from "@/lib/products"
 import { getCatalogById } from "@/lib/catalogs"
 import { breadcrumbSchema } from "@/lib/structured-data"
 import ProductDetailView from "@/components/product/ProductDetailView"
 
+export const revalidate = 3600 // ISR: revalidate ทุก 1 ชั่วโมง
+
 type Props = { params: Promise<{ category: string; slug: string }> }
+
+export async function generateStaticParams() {
+  const products = await getProducts()
+  return products.map((p) => ({ category: p.category, slug: p.slug }))
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params

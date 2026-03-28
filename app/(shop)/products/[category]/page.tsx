@@ -5,7 +5,13 @@ import { getProductsByCategory, getProducts, CATEGORIES } from "@/lib/products"
 import CategoryProductGrid from "@/components/product/CategoryProductGrid"
 import { breadcrumbSchema } from "@/lib/structured-data"
 
+export const revalidate = 3600 // ISR: revalidate ทุก 1 ชั่วโมง
+
 type Props = { params: Promise<{ category: string }> }
+
+export async function generateStaticParams() {
+  return CATEGORIES.map((c) => ({ category: c.value }))
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params
