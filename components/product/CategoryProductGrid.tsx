@@ -134,31 +134,25 @@ export default function CategoryProductGrid({ products, categoryLabel, categoryV
               >
                 <div className="aspect-[4/3] bg-[#1e2035] relative overflow-hidden">
                   {p.image ? (
-                    <Link
-                      href={`/products/${p.category}/${encodeURIComponent(p.slug)}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="block w-full h-full"
-                    >
-                      <Image
-                        src={p.image}
-                        alt={p.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      />
-                    </Link>
+                    <Image
+                      src={p.image}
+                      alt={p.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-gray-600 text-sm">รูปสินค้า</span>
                     </div>
                   )}
                   {discountPct > 0 && (
-                    <div className={`absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md pointer-events-none ${discountPct >= 20 ? "bg-red-500 text-white" : "bg-orange-500 text-white"}`}>
+                    <div className={`absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md ${discountPct >= 20 ? "bg-red-500 text-white" : "bg-orange-500 text-white"}`}>
                       -{discountPct}%
                     </div>
                   )}
                   {p.isNew && (
-                    <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md pointer-events-none bg-emerald-500 text-white">
+                    <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md bg-emerald-500 text-white">
                       NEW
                     </div>
                   )}
@@ -292,14 +286,18 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
       <div className="flex flex-col md:flex-row">
         {/* ─── Image Gallery ─── */}
         <div className="md:w-[45%] lg:w-[40%] bg-[#1a1a28] p-4 md:p-6">
-          {/* Main image */}
-          <div className="aspect-square bg-[#1e2035] rounded-xl relative overflow-hidden">
+          {/* Main image — clickable to detail page */}
+          <Link
+            href={`/products/${p.category}/${encodeURIComponent(p.slug)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="block aspect-square bg-[#1e2035] rounded-xl relative overflow-hidden group/img cursor-pointer"
+          >
             {allImages[selectedImg] ? (
               <Image
                 src={allImages[selectedImg]}
                 alt={p.name}
                 fill
-                className="object-contain p-3"
+                className="object-contain p-3 group-hover/img:scale-105 transition-transform duration-300"
                 sizes="(max-width: 768px) 100vw, 45vw"
               />
             ) : (
@@ -308,11 +306,11 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
               </div>
             )}
             {imgDiscountPct > 0 && (
-              <div className={`absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg ${imgDiscountPct >= 20 ? "bg-red-500" : "bg-orange-500"}`}>
+              <div className={`absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg pointer-events-none ${imgDiscountPct >= 20 ? "bg-red-500" : "bg-orange-500"}`}>
                 -{imgDiscountPct}%
               </div>
             )}
-          </div>
+          </Link>
 
           {/* Thumbnails */}
           {allImages.length > 1 && (
