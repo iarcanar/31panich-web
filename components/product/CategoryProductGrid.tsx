@@ -134,25 +134,31 @@ export default function CategoryProductGrid({ products, categoryLabel, categoryV
               >
                 <div className="aspect-[4/3] bg-[#1e2035] relative overflow-hidden">
                   {p.image ? (
-                    <Image
-                      src={p.image}
-                      alt={p.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    />
+                    <Link
+                      href={`/products/${p.category}/${encodeURIComponent(p.slug)}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="block w-full h-full"
+                    >
+                      <Image
+                        src={p.image}
+                        alt={p.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
+                    </Link>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-gray-600 text-sm">รูปสินค้า</span>
                     </div>
                   )}
                   {discountPct > 0 && (
-                    <div className={`absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md ${discountPct >= 20 ? "bg-red-500 text-white" : "bg-orange-500 text-white"}`}>
+                    <div className={`absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md pointer-events-none ${discountPct >= 20 ? "bg-red-500 text-white" : "bg-orange-500 text-white"}`}>
                       -{discountPct}%
                     </div>
                   )}
                   {p.isNew && (
-                    <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md bg-emerald-500 text-white">
+                    <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md pointer-events-none bg-emerald-500 text-white">
                       NEW
                     </div>
                   )}
@@ -482,10 +488,10 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
               <Link
                 href={`/products/${p.category}/${encodeURIComponent(p.slug)}`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex-1 flex items-center justify-center gap-1.5 text-cyan-400/70 hover:text-cyan-300 text-xs font-medium px-4 py-2.5 rounded-xl transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 text-cyan-400/80 hover:text-cyan-300 text-xs md:text-sm font-medium px-3 md:px-4 py-2 md:py-2.5 rounded-xl bg-[#1a1a28] hover:bg-[#1e1e30] border border-white/10 hover:border-cyan-400/30 transition-all whitespace-nowrap"
               >
-                ดูหน้าเต็ม
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                ดูรายละเอียด
+                <svg className="w-3 h-3 md:w-3.5 md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
