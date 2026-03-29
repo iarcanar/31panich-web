@@ -286,14 +286,18 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
       <div className="flex flex-col md:flex-row">
         {/* ─── Image Gallery ─── */}
         <div className="md:w-[45%] lg:w-[40%] bg-[#1a1a28] p-4 md:p-6">
-          {/* Main image */}
-          <div className="aspect-square bg-[#1e2035] rounded-xl relative overflow-hidden">
+          {/* Main image — clickable to detail page */}
+          <Link
+            href={`/products/${p.category}/${encodeURIComponent(p.slug)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="block aspect-square bg-[#1e2035] rounded-xl relative overflow-hidden group/img"
+          >
             {allImages[selectedImg] ? (
               <Image
                 src={allImages[selectedImg]}
                 alt={p.name}
                 fill
-                className="object-contain p-3"
+                className="object-contain p-3 group-hover/img:scale-105 transition-transform duration-300"
                 sizes="(max-width: 768px) 100vw, 45vw"
               />
             ) : (
@@ -302,11 +306,11 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
               </div>
             )}
             {imgDiscountPct > 0 && (
-              <div className={`absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg ${imgDiscountPct >= 20 ? "bg-red-500" : "bg-orange-500"}`}>
+              <div className={`absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg pointer-events-none ${imgDiscountPct >= 20 ? "bg-red-500" : "bg-orange-500"}`}>
                 -{imgDiscountPct}%
               </div>
             )}
-          </div>
+          </Link>
 
           {/* Thumbnails */}
           {allImages.length > 1 && (
