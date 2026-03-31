@@ -34,8 +34,7 @@ export default function AdminLoginPage() {
         return
       }
 
-      router.push("/admin")
-      router.refresh()
+      window.location.href = "/admin"
     } catch {
       setError("ไม่สามารถเชื่อมต่อได้")
     } finally {

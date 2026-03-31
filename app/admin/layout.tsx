@@ -53,13 +53,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   async function handleLogout() {
     setLoggingOut(true)
+    setUser(null)
     await fetch("/api/admin/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "logout" }),
     })
-    router.push("/admin/login")
-    router.refresh()
+    window.location.href = "/admin/login"
   }
 
   const badge = user ? ROLE_BADGE[user.role] : null
