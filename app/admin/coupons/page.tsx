@@ -441,8 +441,14 @@ export default function AdminCouponsPage() {
       fd.append("cropSize", String(crop.size))
       const res = await fetch("/api/upload", { method: "POST", body: fd })
       const data = await res.json()
-      if (data.url) setForm((prev) => ({ ...prev, image: data.url }))
-    } catch { /* upload failed silently */ }
+      if (data.url) {
+        setForm((prev) => ({ ...prev, image: data.url }))
+      } else {
+        alert(`อัปโหลดไม่สำเร็จ: ${data.error || "unknown error"}`)
+      }
+    } catch (e) {
+      alert(`อัปโหลดไม่สำเร็จ: ${e instanceof Error ? e.message : "network error"}`)
+    }
     setUploadingImage(false)
   }
 
