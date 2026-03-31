@@ -19,6 +19,7 @@ export function useAuth() {
 
 // ─── Nav ───────────────────────────────────────────────
 const NAV = [
+  { href: "/admin", label: "Dashboard", exact: true },
   { href: "/admin/products", label: "สินค้า" },
   { href: "/admin/coupons", label: "คูปอง" },
   { href: "/admin/analytics", label: "Analytics" },
@@ -74,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex items-center justify-between h-10">
               <div className="flex items-center gap-0.5">
                 {NAV.map((item) => {
-                  const active = pathname.startsWith(item.href)
+                  const active = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href)
                   const restricted = "adminOnly" in item && item.adminOnly && !isAdmin
                   return (
                     <Link
