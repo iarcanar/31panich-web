@@ -433,24 +433,44 @@ export default function AdminCouponsPage() {
     setShowCropPicker(false)
     setUploadingImage(true)
     try {
+      // Build Cloudinary transformation for 1:1 crop
+      const transforms = crop.size > 0
+        ? `c_crop,w_${crop.size},h_${crop.size},x_${crop.x},y_${crop.y}/c_fill,w_400,h_400`
+        : "c_fill,w_400,h_400"
+
+      // 1. Get signed params from server (tiny request, no file)
+      const signRes = await fetch("/api/upload/sign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folder: "coupons", transformation: transforms }),
+      })
+      const sign = await signRes.json()
+      if (!sign.signature) throw new Error(sign.error || "Failed to get signature")
+
+      // 2. Upload directly to Cloudinary (no Vercel size limit)
       const fd = new FormData()
       fd.append("file", file)
-      fd.append("folder", "coupons")
-      fd.append("cropX", String(crop.x))
-      fd.append("cropY", String(crop.y))
-      fd.append("cropSize", String(crop.size))
-      const res = await fetch("/api/upload", { method: "POST", body: fd })
-      const text = await res.text()
-      let data: { url?: string; error?: string }
-      try { data = JSON.parse(text) } catch { data = { error: `Server error (${res.status})` } }
-      if (data.url) {
-        const imageUrl = data.url
-        setForm((prev) => ({ ...prev, image: imageUrl }))
+      fd.append("api_key", sign.apiKey)
+      fd.append("timestamp", String(sign.timestamp))
+      fd.append("signature", sign.signature)
+      fd.append("folder", sign.folder)
+      fd.append("format", sign.format)
+      fd.append("quality", sign.quality)
+      if (sign.transformation) fd.append("transformation", sign.transformation)
+
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloudName}/image/upload`, {
+        method: "POST",
+        body: fd,
+      })
+      const result = await uploadRes.json()
+
+      if (result.secure_url) {
+        setForm((prev) => ({ ...prev, image: result.secure_url }))
       } else {
-        alert("อัปโหลดไม่สำเร็จ: " + (data.error || "HTTP " + res.status))
+        alert("อัปโหลดไม่สำเร็จ: " + (result.error?.message || "Cloudinary error"))
       }
     } catch (e) {
-      alert(`อัปโหลดไม่สำเร็จ: ${e instanceof Error ? e.message : "network error"}`)
+      alert("อัปโหลดไม่สำเร็จ: " + (e instanceof Error ? e.message : "network error"))
     }
     setUploadingImage(false)
   }
