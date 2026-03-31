@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
-import { getCoupons, getActiveCoupons, createCoupon } from "@/lib/coupons"
+import { getCoupons, getActiveCoupons, getTestCoupons, createCoupon } from "@/lib/coupons"
 
 export async function GET(req: NextRequest) {
   try {
     const active = req.nextUrl.searchParams.get("active")
-    const coupons = active === "true" ? await getActiveCoupons() : await getCoupons()
+    const test = req.nextUrl.searchParams.get("test")
+    const coupons = test === "true" ? await getTestCoupons() : active === "true" ? await getActiveCoupons() : await getCoupons()
     return NextResponse.json(coupons)
   } catch {
     return NextResponse.json({ error: "internal error" }, { status: 500 })

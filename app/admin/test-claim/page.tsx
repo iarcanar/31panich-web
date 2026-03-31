@@ -9,107 +9,103 @@ const STORAGE_KEY = "claimed_coupons"
 export default function TestClaimPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [loading, setLoading] = useState(true)
-  const [lastAction, setLastAction] = useState("")
+  const [msg, setMsg] = useState("")
   const [refreshKey, setRefreshKey] = useState(0)
+  const [resetting, setResetting] = useState<string | null>(null)
 
   const fetchCoupons = useCallback(async () => {
     setLoading(true)
-    const res = await fetch("/api/coupons?active=true")
+    const res = await fetch("/api/coupons?test=true")
     setCoupons(await res.json())
     setLoading(false)
   }, [])
 
   useEffect(() => { fetchCoupons() }, [fetchCoupons])
 
-  function resetLocalStorage() {
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem("claim_counters")
-    setLastAction("ลบ localStorage แล้ว — รีเฟรชหน้าเพื่อทดสอบใหม่")
-    setRefreshKey((k) => k + 1)
+  function showMsg(text: string) {
+    setMsg(text)
+    setTimeout(() => setMsg(""), 4000)
   }
 
-  async function revertLastClaim(couponId: string) {
-    setLastAction("กำลัง revert...")
+  async function handleReset(c: Coupon) {
+    if (!confirm(`ล้างข้อมูลการรับคูปอง "${c.title}" ทั้งหมด?\ncount จะกลับเป็น 0 และ claim records จะถูกลบ`)) return
+    setResetting(c.id)
     try {
-      const res = await fetch("/api/admin/revert-claim", {
+      const res = await fetch("/api/admin/reset-claims", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ couponId }),
+        body: JSON.stringify({ couponId: c.id }),
       })
       const data = await res.json()
       if (res.ok) {
-        setLastAction(`Revert สำเร็จ — ลบ serial ${data.removedSerial}, count กลับเป็น ${data.newCount}`)
-        // Clear from localStorage too
+        showMsg(`ล้างแล้ว — ลบ ${data.removedCount} records, count = 0`)
+        // Clear localStorage for this coupon
         try {
           const map = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}")
-          delete map[couponId]
+          delete map[c.id]
           localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
         } catch {}
         setRefreshKey((k) => k + 1)
         fetchCoupons()
       } else {
-        setLastAction(`Revert ไม่สำเร็จ: ${data.error}`)
+        showMsg(`ล้างไม่สำเร็จ: ${data.error}`)
       }
     } catch {
-      setLastAction("Revert ไม่สำเร็จ — network error")
+      showMsg("ล้างไม่สำเร็จ — network error")
     }
+    setResetting(null)
   }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-white mb-1">ทดสอบรับคูปอง (Live)</h1>
-        <p className="text-xs text-[#64748b]">หน้านี้แสดงคูปองเหมือนลูกค้าเห็น — กดรับ = นับจริง, serial จริง</p>
-      </div>
-
-      {/* Controls */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <button
-          onClick={resetLocalStorage}
-          className="px-3 py-2 bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-medium rounded-lg hover:bg-red-500/25 cursor-pointer transition-colors"
-        >
-          Reset localStorage (ทดสอบซ้ำ)
-        </button>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-white mb-1">ทดสอบคูปอง</h1>
+          <p className="text-xs text-[#64748b]">แสดงเฉพาะคูปองที่เปิด toggle "ทดสอบ" — รับจริง นับจริง</p>
+        </div>
         <button
           onClick={fetchCoupons}
-          className="px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] text-xs font-medium rounded-lg hover:text-white cursor-pointer transition-colors"
+          className="w-8 h-8 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90"
+          title="รีเฟรช"
         >
-          Refresh คูปอง
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
         </button>
       </div>
 
-      {/* Status */}
-      {lastAction && (
+      {msg && (
         <div className="px-4 py-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-lg text-xs text-cyan-400 mb-4">
-          {lastAction}
+          {msg}
         </div>
       )}
 
-      {/* Coupon cards — exact same as frontend */}
       {loading ? (
         <div className="space-y-4">
           {[1, 2].map((i) => <div key={i} className="h-32 bg-[#1e1e2e] rounded-xl animate-pulse" />)}
         </div>
       ) : coupons.length === 0 ? (
-        <p className="text-sm text-[#64748b] text-center py-12">ไม่มีคูปองที่ active อยู่</p>
+        <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-8 text-center">
+          <p className="text-sm text-[#64748b] mb-2">ไม่มีคูปองที่เปิด toggle "ทดสอบ"</p>
+          <p className="text-xs text-[#475569]">ไปที่หน้าจัดการคูปอง → กดปุ่ม "ทดสอบ" (สีฟ้า) บนคูปองที่ต้องการ</p>
+        </div>
       ) : (
-        <div className="space-y-4" key={refreshKey}>
+        <div className="space-y-6" key={refreshKey}>
           {coupons.map((c) => (
             <div key={c.id}>
-              {/* Real CouponCard — identical to customer view */}
               <CouponCard coupon={c} />
 
-              {/* Admin: revert button */}
-              <div className="flex items-center justify-end gap-2 mt-1.5">
+              {/* Admin controls */}
+              <div className="flex items-center justify-between mt-2 px-1">
                 <span className="text-[10px] text-[#475569]">
-                  count: {c.claimCount}/{c.usageLimit || "∞"}
+                  รับแล้ว {c.claimCount}/{c.usageLimit || "∞"}
                 </span>
                 <button
-                  onClick={() => revertLastClaim(c.id)}
-                  className="text-[10px] text-amber-400/70 hover:text-amber-400 cursor-pointer transition-colors"
+                  onClick={() => handleReset(c)}
+                  disabled={resetting === c.id}
+                  className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 text-[11px] font-medium rounded-lg hover:bg-red-500/20 cursor-pointer transition-colors disabled:opacity-40"
                 >
-                  ↩ revert claim ล่าสุด
+                  {resetting === c.id ? "กำลังล้าง..." : "ล้างข้อมูลการรับทั้งหมด"}
                 </button>
               </div>
             </div>
@@ -117,13 +113,12 @@ export default function TestClaimPage() {
         </div>
       )}
 
-      {/* Info */}
       <div className="mt-8 p-4 bg-[#13131d] border border-[#2a2a3a] rounded-xl text-[11px] text-[#64748b] space-y-1">
-        <p><strong className="text-white/60">วิธีทดสอบ:</strong></p>
-        <p>1. กด "รับคูปอง" → ดูว่าปุ่มขึ้น "กำลังรับ..." แล้ว modal เปิดพร้อม serial จริง</p>
-        <p>2. กด "Reset localStorage" → แล้ว Refresh → กดรับอีกครั้งได้</p>
-        <p>3. กด "↩ revert claim ล่าสุด" → ลบ claim record + ลด count กลับ 1</p>
-        <p>4. ทุกอย่างเป็น live จริง — ระวังทดสอบกับคูปองที่ลูกค้ากำลังใช้อยู่</p>
+        <p><strong className="text-white/60">Flow การทดสอบ:</strong></p>
+        <p>1. สร้างคูปอง → เปิด toggle <span className="text-cyan-400">ทดสอบ</span> (สีฟ้า)</p>
+        <p>2. เข้าหน้านี้ → ทดสอบรับคูปองจนพอใจ</p>
+        <p>3. กด <span className="text-red-400">"ล้างข้อมูลการรับทั้งหมด"</span> → count กลับเป็น 0</p>
+        <p>4. กลับไปหน้าจัดการ → เปิด toggle <span className="text-emerald-400">แสดง</span> (สีเขียว) → ไปหน้าเว็บจริง</p>
       </div>
     </div>
   )

@@ -72,6 +72,17 @@ export async function getAllClaims(): Promise<ClaimRecord[]> {
   return (await readAll()).sort((a, b) => b.claimedAt.localeCompare(a.claimedAt))
 }
 
+/** Remove ALL claims for a coupon (admin reset). Returns number removed. */
+export async function removeAllClaimsForCoupon(couponId: string): Promise<number> {
+  return withLock(FILE, async () => {
+    const claims = await readAll(true)
+    const before = claims.length
+    const filtered = claims.filter((c) => c.couponId !== couponId)
+    await writeAll(filtered)
+    return before - filtered.length
+  })
+}
+
 /** Remove the last claim for a coupon (admin revert). Returns removed record or null. */
 export async function removeLastClaim(couponId: string): Promise<ClaimRecord | null> {
   return withLock(FILE, async () => {

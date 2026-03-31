@@ -15,6 +15,7 @@ export interface Coupon {
   startDate: string
   endDate: string
   isActive: boolean
+  testMode: boolean     // true = แสดงเฉพาะหน้าทดสอบ (/admin/test-claim)
   usageLimit: number
   usageCount: number
   claimCount: number
@@ -25,7 +26,7 @@ export interface Coupon {
   updatedAt: string
 }
 
-export type CouponInput = Omit<Coupon, "id" | "createdAt" | "updatedAt" | "usageCount" | "claimCount" | "stackWithPoints" | "allowRepeatClaim" | "serialPrefix"> & { stackWithPoints?: boolean; allowRepeatClaim?: boolean }
+export type CouponInput = Omit<Coupon, "id" | "createdAt" | "updatedAt" | "usageCount" | "claimCount" | "stackWithPoints" | "allowRepeatClaim" | "testMode" | "serialPrefix"> & { stackWithPoints?: boolean; allowRepeatClaim?: boolean; testMode?: boolean }
 
 // ─── Data helpers (async, dual-mode via blob-store) ─────
 const FILE = "coupons.json"
@@ -83,6 +84,12 @@ export async function getActiveCoupons(): Promise<Coupon[]> {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
+export async function getTestCoupons(): Promise<Coupon[]> {
+  return (await readAll())
+    .filter((c) => c.testMode)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
 export async function getCouponById(id: string): Promise<Coupon | undefined> {
   return (await readAll()).find((c) => c.id === id)
 }
@@ -104,6 +111,7 @@ export async function createCoupon(input: CouponInput): Promise<Coupon> {
       claimCount: 0,
       stackWithPoints: input.stackWithPoints ?? true,
       allowRepeatClaim: input.allowRepeatClaim ?? false,
+      testMode: input.testMode ?? false,
       serialPrefix: await generateSerialPrefix(),
       createdAt: now,
       updatedAt: now,
@@ -148,6 +156,19 @@ export async function incrementClaimCount(id: string): Promise<number> {
     coupons[idx].updatedAt = new Date().toISOString()
     await writeAll(coupons)
     return coupons[idx].claimCount
+  })
+}
+
+/** Reset claimCount to 0 (admin reset all). */
+export async function resetClaimCount(id: string): Promise<void> {
+  await withLock(FILE, async () => {
+    const coupons = await readAll()
+    const idx = coupons.findIndex((c) => c.id === id)
+    if (idx === -1) return
+    coupons[idx].claimCount = 0
+    coupons[idx].usageCount = 0
+    coupons[idx].updatedAt = new Date().toISOString()
+    await writeAll(coupons)
   })
 }
 

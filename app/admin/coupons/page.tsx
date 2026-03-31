@@ -182,9 +182,9 @@ function CouponPreviewCard({ coupon: c }: { coupon: Coupon }) {
 
 // ─── Coupon Row with preview + inline verify ────────────
 
-function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaims }: {
+function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onToggleTest, onShowClaims }: {
   coupon: Coupon; isAdmin: boolean
-  onEdit: () => void; onDelete: () => void; onToggle: () => void
+  onEdit: () => void; onDelete: () => void; onToggle: () => void; onToggleTest: () => void
   onShowClaims: () => void
 }) {
   const [testClaim, setTestClaim] = useState(false)
@@ -258,19 +258,28 @@ function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaim
               </div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <button onClick={() => setTestClaim(true)} className="h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium" title="ทดลองรับคูปอง (ไม่นับจริง)">
-                ทดลองรับ
+              <button onClick={() => setTestClaim(true)} className="h-8 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] hover:text-white flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium" title="ดูตัวอย่าง modal (ไม่นับ)">
+                ดูตัวอย่าง
               </button>
+              <a href="/admin/test-claim" target="_blank" rel="noopener noreferrer" className="h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium no-underline" title="ทดสอบรับจริง (นับจริง + revert ได้)">
+                ทดสอบจริง ↗
+              </a>
               <button onClick={onShowClaims} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer" title="ประวัติการรับ">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </button>
+              <button onClick={onToggleTest} className={`h-8 rounded-lg flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium ${c.testMode ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" : "bg-[#1e1e2e] text-[#64748b] border border-[#2a2a3a]"}`} title={c.testMode ? "ปิดหน้าทดสอบ" : "แสดงที่หน้าทดสอบ"}>
+                <div className={`relative w-7 h-3.5 rounded-full transition-colors ${c.testMode ? "bg-cyan-500" : "bg-[#475569]"}`}>
+                  <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-all ${c.testMode ? "left-[14px]" : "left-0.5"}`} />
+                </div>
+                ทดสอบ
+              </button>
               <button onClick={onToggle} className={`h-8 rounded-lg flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium ${c.isActive ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-[#1e1e2e] text-[#64748b] border border-[#2a2a3a]"}`} title={c.isActive ? "กดเพื่อซ่อนจาก frontend" : "กดเพื่อแสดงบน frontend"}>
                 <div className={`relative w-7 h-3.5 rounded-full transition-colors ${c.isActive ? "bg-emerald-500" : "bg-[#475569]"}`}>
                   <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-all ${c.isActive ? "left-[14px]" : "left-0.5"}`} />
                 </div>
-                {c.isActive ? "แสดง" : "ซ่อน"}
+                แสดง
               </button>
               <button onClick={onEdit} className="h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-white flex items-center gap-1.5 px-3 transition-colors cursor-pointer text-[11px] font-medium" title="แก้ไข">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -396,6 +405,11 @@ export default function AdminCouponsPage() {
 
   async function handleToggleActive(c: Coupon) {
     await fetch(`/api/coupons/${c.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !c.isActive }) })
+    fetchCoupons()
+  }
+
+  async function handleToggleTest(c: Coupon) {
+    await fetch(`/api/coupons/${c.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ testMode: !c.testMode }) })
     fetchCoupons()
   }
 
@@ -640,6 +654,7 @@ export default function AdminCouponsPage() {
             onEdit={() => handleEdit(c)}
             onDelete={() => handleDelete(c.id)}
             onToggle={() => handleToggleActive(c)}
+            onToggleTest={() => handleToggleTest(c)}
             onShowClaims={() => showClaims(c)}
           />
         ))}
