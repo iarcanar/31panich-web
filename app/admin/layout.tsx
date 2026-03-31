@@ -21,7 +21,7 @@ export function useAuth() {
 const NAV = [
   { href: "/admin/products", label: "สินค้า" },
   { href: "/admin/coupons", label: "คูปอง" },
-  { href: "/admin/analytics", label: "Analytics", adminOnly: true },
+  { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/ai-logs", label: "AI Logs", adminOnly: true },
   { href: "/admin/settings", label: "ตั้งค่า", adminOnly: true },
 ]

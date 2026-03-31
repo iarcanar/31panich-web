@@ -14,7 +14,7 @@ interface TimeseriesItem {
 export async function GET(req: NextRequest) {
   try {
     const user = await getSessionUser()
-    if (!user || user.role !== "admin") {
+    if (!user) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 })
     }
 
