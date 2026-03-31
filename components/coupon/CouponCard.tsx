@@ -176,7 +176,7 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
         <div className="flex">
           {/* Left: coupon image with dissolve effect */}
           {coupon.image && (
-            <div className="relative w-24 md:w-28 shrink-0 self-stretch">
+            <div className="relative w-28 md:w-36 shrink-0 self-stretch">
               <Image
                 src={coupon.image}
                 alt=""

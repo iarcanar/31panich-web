@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "itp1.itopfile.com" },
       // Imgur (legacy product images)
       { protocol: "https", hostname: "i.imgur.com" },
+      // Vercel Blob (coupon/product uploads)
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
     ],
   },
   async headers() {
