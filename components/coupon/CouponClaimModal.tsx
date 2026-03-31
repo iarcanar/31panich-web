@@ -145,34 +145,40 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
         },
       })
 
+      const fileName = `coupon-${coupon.code}.jpg`
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent)
+      const isLineOrWebview = /Line|LIFF|FBAN|FBAV|Instagram|Twitter/i.test(navigator.userAgent)
+
+      // Strategy 1: Direct download via <a download> (works on most browsers)
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((b) => b ? resolve(b) : reject(new Error("toBlob failed")), "image/jpeg", 0.92)
       })
 
-      const fileName = `coupon-${coupon.code}.jpg`
-      const isMobile = /Mobi|Android/i.test(navigator.userAgent)
-
-      // 1. Try Web Share API with file (shows native save/share on mobile)
-      if (isMobile && navigator.share) {
-        try {
-          const file = new File([blob], fileName, { type: "image/jpeg" })
-          if (navigator.canShare?.({ files: [file] })) {
-            await navigator.share({ files: [file], title: `คูปอง ${coupon.code}` })
-            return
-          }
-        } catch (e: unknown) {
-          const err = e as { name?: string }
-          if (err?.name === "AbortError") return // user cancelled — that's OK
-          // other share errors → fall through to download
+      if (!isMobile || !isLineOrWebview) {
+        // Normal browser — <a download> works
+        downloadBlob(blob, fileName)
+        if (isMobile) {
+          showSaveMsg("บันทึกแล้ว — ดูได้ในโฟลเดอร์ Downloads")
         }
-      }
-
-      // 2. Download file
-      downloadBlob(blob, fileName)
-
-      // 3. On mobile, show confirmation since download may be invisible
-      if (isMobile) {
-        showSaveMsg("บันทึกแล้ว — ดูได้ในโฟลเดอร์ Downloads")
+      } else {
+        // LINE / in-app browser — <a download> often fails
+        // Open image in new tab → user long-press to save
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.92)
+        const win = window.open()
+        if (win) {
+          win.document.write(`
+            <html><head><title>คูปอง ${coupon.code}</title>
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh}
+            img{max-width:100%;height:auto}p{color:#fff;text-align:center;font:14px sans-serif;padding:12px}</style></head>
+            <body><div><img src="${dataUrl}" alt="coupon"/><p>กดค้างที่ภาพ → บันทึกภาพ</p></div></body></html>
+          `)
+          win.document.close()
+        } else {
+          // Popup blocked — fallback to download
+          downloadBlob(blob, fileName)
+          showSaveMsg("บันทึกแล้ว — ดูได้ในโฟลเดอร์ Downloads")
+        }
       }
     } catch (err) {
       console.error("Save image error:", err)
