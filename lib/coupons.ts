@@ -151,6 +151,34 @@ export async function incrementClaimCount(id: string): Promise<number> {
   })
 }
 
+/**
+ * Atomic claim: check limit + increment in one lock.
+ * Returns { ok, count, soldOut } — if limit reached, ok=false and count is NOT incremented.
+ */
+export async function atomicClaim(id: string): Promise<{ ok: boolean; count: number; soldOut: boolean }> {
+  return withLock(FILE, async () => {
+    const coupons = await readAll()
+    const idx = coupons.findIndex((c) => c.id === id)
+    if (idx === -1) return { ok: false, count: 0, soldOut: false }
+
+    const c = coupons[idx]
+    const currentCount = c.claimCount || 0
+
+    // Check limit INSIDE the lock
+    if (c.usageLimit > 0 && currentCount >= c.usageLimit) {
+      return { ok: false, count: currentCount, soldOut: true }
+    }
+
+    // Increment
+    coupons[idx].claimCount = currentCount + 1
+    coupons[idx].updatedAt = new Date().toISOString()
+    await writeAll(coupons)
+
+    const newCount = coupons[idx].claimCount
+    return { ok: true, count: newCount, soldOut: c.usageLimit > 0 && newCount >= c.usageLimit }
+  })
+}
+
 export async function incrementUsage(id: string): Promise<Coupon | null> {
   return withLock(FILE, async () => {
     const coupons = await readAll()

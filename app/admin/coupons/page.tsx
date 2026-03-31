@@ -642,24 +642,45 @@ export default function AdminCouponsPage() {
             <div className="flex-1 overflow-y-auto p-5">
               {claimHistory.length === 0 ? (
                 <p className="text-center text-[#64748b] text-sm py-8">ยังไม่มีคนรับคูปองนี้</p>
-              ) : (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-[60px_80px_1fr_80px] gap-2 text-[10px] text-[#64748b] uppercase tracking-wider pb-2 border-b border-[#2a2a3a]">
-                    <span>#</span>
-                    <span>Serial</span>
-                    <span>เวลา</span>
-                    <span>IP</span>
-                  </div>
-                  {claimHistory.map((cl, i) => (
-                    <div key={cl.id} className="grid grid-cols-[60px_80px_1fr_80px] gap-2 text-xs text-[#94a3b8] py-1.5 border-b border-[#2a2a3a]/50">
-                      <span className="text-[#64748b]">{i + 1}</span>
-                      <span className="font-mono text-amber-400">{cl.serial}</span>
-                      <span>{new Date(cl.claimedAt).toLocaleString("th-TH", { day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
-                      <span className="font-mono text-[11px]">{cl.ip}</span>
+              ) : (() => {
+                // Count IP occurrences to flag duplicates
+                const ipCount = new Map<string, number>()
+                for (const cl of claimHistory) {
+                  ipCount.set(cl.ip, (ipCount.get(cl.ip) || 0) + 1)
+                }
+                const dupIps = new Set([...ipCount.entries()].filter(([, c]) => c > 1).map(([ip]) => ip))
+
+                return (
+                  <div className="space-y-2">
+                    {dupIps.size > 0 && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-lg mb-2">
+                        <span className="text-amber-400 text-[11px] font-medium">IP ซ้ำ {dupIps.size} รายการ</span>
+                        <span className="text-[10px] text-amber-400/60">(อาจเป็น ISP มือถือแจก IP ซ้ำ หรือคนเดียวกดหลายครั้ง)</span>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-[40px_70px_1fr_90px] gap-2 text-[10px] text-[#64748b] uppercase tracking-wider pb-2 border-b border-[#2a2a3a]">
+                      <span>#</span>
+                      <span>Serial</span>
+                      <span>เวลา</span>
+                      <span>IP</span>
                     </div>
-                  ))}
-                </div>
-              )}
+                    {claimHistory.map((cl, i) => {
+                      const isDup = dupIps.has(cl.ip)
+                      return (
+                        <div key={cl.id} className={`grid grid-cols-[40px_70px_1fr_90px] gap-2 text-xs py-1.5 border-b border-[#2a2a3a]/50 ${isDup ? "bg-amber-500/5" : ""}`}>
+                          <span className="text-[#64748b]">{i + 1}</span>
+                          <span className="font-mono text-amber-400">{cl.serial}</span>
+                          <span className="text-[#94a3b8]">{new Date(cl.claimedAt).toLocaleString("th-TH", { day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                          <span className={`font-mono text-[11px] ${isDup ? "text-amber-400" : "text-[#94a3b8]"}`}>
+                            {cl.ip}
+                            {isDup && <span className="ml-1 text-[9px]">×{ipCount.get(cl.ip)}</span>}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </div>
