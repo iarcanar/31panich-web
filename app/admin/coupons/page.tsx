@@ -116,73 +116,64 @@ function cardFormatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" })
 }
 
-// ─── Mini claim modal preview (matches what customer sees after claiming) ─
+// ─── Frontend-style preview (matches what customer sees on coupon page) ─
 function CouponPreviewCard({ coupon: c }: { coupon: Coupon }) {
   const accent = CARD_ACCENT[c.discountType] || CARD_ACCENT.percent
-  const barcodeRef = useRef<SVGSVGElement>(null)
   const guillocheStyle = {
     backgroundImage: cardWavePattern(accent.waveColor),
     backgroundRepeat: "repeat",
     backgroundSize: "200px 56px",
   }
 
-  useEffect(() => {
-    if (barcodeRef.current && c.code) {
-      try {
-        JsBarcode(barcodeRef.current, c.code, {
-          format: "CODE128", width: 1.2, height: 36,
-          displayValue: false, background: "transparent", lineColor: "#e2e8f0", margin: 0,
-        })
-      } catch { /* invalid code */ }
-    }
-  }, [c.code])
-
   return (
     <div
-      className="relative bg-[#13131d] border border-white/10 rounded-xl overflow-hidden"
+      className={`relative bg-[#1a1a28] border border-dashed rounded-xl overflow-hidden ${accent.border}`}
       style={guillocheStyle}
     >
-      {/* Header: discount + title */}
-      <div className={`${accent.badge.split(" ")[0]} px-3 pt-3 pb-2 text-center border-b border-white/5`}>
-        <div className={`text-sm font-bold ${accent.text}`}>{cardDiscountLabel(c)}</div>
-        <div className="text-[10px] font-medium text-white/80 line-clamp-1 mt-0.5">{c.title}</div>
-      </div>
-
-      {/* Serial example */}
-      <div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-white/[0.03] border-b border-white/5">
-        <div className="text-center">
-          <div className="text-[8px] text-white/40 uppercase">Serial</div>
-          <div className="text-[10px] font-mono font-bold text-white/80">31-{c.serialPrefix || "A"}1</div>
-        </div>
-        <div className="w-px h-5 bg-white/10" />
-        <div className="text-center">
-          <div className="text-[8px] text-white/40 uppercase">รับเมื่อ</div>
-          <div className="text-[9px] text-white/60">ตัวอย่าง</div>
-        </div>
-      </div>
-
-      {/* Barcode */}
-      <div className="px-3 py-2 flex flex-col items-center">
-        <svg ref={barcodeRef} className="w-full max-w-[160px]" />
-        <div className="mt-1 text-[10px] font-mono font-bold text-white/70 tracking-wider">{c.code}</div>
-      </div>
-
-      {/* Mini conditions */}
-      <div className="px-3 pb-2 space-y-0.5">
-        {c.minPurchase > 0 && (
-          <p className="text-[8px] text-white/40">● ขั้นต่ำ {c.minPurchase.toLocaleString()} บาท</p>
+      <div className="flex">
+        {/* Left: coupon image with dissolve */}
+        {c.image && (
+          <div className="relative w-20 shrink-0 self-stretch">
+            <Image src={c.image} alt="" fill className="object-cover" />
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: "linear-gradient(to bottom, transparent 20%, rgba(26,26,40,0.5) 60%, rgba(26,26,40,0.95) 100%)" }}
+            />
+            <div className={`absolute left-0 top-0 bottom-0 w-1 ${accent.bg}`} />
+          </div>
         )}
-        <p className="text-[8px] text-white/40">● ใช้ได้ถึง {cardFormatDate(c.endDate)}</p>
-        {c.stackWithPoints ? (
-          <p className="text-[8px] text-amber-400/70">✦ ใช้กับแต้มได้</p>
-        ) : (
-          <p className="text-[8px] text-white/30">● ใช้กับแต้มไม่ได้</p>
-        )}
-      </div>
 
-      {/* Branding */}
-      <div className="px-3 pb-2 text-center">
-        <p className="text-[7px] text-white/20">สามหนึ่งพานิช — 31panich.co.th</p>
+        {/* Accent stripe when no image */}
+        {!c.image && <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${accent.bg}`} />}
+
+        <div className={`relative flex-1 pr-3 py-3 ${c.image ? "pl-2" : "pl-4"}`}>
+          {/* Discount badge */}
+          <div className="flex items-start justify-between gap-1 mb-1">
+            <span className={`text-sm font-bold ${accent.text}`}>{cardDiscountLabel(c)}</span>
+            <span className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full ${accent.badge}`}>
+              {c.discountType === "percent" ? "%" : c.discountType === "fixed" ? "฿" : "🎁"}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-[11px] font-medium text-white/90 mb-1 line-clamp-2">{c.title}</h3>
+
+          {/* Conditions */}
+          {c.minPurchase > 0 && (
+            <p className="text-[9px] text-white/50 mb-0.5">ซื้อขั้นต่ำ {c.minPurchase.toLocaleString()} บาท</p>
+          )}
+          {c.stackWithPoints ? (
+            <p className="text-[9px] text-amber-400/80">✦ ใช้ร่วมกับโปรรับแต้มสามหนึ่งได้</p>
+          ) : (
+            <p className="text-[9px] text-white/35">ไม่สามารถใช้ร่วมกับโปรรับแต้มสามหนึ่ง</p>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between mt-2 gap-1">
+            <span className="text-[9px] text-white/40">หมดเขต {cardFormatDate(c.endDate)}</span>
+            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold text-white ${accent.bg}`}>รับคูปอง</span>
+          </div>
+        </div>
       </div>
     </div>
   )
