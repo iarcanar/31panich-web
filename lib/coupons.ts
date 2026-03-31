@@ -80,7 +80,7 @@ export async function getCoupons(): Promise<Coupon[]> {
 export async function getActiveCoupons(): Promise<Coupon[]> {
   const now = new Date().toISOString()
   return (await readAll())
-    .filter((c) => c.isActive && c.startDate <= now && c.endDate >= now)
+    .filter((c) => c.isActive && !c.testMode && c.startDate <= now && c.endDate >= now)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 

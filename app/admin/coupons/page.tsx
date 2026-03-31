@@ -76,7 +76,8 @@ const EMPTY_FORM = {
   minPurchase: "0",
   startDate: new Date().toISOString().slice(0, 10),
   endDate: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
-  isActive: true,
+  isActive: false,
+  testMode: true,
   usageLimit: "0",
   stackWithPoints: true,
   allowRepeatClaim: false,
@@ -134,8 +135,8 @@ function CouponPreviewCard({ coupon: c }: { coupon: Coupon }) {
       <div className="flex">
         {/* Left: coupon image with dissolve */}
         {c.image && (
-          <div className="relative w-20 shrink-0 self-stretch">
-            <Image src={c.image} alt="" fill className="object-cover" />
+          <div className="relative w-20 shrink-0 self-stretch min-h-[100px]">
+            <Image src={c.image} alt="" fill className="object-cover" sizes="80px" />
             <div
               className="absolute inset-0 pointer-events-none"
               style={{ background: "linear-gradient(to bottom, transparent 20%, rgba(26,26,40,0.5) 60%, rgba(26,26,40,0.95) 100%)" }}
@@ -360,6 +361,7 @@ export default function AdminCouponsPage() {
       category: form.category || null,
       stackWithPoints: form.stackWithPoints,
       allowRepeatClaim: form.allowRepeatClaim,
+      testMode: form.testMode,
       startDate: new Date(form.startDate).toISOString(),
       endDate: new Date(form.endDate + "T23:59:59").toISOString(),
     }
@@ -388,6 +390,7 @@ export default function AdminCouponsPage() {
       startDate: c.startDate.slice(0, 10),
       endDate: c.endDate.slice(0, 10),
       isActive: c.isActive,
+      testMode: c.testMode ?? false,
       usageLimit: String(c.usageLimit),
       stackWithPoints: c.stackWithPoints ?? true,
       allowRepeatClaim: c.allowRepeatClaim ?? false,
@@ -626,7 +629,8 @@ export default function AdminCouponsPage() {
                 <FieldLabel>จำนวนจำกัด (0 = ไม่จำกัด)</FieldLabel>
                 <TextInput value={form.usageLimit} onChange={(v) => setForm({ ...form, usageLimit: v })} type="number" placeholder="0" />
               </div>
-              <Toggle checked={form.isActive} onChange={(v) => setForm({ ...form, isActive: v })} label="เปิดใช้งาน" color="emerald" />
+              <Toggle checked={form.testMode} onChange={(v) => setForm({ ...form, testMode: v })} label="แสดงหน้าทดสอบ (admin)" color="primary" />
+              <Toggle checked={form.isActive} onChange={(v) => setForm({ ...form, isActive: v })} label="แสดงหน้าเว็บจริง (ลูกค้า)" color="emerald" />
               <Toggle checked={form.stackWithPoints} onChange={(v) => setForm({ ...form, stackWithPoints: v })} label="ใช้ร่วมกับโปรรับแต้มสามหนึ่งได้" color="amber" />
               <Toggle checked={form.allowRepeatClaim} onChange={(v) => setForm({ ...form, allowRepeatClaim: v })} label="อนุญาตรับคูปองซ้ำ (ไม่จำกัดครั้ง)" color="primary" />
             </div>
