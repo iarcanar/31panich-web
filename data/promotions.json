@@ -1,5 +1,18 @@
 [
   {
+    "id": "website-launch-video-2026",
+    "active": true,
+    "order": 0,
+    "image": "/promotions/website-launch.webp",
+    "title": "สามหนึ่งพานิชย้ายบ้านแล้ว!",
+    "subtitle": "จากดอท COM มาเป็นดอท CO ดอท TH — ดูสินค้า สั่งของ สะสมแต้ม ครบจบในเว็บเดียว!",
+    "badge": "NEW",
+    "ctaFacebook": "https://www.facebook.com/share/r/18Ei1gryUT/",
+    "ctaLine": "line",
+    "ctaPhone": "phone",
+    "videoEmbed": "https://www.facebook.com/plugins/video.php?height=476&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F1493724645798076%2F&show_text=false&width=267&t=0"
+  },
+  {
     "id": "bewon-led-2026",
     "active": true,
     "order": 1,

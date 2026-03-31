@@ -11,4 +11,5 @@ export interface Promotion {
   ctaLine?: string
   ctaPhone?: string
   ctaFacebook?: string
+  videoEmbed?: string   // Facebook video embed iframe URL
 }

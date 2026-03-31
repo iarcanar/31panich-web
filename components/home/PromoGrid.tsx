@@ -41,6 +41,40 @@ function PromoCardHero({ promo }: { promo: Promotion }) {
   const Wrapper = promo.link ? Link : "div"
   const wrapperProps = promo.link ? { href: promo.link } : {}
 
+  // Video embed layout: video left + info right
+  if (promo.videoEmbed) {
+    return (
+      <div className="relative rounded-2xl overflow-hidden bg-[#1a1a28] border border-white/10 shadow-lg">
+        {promo.badge && (
+          <span className="absolute top-3 left-3 z-10 bg-red-500 text-white text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-md shadow-lg">
+            {promo.badge}
+          </span>
+        )}
+        <div className="flex flex-col md:flex-row">
+          {/* Video */}
+          <div className="flex justify-center bg-black md:w-[300px] shrink-0">
+            <iframe
+              src={promo.videoEmbed}
+              width={267}
+              height={476}
+              style={{ border: "none", overflow: "hidden" }}
+              scrolling="no"
+              frameBorder={0}
+              allowFullScreen
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            />
+          </div>
+          {/* Info */}
+          <div className="flex-1 flex flex-col justify-center px-5 py-5 md:px-8 md:py-8">
+            <p className="text-white text-base md:text-lg font-bold mb-2">{promo.title}</p>
+            {promo.subtitle && <p className="text-white/50 text-xs md:text-sm mb-4 leading-relaxed">{promo.subtitle}</p>}
+            <PromoCTAs promo={promo} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <Wrapper {...wrapperProps as any} className="relative block rounded-2xl overflow-hidden bg-[#1a1a28] border border-white/10 shadow-lg group">
       <Image
