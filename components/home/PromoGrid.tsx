@@ -48,12 +48,24 @@ function PromoCardHero({ promo }: { promo: Promotion }) {
         {/* Glow border */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-400/50 via-blue-500/30 to-cyan-400/50" />
         <div className="relative m-[2px] rounded-[14px] overflow-hidden bg-gradient-to-br from-[#0e1525] via-[#111827] to-[#0e1525]">
-          {/* Badge */}
+          {/* Badge — top right */}
           {promo.badge && (
-            <span className="absolute top-3 left-3 z-10 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-cyan-500/40">
+            <span className="absolute top-3 right-3 z-10 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-cyan-500/40">
               {promo.badge}
             </span>
           )}
+
+          {/* Watermark pattern — tools & hardware */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.04]">
+            {/* Wrench */}
+            <svg className="absolute -right-4 -bottom-4 w-56 h-56 text-cyan-300 rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" /></svg>
+            {/* Paintbrush */}
+            <svg className="absolute right-1/4 -top-2 w-40 h-40 text-blue-300 -rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8"><path d="M18.37 2.63a1 1 0 00-1.41 0L9 10.59l4.41 4.41 7.96-7.96a1 1 0 000-1.41l-3-3zM2 22l4-4 4.41 4.41" /><path d="M9 10.59L2 22l11.41-7.41" /></svg>
+            {/* Bolt/screw */}
+            <svg className="absolute left-1/3 bottom-4 w-32 h-32 text-cyan-200 rotate-[30deg]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+            {/* Hammer */}
+            <svg className="absolute right-12 top-1/3 w-28 h-28 text-blue-200 -rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8"><path d="M15 12l-8.5 8.5a2.12 2.12 0 01-3-3L12 9" /><path d="M17.64 15L22 10.64a1 1 0 000-1.41L18.77 6a5 5 0 00-6.2-.64L12 6l1 1 3.64 3.64" /></svg>
+          </div>
 
           <div className="flex flex-col md:flex-row">
             {/* Video */}
