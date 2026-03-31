@@ -151,6 +151,19 @@ export async function incrementClaimCount(id: string): Promise<number> {
   })
 }
 
+/** Decrement claimCount by 1 (admin revert). Returns new count. */
+export async function decrementClaimCount(id: string): Promise<number> {
+  return withLock(FILE, async () => {
+    const coupons = await readAll()
+    const idx = coupons.findIndex((c) => c.id === id)
+    if (idx === -1) return 0
+    coupons[idx].claimCount = Math.max(0, (coupons[idx].claimCount || 0) - 1)
+    coupons[idx].updatedAt = new Date().toISOString()
+    await writeAll(coupons)
+    return coupons[idx].claimCount
+  })
+}
+
 /**
  * Atomic claim: check limit + increment in one lock.
  * Returns { ok, count, soldOut } — if limit reached, ok=false and count is NOT incremented.

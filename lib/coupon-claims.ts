@@ -72,6 +72,20 @@ export async function getAllClaims(): Promise<ClaimRecord[]> {
   return (await readAll()).sort((a, b) => b.claimedAt.localeCompare(a.claimedAt))
 }
 
+/** Remove the last claim for a coupon (admin revert). Returns removed record or null. */
+export async function removeLastClaim(couponId: string): Promise<ClaimRecord | null> {
+  return withLock(FILE, async () => {
+    const claims = await readAll(true)
+    // Find last claim for this coupon
+    const forCoupon = claims.filter((c) => c.couponId === couponId)
+    if (forCoupon.length === 0) return null
+    const last = forCoupon[forCoupon.length - 1]
+    const filtered = claims.filter((c) => c.id !== last.id)
+    await writeAll(filtered)
+    return last
+  })
+}
+
 // ─── Helpers ─────────────────────────────────────────────
 
 /** Anonymize IP: keep first 3 octets, replace last with 'x' */
