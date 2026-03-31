@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useState, useEffect } from "react"
+import { useAuth } from "../layout"
 
 interface ChatLogEntry {
   q: string
@@ -18,6 +19,7 @@ interface IpChatLog {
 type ChatLogs = Record<string, IpChatLog>
 
 export default function AiLogsPage() {
+  const { isAdmin } = useAuth()
   const [logs, setLogs] = useState<ChatLogs>({})
   const [loading, setLoading] = useState(true)
   const [expandedIp, setExpandedIp] = useState<string | null>(null)
@@ -85,6 +87,14 @@ export default function AiLogsPage() {
       const d = new Date(t)
       return d.toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "short", timeStyle: "short" })
     } catch { return t }
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <p className="text-sm text-[#64748b]">เฉพาะ Admin เท่านั้น</p>
+      </div>
+    )
   }
 
   return (
