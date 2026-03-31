@@ -218,23 +218,39 @@ function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onShowClaim
                 {c.allowRepeatClaim && <span className="text-[10px] text-sky-400">รับซ้ำได้</span>}
               </div>
               <h3 className="text-sm font-medium text-white truncate">{c.title}</h3>
-              <div className="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-[#64748b]">
-                <span>
-                  {c.discountType === "percent" && `ลด ${c.discountValue}%`}
-                  {c.discountType === "fixed" && `ลด ${c.discountValue} บาท`}
-                  {c.discountType === "gift" && c.giftDescription}
-                </span>
+              <div className="text-[11px] text-[#64748b] mt-1 mb-2">
                 <span>{c.startDate.slice(0, 10)} → {c.endDate.slice(0, 10)}</span>
-                <span>ใช้แล้ว {c.usageCount}{c.usageLimit > 0 ? `/${c.usageLimit}` : ""}</span>
-                <span className="flex items-center gap-1">
-                  รับแล้ว <span className="font-bold text-white">{c.claimCount ?? 0}</span>
-                  {c.usageLimit > 0 && (
-                    <span className={`ml-1 ${(c.usageLimit - (c.claimCount ?? 0)) <= 0 ? "text-red-400 font-bold" : "text-emerald-400"}`}>
-                      (เหลือ {Math.max(0, c.usageLimit - (c.claimCount ?? 0))})
-                    </span>
-                  )}
+                {c.discountType !== "gift" && <span className="ml-3">ลด {c.discountValue}{c.discountType === "percent" ? "%" : " บาท"}</span>}
+                {c.discountType === "gift" && <span className="ml-3">{c.giftDescription}</span>}
+              </div>
+
+              {/* Stats labels */}
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px]">
+                  <span className="text-[#64748b]">รับแล้ว</span>
+                  <span className="font-bold text-white">{c.claimCount ?? 0}</span>
                 </span>
-                <button onClick={onShowClaims} className="text-amber-400 hover:text-amber-300 cursor-pointer">
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px]">
+                  <span className="text-[#64748b]">ใช้แล้ว</span>
+                  <span className="font-bold text-white">{c.usageCount}</span>
+                </span>
+                {c.usageLimit > 0 && (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px]">
+                    <span className="text-[#64748b]">จำกัด</span>
+                    <span className="font-bold text-white">{c.usageLimit}</span>
+                  </span>
+                )}
+                {c.usageLimit > 0 && (
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold ${
+                    (c.usageLimit - (c.claimCount ?? 0)) <= 0
+                      ? "bg-red-500/15 border border-red-500/30 text-red-400"
+                      : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                  }`}>
+                    <span className="font-normal text-inherit/70">เหลือ</span>
+                    {Math.max(0, c.usageLimit - (c.claimCount ?? 0))}
+                  </span>
+                )}
+                <button onClick={onShowClaims} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[11px] font-medium hover:bg-amber-500/20 cursor-pointer transition-colors">
                   ดูประวัติ
                 </button>
               </div>
@@ -411,7 +427,14 @@ export default function AdminCouponsPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-white">จัดการคูปอง</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold text-white">จัดการคูปอง</h1>
+          <button onClick={fetchCoupons} className="w-8 h-8 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90" title="รีเฟรชข้อมูล">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
         {!showForm && (
           <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer">
             + สร้างคูปอง
