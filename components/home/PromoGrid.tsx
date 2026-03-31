@@ -41,34 +41,61 @@ function PromoCardHero({ promo }: { promo: Promotion }) {
   const Wrapper = promo.link ? Link : "div"
   const wrapperProps = promo.link ? { href: promo.link } : {}
 
-  // Video embed layout: video left + info right
+  // Video embed layout: vibrant gradient card
   if (promo.videoEmbed) {
     return (
-      <div className="relative rounded-2xl overflow-hidden bg-[#1a1a28] border border-white/10 shadow-lg">
-        {promo.badge && (
-          <span className="absolute top-3 left-3 z-10 bg-red-500 text-white text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-md shadow-lg">
-            {promo.badge}
-          </span>
-        )}
-        <div className="flex flex-col md:flex-row">
-          {/* Video */}
-          <div className="flex justify-center bg-black md:w-[300px] shrink-0">
-            <iframe
-              src={promo.videoEmbed}
-              width={267}
-              height={476}
-              style={{ border: "none", overflow: "hidden" }}
-              scrolling="no"
-              frameBorder={0}
-              allowFullScreen
-              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-            />
-          </div>
-          {/* Info */}
-          <div className="flex-1 flex flex-col justify-center px-5 py-5 md:px-8 md:py-8">
-            <p className="text-white text-base md:text-lg font-bold mb-2">{promo.title}</p>
-            {promo.subtitle && <p className="text-white/50 text-xs md:text-sm mb-4 leading-relaxed">{promo.subtitle}</p>}
-            <PromoCTAs promo={promo} />
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-purple-500/20">
+        {/* Gradient border glow */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 via-cyan-500/20 to-amber-500/20 rounded-2xl" />
+        <div className="relative m-[1px] rounded-2xl overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16162a] to-[#1a1a28]">
+          {/* Badge */}
+          {promo.badge && (
+            <span className="absolute top-3 left-3 z-10 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-red-500/40 animate-pulse">
+              {promo.badge}
+            </span>
+          )}
+
+          <div className="flex flex-col md:flex-row">
+            {/* Video */}
+            <div className="flex justify-center bg-black/50 md:w-[300px] shrink-0 relative">
+              <iframe
+                src={promo.videoEmbed}
+                width={267}
+                height={476}
+                style={{ border: "none", overflow: "hidden" }}
+                scrolling="no"
+                frameBorder={0}
+                allowFullScreen
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              />
+              {/* Fade edge into info */}
+              <div className="hidden md:block absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-[#16162a]" />
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 flex flex-col justify-center px-5 py-6 md:px-10 md:py-8 relative">
+              {/* Decorative accent */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-1/2 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative">
+                <p className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 text-xl md:text-2xl font-black mb-3 leading-tight">
+                  {promo.title}
+                </p>
+                {promo.subtitle && (
+                  <p className="text-white/60 text-xs md:text-sm mb-5 leading-relaxed max-w-md">
+                    {promo.subtitle}
+                  </p>
+                )}
+
+                {/* URL highlight */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 mb-5">
+                  <span className="text-cyan-400 text-xs md:text-sm font-bold tracking-wide">WWW.31PANICH.CO.TH</span>
+                </div>
+
+                <PromoCTAs promo={promo} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
