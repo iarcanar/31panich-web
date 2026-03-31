@@ -35,20 +35,6 @@ export function getClaimedInfo(id: string): ClaimedInfo | null {
   return getClaimedMap()[id] ?? null
 }
 
-/** Generate a per-device claim number from localStorage counter */
-function getNextClaimNumber(couponId: string): number {
-  const key = "claim_counters"
-  try {
-    const counters: Record<string, number> = JSON.parse(localStorage.getItem(key) || "{}")
-    const next = (counters[couponId] || 0) + 1
-    counters[couponId] = next
-    localStorage.setItem(key, JSON.stringify(counters))
-    return next
-  } catch {
-    return Math.floor(Math.random() * 900) + 100
-  }
-}
-
 // ─── Accent colors by discount type ────────────────────
 const ACCENT: Record<string, { border: string; bg: string; text: string; badge: string; waveColor: string }> = {
   percent: { border: "border-orange-500/30", bg: "bg-orange-500", text: "text-orange-400", badge: "bg-orange-500/20 text-orange-300", waveColor: "251,146,60" },
@@ -57,7 +43,6 @@ const ACCENT: Record<string, { border: string; bg: string; text: string; badge: 
 }
 
 // SVG wave pattern for banknote-style guilloche watermark
-// เส้นโค้ง 8 เส้นถี่เสมอกัน ไล่ opacity gradient จากบนลงล่าง 0.12→0.06
 function wavePatternUrl(rgb: string): string {
   const lines = 8
   const h = 56
@@ -91,6 +76,8 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
   const [claimInfo, setClaimInfo] = useState<ClaimedInfo | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [liveClaimCount, setLiveClaimCount] = useState(coupon.claimCount ?? 0)
+  const [claiming, setClaiming] = useState(false)
+  const [claimError, setClaimError] = useState("")
 
   const accent = ACCENT[coupon.discountType] || ACCENT.percent
 
@@ -113,30 +100,49 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
   // รับไปแล้ว (ในเครื่องนี้) และไม่อนุญาตรับซ้ำ
   const alreadyClaimed = claimed && !coupon.allowRepeatClaim
   // สถานะ disabled (แสดงแต่กดไม่ได้)
-  const disabled = soldOut || alreadyClaimed
+  const disabled = soldOut || alreadyClaimed || claiming
 
-  function handleClaim() {
+  async function handleClaim() {
     if (disabled) return
-    const prefix = coupon.serialPrefix || "A"
-    const claimNum = getNextClaimNumber(coupon.id)
-    const serial = `31-${prefix}${claimNum}`
-    const claimedAt = new Date().toISOString()
+    setClaiming(true)
+    setClaimError("")
 
-    const info: ClaimedInfo = { serial, claimedAt }
-    markClaimed(coupon.id, info)
-    setClaimed(true)
-    setClaimInfo(info)
-    setShowModal(true)
+    try {
+      // ① เรียก API ก่อน — server ตรวจ limit + สร้าง serial จริง
+      const res = await fetch("/api/coupons/claim-count", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: coupon.id }),
+      })
+      const data = await res.json()
 
-    // ส่งนับไป backend + ตรวจ limit
-    fetch("/api/coupons/claim-count", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: coupon.id }),
-    })
-      .then((r) => r.json())
-      .then((data) => { if (typeof data.count === "number") setLiveClaimCount(data.count) })
-      .catch(() => {})
+      if (!res.ok) {
+        // Server ปฏิเสธ
+        if (data.soldOut) {
+          setLiveClaimCount(data.count ?? coupon.usageLimit)
+          setClaimError("คูปองหมดแล้ว!")
+        } else {
+          setClaimError("เกิดข้อผิดพลาด ลองอีกครั้ง")
+        }
+        return
+      }
+
+      // ② สำเร็จ — ใช้ serial จาก server
+      const serial = data.serial || `31-${coupon.serialPrefix || "A"}${data.count}`
+      const claimedAt = new Date().toISOString()
+      const info: ClaimedInfo = { serial, claimedAt }
+
+      // ③ บันทึก localStorage + เปิด Modal
+      markClaimed(coupon.id, info)
+      setClaimed(true)
+      setClaimInfo(info)
+      setShowModal(true)
+      if (typeof data.count === "number") setLiveClaimCount(data.count)
+    } catch {
+      setClaimError("ไม่สามารถเชื่อมต่อได้ ลองอีกครั้ง")
+    } finally {
+      setClaiming(false)
+    }
   }
 
   // Banknote-style wave guilloche
@@ -150,11 +156,11 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
     <>
       <div
         className={`relative bg-[#1a1a28] border border-dashed rounded-xl overflow-hidden
-          ${accent.border} transition-all ${disabled ? "opacity-50" : "hover:border-white/25"}`}
+          ${accent.border} transition-all ${disabled && !claiming ? "opacity-50" : "hover:border-white/25"}`}
         style={guillocheStyle}
       >
         {/* Disabled overlay */}
-        {disabled && (
+        {(soldOut || alreadyClaimed) && !claiming && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <span className="text-red-500 text-2xl font-bold -rotate-12 border-2 border-red-500/60 px-4 py-1 rounded-lg bg-black/40 backdrop-blur-sm">
               {soldOut ? "หมดแล้ว" : "รับไปแล้ว"}
@@ -227,6 +233,11 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
               <p className="text-xs text-white/35 mb-0.5">ไม่สามารถใช้ร่วมกับโปรรับแต้มสามหนึ่ง</p>
             )}
 
+            {/* Error message */}
+            {claimError && (
+              <p className="text-xs text-red-400 mt-1 mb-0.5">{claimError}</p>
+            )}
+
             {/* Footer: expiry + CTA */}
             <div className="flex items-center justify-between mt-3 gap-2">
               <span className="text-[11px] text-white/40">
@@ -238,7 +249,7 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
                 className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
                   ${disabled ? "bg-gray-600 cursor-not-allowed opacity-50" : `${accent.bg} hover:brightness-110 active:scale-95`}`}
               >
-                {disabled ? (soldOut ? "หมดแล้ว" : "รับแล้ว") : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
+                {claiming ? "กำลังรับ..." : disabled ? (soldOut ? "หมดแล้ว" : "รับแล้ว") : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
               </button>
             </div>
           </div>

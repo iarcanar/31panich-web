@@ -33,15 +33,19 @@ export async function POST(req: NextRequest) {
       }, { status: result.soldOut ? 409 : 404 })
     }
 
-    // บันทึก claim record สำหรับ admin ดูประวัติ
+    // บันทึก claim record + ส่ง serial กลับ
     const coupon = await getCouponById(id)
+    let serial = ""
     if (coupon) {
       const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown"
       const ua = req.headers.get("user-agent") || "unknown"
-      await addClaim(id, coupon.code, coupon.serialPrefix || "A", ip, ua).catch(() => {})
+      try {
+        const record = await addClaim(id, coupon.code, coupon.serialPrefix || "A", ip, ua)
+        serial = record.serial
+      } catch {}
     }
 
-    return NextResponse.json({ count: result.count, soldOut: result.soldOut })
+    return NextResponse.json({ count: result.count, soldOut: result.soldOut, serial })
   } catch {
     return NextResponse.json({ error: "failed" }, { status: 500 })
   }
