@@ -3,94 +3,154 @@
 import { useState, useEffect, useCallback } from "react"
 
 // ─── Types ────────────────────────────────────────────
-interface TimeseriesItem { key: string; total: number; devices?: number }
-interface RankedItem { key: string; value: number }
+interface TimeseriesItem { key: string; views: number; visitors: number; bounceRate: number }
+interface Summary {
+  totalViews: number
+  totalVisitors: number
+  avgBounceRate: number
+  peakTime: string | null
+  peakViews: number
+  dataPoints: number
+}
 interface AnalyticsData {
   configured: boolean
   period: string
-  timeseries?: { data: TimeseriesItem[] }
-  topPages?: { data: RankedItem[] }
-  topReferrers?: { data: RankedItem[] }
-  countries?: { data: RankedItem[] }
-  devices?: { data: RankedItem[] }
-  browsers?: { data: RankedItem[] }
-  os?: { data: RankedItem[] }
-  timeseriesError?: string
+  summary?: Summary
+  timeseries?: TimeseriesItem[]
+  error?: string
 }
 
 // ─── Helpers ──────────────────────────────────────────
-function formatNum(n: number) { return n.toLocaleString("th-TH") }
+function fmtNum(n: number) { return n.toLocaleString("th-TH") }
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function fmtTime(iso: string, period: string) {
+  const d = new Date(iso)
+  if (period === "24h") return d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
+  return d.toLocaleDateString("th-TH", { day: "numeric", month: "short" })
+}
+
+function StatCard({ label, value, sub, color = "white" }: { label: string; value: string | number; sub?: string; color?: string }) {
+  const colorClass: Record<string, string> = {
+    white: "text-white",
+    cyan: "text-cyan-400",
+    amber: "text-amber-400",
+    emerald: "text-emerald-400",
+  }
   return (
     <div className="bg-[#1e1e2e] border border-[#2a2a3a] rounded-xl p-4">
       <div className="text-[11px] text-[#64748b] mb-1">{label}</div>
-      <div className="text-2xl font-bold text-white">{typeof value === "number" ? formatNum(value) : value}</div>
+      <div className={`text-2xl font-bold ${colorClass[color] || "text-white"}`}>
+        {typeof value === "number" ? fmtNum(value) : value}
+      </div>
       {sub && <div className="text-[10px] text-[#64748b] mt-1">{sub}</div>}
     </div>
   )
 }
 
-function RankedList({ title, items }: { title: string; items: RankedItem[] }) {
-  if (!items?.length) return null
-  const max = Math.max(...items.map((i) => i.value || 0))
-  return (
-    <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-4">
-      <h3 className="text-xs font-medium text-[#94a3b8] mb-3">{title}</h3>
-      <div className="space-y-2">
-        {items.map((item, i) => {
-          const label = item.key || "(ไม่ทราบ)"
-          const val = item.value || 0
-          const pct = max > 0 ? (val / max) * 100 : 0
-          return (
-            <div key={i}>
-              <div className="flex items-center justify-between text-[11px] mb-0.5">
-                <span className="text-white/80 truncate mr-2">{label || "(direct)"}</span>
-                <span className="text-white font-medium shrink-0">{formatNum(val)}</span>
-              </div>
-              <div className="h-1.5 bg-[#1e1e2e] rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-500/60 rounded-full transition-all" style={{ width: `${pct}%` }} />
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
+// ─── Bar chart ────────────────────────────────────────
+function BarChart({ data, period }: { data: TimeseriesItem[]; period: string }) {
+  if (!data?.length) return <div className="text-xs text-[#64748b] py-12 text-center">ยังไม่มีข้อมูล — รอสักครู่หลังเปิด Analytics</div>
 
-// ─── Mini bar chart ───────────────────────────────────
-function MiniChart({ data }: { data: TimeseriesItem[] }) {
-  if (!data?.length) return <div className="text-xs text-[#64748b] py-8 text-center">ยังไม่มีข้อมูล</div>
-  const max = Math.max(...data.map((d) => d.total), 1)
-  const barCount = data.length
+  // Aggregate by day if 7d/30d (raw is hourly)
+  let display = data
+  if (period !== "24h") {
+    const dayMap = new Map<string, { views: number; visitors: number }>()
+    for (const d of data) {
+      const day = d.key.slice(0, 10)
+      const existing = dayMap.get(day) || { views: 0, visitors: 0 }
+      existing.views += d.views
+      existing.visitors += d.visitors
+      dayMap.set(day, existing)
+    }
+    display = Array.from(dayMap.entries()).map(([key, v]) => ({
+      key, views: v.views, visitors: v.visitors, bounceRate: 0,
+    }))
+  }
+
+  const max = Math.max(...display.map((d) => d.views), 1)
+
   return (
     <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-4">
-      <h3 className="text-xs font-medium text-[#94a3b8] mb-3">Page Views</h3>
-      <div className="flex items-end gap-px h-32">
-        {data.map((d, i) => {
-          const h = (d.total / max) * 100
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-medium text-[#94a3b8]">Page Views</h3>
+        <div className="flex items-center gap-3 text-[10px] text-[#64748b]">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-cyan-500/60" />Views</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-amber-500/60" />Visitors</span>
+        </div>
+      </div>
+      <div className="flex items-end gap-px h-40">
+        {display.map((d, i) => {
+          const hViews = (d.views / max) * 100
+          const hVisitors = max > 0 ? (d.visitors / max) * 100 : 0
           return (
             <div key={i} className="flex-1 flex flex-col items-center justify-end group relative">
-              <div
-                className="w-full bg-cyan-500/50 hover:bg-cyan-400/70 rounded-t transition-colors min-h-[2px]"
-                style={{ height: `${Math.max(h, 1.5)}%` }}
-              />
+              {/* Visitors bar (behind) */}
+              <div className="w-full flex items-end gap-px">
+                <div
+                  className="flex-1 bg-cyan-500/50 hover:bg-cyan-400/70 rounded-t transition-colors min-h-[2px]"
+                  style={{ height: `${Math.max(hViews, 1.5)}%` }}
+                />
+              </div>
               {/* Tooltip */}
-              <div className="absolute bottom-full mb-1 hidden group-hover:block z-10">
+              <div className="absolute bottom-full mb-1 hidden group-hover:block z-10 pointer-events-none">
                 <div className="bg-[#0a0a0f] border border-[#2a2a3a] rounded px-2 py-1 text-[9px] text-white whitespace-nowrap shadow-lg">
-                  {d.key.slice(5, 10)} — {formatNum(d.total)} views
+                  <div>{fmtTime(d.key, period)}</div>
+                  <div className="text-cyan-400">{fmtNum(d.views)} views</div>
+                  <div className="text-amber-400">{fmtNum(d.visitors)} visitors</div>
                 </div>
               </div>
             </div>
           )
         })}
       </div>
-      {/* X-axis labels */}
+      {/* X-axis */}
       <div className="flex justify-between mt-1.5">
-        <span className="text-[9px] text-[#64748b]">{data[0]?.key.slice(5, 10)}</span>
-        {barCount > 2 && <span className="text-[9px] text-[#64748b]">{data[Math.floor(barCount / 2)]?.key.slice(5, 10)}</span>}
-        <span className="text-[9px] text-[#64748b]">{data[barCount - 1]?.key.slice(5, 10)}</span>
+        <span className="text-[9px] text-[#64748b]">{fmtTime(display[0]?.key, period)}</span>
+        {display.length > 4 && <span className="text-[9px] text-[#64748b]">{fmtTime(display[Math.floor(display.length / 2)]?.key, period)}</span>}
+        <span className="text-[9px] text-[#64748b]">{fmtTime(display[display.length - 1]?.key, period)}</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Hourly heatmap ───────────────────────────────────
+function HourlyHeatmap({ data }: { data: TimeseriesItem[] }) {
+  if (!data?.length) return null
+  // Aggregate views by hour of day
+  const hourly = new Array(24).fill(0)
+  for (const d of data) {
+    const h = new Date(d.key).getHours()
+    hourly[h] += d.views
+  }
+  const max = Math.max(...hourly, 1)
+
+  return (
+    <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-4">
+      <h3 className="text-xs font-medium text-[#94a3b8] mb-3">ช่วงเวลาที่มีคนเข้าชม</h3>
+      <div className="flex gap-0.5">
+        {hourly.map((v, h) => {
+          const intensity = max > 0 ? v / max : 0
+          return (
+            <div key={h} className="flex-1 flex flex-col items-center group relative">
+              <div
+                className="w-full h-8 rounded-sm transition-colors"
+                style={{ backgroundColor: `rgba(34,211,238,${0.08 + intensity * 0.7})` }}
+              />
+              <div className="absolute bottom-full mb-1 hidden group-hover:block z-10 pointer-events-none">
+                <div className="bg-[#0a0a0f] border border-[#2a2a3a] rounded px-2 py-1 text-[9px] text-white whitespace-nowrap shadow-lg">
+                  {String(h).padStart(2, "0")}:00 — {fmtNum(v)} views
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div className="flex justify-between mt-1">
+        <span className="text-[8px] text-[#64748b]">00:00</span>
+        <span className="text-[8px] text-[#64748b]">06:00</span>
+        <span className="text-[8px] text-[#64748b]">12:00</span>
+        <span className="text-[8px] text-[#64748b]">18:00</span>
+        <span className="text-[8px] text-[#64748b]">23:00</span>
       </div>
     </div>
   )
@@ -121,10 +181,7 @@ export default function AdminAnalyticsPage() {
 
   useEffect(() => { fetchData(period) }, [period, fetchData])
 
-  // Computed totals
-  const totalViews = data?.timeseries?.data?.reduce((s, d) => s + d.total, 0) ?? 0
-  const totalVisitors = data?.timeseries?.data?.reduce((s, d) => s + (d.devices ?? 0), 0) ?? 0
-  const topPage = data?.topPages?.data?.[0]
+  const s = data?.summary
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -142,7 +199,6 @@ export default function AdminAnalyticsPage() {
             </svg>
           </button>
         </div>
-        {/* Period selector */}
         <div className="flex gap-1 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg p-0.5">
           {PERIODS.map((p) => (
             <button
@@ -160,60 +216,55 @@ export default function AdminAnalyticsPage() {
 
       {/* Loading */}
       {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-[#1e1e2e] border border-[#2a2a3a] rounded-xl animate-pulse" />
-          ))}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 bg-[#1e1e2e] border border-[#2a2a3a] rounded-xl animate-pulse" />
+            ))}
+          </div>
+          <div className="h-48 bg-[#1e1e2e] border border-[#2a2a3a] rounded-xl animate-pulse" />
         </div>
       )}
 
-      {/* Not configured */}
-      {!loading && !data?.configured && (
+      {/* Error / not configured */}
+      {!loading && (!data?.configured || data?.error) && (
         <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-8 text-center">
-          <p className="text-sm text-[#64748b] mb-2">ยังไม่ได้เชื่อมต่อ Vercel Analytics</p>
-          <p className="text-xs text-[#475569]">ต้องเปิดใช้ Web Analytics ใน Vercel Dashboard ก่อน</p>
-          {data?.timeseriesError && (
-            <p className="text-xs text-red-400/70 mt-2 font-mono">{data.timeseriesError}</p>
-          )}
+          <p className="text-sm text-[#64748b] mb-2">ยังไม่สามารถดึงข้อมูล Analytics ได้</p>
+          {data?.error && <p className="text-xs text-red-400/70 mt-2 font-mono">{data.error}</p>}
+          <p className="text-xs text-[#475569] mt-2">ตรวจสอบว่าเปิด Web Analytics ใน Vercel Dashboard แล้ว</p>
         </div>
       )}
 
-      {/* Data loaded */}
-      {!loading && data?.configured && (
+      {/* Data */}
+      {!loading && data?.configured && !data?.error && s && (
         <>
           {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <StatCard label="Page Views" value={totalViews} sub={`ช่วง ${PERIODS.find((p) => p.value === period)?.label}`} />
-            <StatCard label="Visitors" value={totalVisitors} sub="จำนวนอุปกรณ์ที่เข้าชม" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <StatCard label="Page Views" value={s.totalViews} color="cyan" sub={PERIODS.find((p) => p.value === period)?.label} />
+            <StatCard label="Visitors" value={s.totalVisitors} color="amber" sub="จำนวนอุปกรณ์" />
+            <StatCard label="Bounce Rate" value={`${s.avgBounceRate}%`} color={s.avgBounceRate > 70 ? "amber" : "emerald"} sub="เฉลี่ย" />
             <StatCard
-              label="หน้ายอดนิยม"
-              value={topPage?.key || "-"}
-              sub={topPage ? `${formatNum(topPage.value)} views` : undefined}
+              label="Peak"
+              value={s.peakViews}
+              color="white"
+              sub={s.peakTime ? fmtTime(s.peakTime, period) : "-"}
             />
           </div>
 
-          {/* Timeseries chart */}
+          {/* Bar chart */}
           <div className="mb-6">
-            <MiniChart data={data.timeseries?.data || []} />
+            <BarChart data={data.timeseries || []} period={period} />
           </div>
 
-          {/* Grid: pages, referrers, countries, devices */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <RankedList title="หน้าเว็บยอดนิยม" items={data.topPages?.data || []} />
-            <RankedList title="แหล่งที่มา (Referrer)" items={data.topReferrers?.data || []} />
-            <RankedList title="ประเทศ" items={data.countries?.data || []} />
-            <RankedList title="อุปกรณ์" items={data.devices?.data || []} />
-            <RankedList title="เบราว์เซอร์" items={data.browsers?.data || []} />
-            <RankedList title="ระบบปฏิบัติการ" items={data.os?.data || []} />
+          {/* Hourly heatmap */}
+          <div className="mb-6">
+            <HourlyHeatmap data={data.timeseries || []} />
           </div>
 
-          {/* Error hint */}
-          {data.timeseriesError && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-xs text-amber-400">
-              API Error: {data.timeseriesError}
-              <p className="text-amber-400/60 mt-1">อาจต้องเปิด Web Analytics ใน Vercel Dashboard → Project → Analytics ก่อน</p>
-            </div>
-          )}
+          {/* Data info */}
+          <div className="text-[10px] text-[#475569] text-center">
+            ข้อมูลจาก Vercel Web Analytics — {s.dataPoints} data points
+          </div>
         </>
       )}
     </div>
