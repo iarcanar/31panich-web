@@ -2,7 +2,6 @@ import Image from "next/image"
 import Link from "next/link"
 import ContactLink from "@/components/ui/ContactLink"
 import SectionHeading from "@/components/ui/SectionHeading"
-import ScrollGlowFrame from "@/components/ui/ScrollGlowFrame"
 import { PHONE } from "@/lib/store-config"
 import type { Promotion } from "@/types/promotion"
 
@@ -42,14 +41,16 @@ function PromoCardHero({ promo }: { promo: Promotion }) {
   const Wrapper = promo.link ? Link : "div"
   const wrapperProps = promo.link ? { href: promo.link } : {}
 
-  // Video embed layout: ScrollGlowFrame + vibrant card
+  // Video embed layout: cyan glow border card
   if (promo.videoEmbed) {
     return (
-      <ScrollGlowFrame offsetTop={-20} color={[255, 140, 50]} glowIntensity={1.8} glowSpread={100} glowAnchor={30}>
-        <div className="relative rounded-b-2xl overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16162a] to-[#1a1a28]">
+      <div className="relative rounded-2xl shadow-xl shadow-cyan-500/15">
+        {/* Glow border */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-400/50 via-blue-500/30 to-cyan-400/50" />
+        <div className="relative m-[2px] rounded-[14px] overflow-hidden bg-gradient-to-br from-[#0e1525] via-[#111827] to-[#0e1525]">
           {/* Badge */}
           {promo.badge && (
-            <span className="absolute top-3 left-3 z-10 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-red-500/40">
+            <span className="absolute top-3 left-3 z-10 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-cyan-500/40">
               {promo.badge}
             </span>
           )}
@@ -67,17 +68,17 @@ function PromoCardHero({ promo }: { promo: Promotion }) {
                 allowFullScreen
                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
               />
-              <div className="hidden md:block absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-[#16162a]" />
+              <div className="hidden md:block absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-[#111827]" />
             </div>
 
             {/* Info */}
             <div className="flex-1 flex flex-col justify-center px-5 py-6 md:px-10 md:py-8 relative overflow-hidden">
               {/* Glow orbs */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/8 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-amber-500/6 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/8 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-1/4 w-40 h-40 bg-blue-500/6 rounded-full blur-3xl pointer-events-none" />
 
               <div className="relative">
-                <p className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-red-400 text-xl md:text-2xl font-black mb-3 leading-tight">
+                <p className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-cyan-300 text-xl md:text-2xl font-black mb-3 leading-tight">
                   {promo.title}
                 </p>
                 {promo.subtitle && (
@@ -96,7 +97,7 @@ function PromoCardHero({ promo }: { promo: Promotion }) {
             </div>
           </div>
         </div>
-      </ScrollGlowFrame>
+      </div>
     )
   }
 
