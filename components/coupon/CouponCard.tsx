@@ -153,9 +153,6 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
           ${accent.border} transition-all ${disabled ? "opacity-50" : "hover:border-white/25"}`}
         style={guillocheStyle}
       >
-        {/* Accent stripe left */}
-        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${accent.bg}`} />
-
         {/* Disabled overlay */}
         {disabled && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
@@ -176,48 +173,74 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
           />
         </div>
 
-        <div className="relative pl-5 pr-4 py-4">
-          {/* Top: discount badge */}
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className={`inline-block text-lg md:text-xl font-bold ${accent.text}`}>
-              {discountLabel(coupon)}
-            </span>
-            <span className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${accent.badge}`}>
-              {coupon.discountType === "percent" ? "%" : coupon.discountType === "fixed" ? "฿" : "🎁"}
-            </span>
-          </div>
-
-          {/* Title */}
-          <h3 className="text-sm md:text-base font-medium text-white/90 mb-1 line-clamp-2">
-            {coupon.title}
-          </h3>
-
-          {/* Conditions */}
-          {coupon.minPurchase > 0 && (
-            <p className="text-xs text-white/50 mb-0.5">ซื้อขั้นต่ำ {coupon.minPurchase.toLocaleString()} บาท</p>
-          )}
-          {coupon.category && (
-            <p className="text-xs text-white/50 mb-0.5">หมวด: {coupon.category}</p>
-          )}
-          {coupon.stackWithPoints ? (
-            <p className="text-xs text-amber-400/80 mb-0.5">✦ ใช้ร่วมกับโปรรับแต้มสามหนึ่งได้</p>
-          ) : (
-            <p className="text-xs text-white/35 mb-0.5">ไม่สามารถใช้ร่วมกับโปรรับแต้มสามหนึ่ง</p>
+        <div className="flex">
+          {/* Left: coupon image with dissolve effect */}
+          {coupon.image && (
+            <div className="relative w-24 md:w-28 shrink-0 self-stretch">
+              <Image
+                src={coupon.image}
+                alt=""
+                fill
+                className="object-cover"
+              />
+              {/* Dissolve: clear top → dark bottom */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "linear-gradient(to bottom, transparent 20%, rgba(26,26,40,0.5) 60%, rgba(26,26,40,0.95) 100%)" }}
+              />
+              {/* Accent stripe (left edge) */}
+              <div className={`absolute left-0 top-0 bottom-0 w-1 ${accent.bg}`} />
+            </div>
           )}
 
-          {/* Footer: expiry + CTA */}
-          <div className="flex items-center justify-between mt-3 gap-2">
-            <span className="text-[11px] text-white/40">
-              หมดเขต {formatDate(coupon.endDate)}
-            </span>
-            <button
-              onClick={handleClaim}
-              disabled={disabled}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
-                ${disabled ? "bg-gray-600 cursor-not-allowed opacity-50" : `${accent.bg} hover:brightness-110 active:scale-95`}`}
-            >
-              {disabled ? (soldOut ? "หมดแล้ว" : "รับแล้ว") : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
-            </button>
+          {/* Accent stripe when no image */}
+          {!coupon.image && (
+            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${accent.bg}`} />
+          )}
+
+          <div className={`relative flex-1 pr-4 py-4 ${coupon.image ? "pl-3" : "pl-5"}`}>
+            {/* Top: discount badge */}
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <span className={`inline-block text-lg md:text-xl font-bold ${accent.text}`}>
+                {discountLabel(coupon)}
+              </span>
+              <span className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${accent.badge}`}>
+                {coupon.discountType === "percent" ? "%" : coupon.discountType === "fixed" ? "฿" : "🎁"}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-sm md:text-base font-medium text-white/90 mb-1 line-clamp-2">
+              {coupon.title}
+            </h3>
+
+            {/* Conditions */}
+            {coupon.minPurchase > 0 && (
+              <p className="text-xs text-white/50 mb-0.5">ซื้อขั้นต่ำ {coupon.minPurchase.toLocaleString()} บาท</p>
+            )}
+            {coupon.category && (
+              <p className="text-xs text-white/50 mb-0.5">หมวด: {coupon.category}</p>
+            )}
+            {coupon.stackWithPoints ? (
+              <p className="text-xs text-amber-400/80 mb-0.5">✦ ใช้ร่วมกับโปรรับแต้มสามหนึ่งได้</p>
+            ) : (
+              <p className="text-xs text-white/35 mb-0.5">ไม่สามารถใช้ร่วมกับโปรรับแต้มสามหนึ่ง</p>
+            )}
+
+            {/* Footer: expiry + CTA */}
+            <div className="flex items-center justify-between mt-3 gap-2">
+              <span className="text-[11px] text-white/40">
+                หมดเขต {formatDate(coupon.endDate)}
+              </span>
+              <button
+                onClick={handleClaim}
+                disabled={disabled}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
+                  ${disabled ? "bg-gray-600 cursor-not-allowed opacity-50" : `${accent.bg} hover:brightness-110 active:scale-95`}`}
+              >
+                {disabled ? (soldOut ? "หมดแล้ว" : "รับแล้ว") : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

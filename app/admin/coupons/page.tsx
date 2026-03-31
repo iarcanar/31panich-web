@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import Image from "next/image"
 import JsBarcode from "jsbarcode"
 import { CATEGORIES } from "@/lib/categories"
 import type { Coupon } from "@/lib/coupons"
 import { useAuth } from "../layout"
+import ImageCropPicker from "@/components/admin/ImageCropPicker"
 
 // ─── Reusable UI (matching products admin style) ─────────
 
@@ -296,6 +298,8 @@ export default function AdminCouponsPage() {
   const [saving, setSaving] = useState(false)
   const [claimHistory, setClaimHistory] = useState<ClaimRecord[] | null>(null)
   const [claimCouponName, setClaimCouponName] = useState("")
+  const [showCropPicker, setShowCropPicker] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const fetchCoupons = useCallback(async () => {
     const res = await fetch("/api/coupons")
@@ -386,6 +390,23 @@ export default function AdminCouponsPage() {
     setForm({ ...form, code })
   }
 
+  async function handleImageCrop(file: File, crop: { x: number; y: number; size: number }) {
+    setShowCropPicker(false)
+    setUploadingImage(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("folder", "coupons")
+      fd.append("cropX", String(crop.x))
+      fd.append("cropY", String(crop.y))
+      fd.append("cropSize", String(crop.size))
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      const data = await res.json()
+      if (data.url) setForm((prev) => ({ ...prev, image: data.url }))
+    } catch { /* upload failed silently */ }
+    setUploadingImage(false)
+  }
+
   async function showClaims(c: Coupon) {
     setClaimCouponName(c.title)
     setClaimHistory([]) // show loading
@@ -442,6 +463,52 @@ export default function AdminCouponsPage() {
                   rows={3}
                   className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-sm focus:border-[#94a3b8] outline-none resize-none"
                 />
+              </div>
+
+              {/* Image picker */}
+              <div>
+                <FieldLabel>ภาพประกอบคูปอง</FieldLabel>
+                {form.image ? (
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/10 bg-black shrink-0">
+                      <Image src={form.image} alt="" fill className="object-cover" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowCropPicker(true)}
+                        className="px-3 py-1.5 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#94a3b8] hover:text-white text-xs cursor-pointer transition-colors"
+                      >
+                        เปลี่ยนภาพ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, image: "" })}
+                        className="px-3 py-1.5 text-red-400/70 hover:text-red-400 text-xs cursor-pointer transition-colors"
+                      >
+                        ลบภาพ
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowCropPicker(true)}
+                    disabled={uploadingImage}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[#1e1e2e] border border-dashed border-[#2a2a3a] hover:border-[#94a3b8] rounded-lg text-[#94a3b8] hover:text-white text-xs cursor-pointer transition-colors w-full justify-center"
+                  >
+                    {uploadingImage ? (
+                      <span className="animate-pulse">กำลังอัปโหลด...</span>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                        </svg>
+                        เลือกภาพ (1:1)
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -582,6 +649,14 @@ export default function AdminCouponsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ─── Image Crop Picker ─── */}
+      {showCropPicker && (
+        <ImageCropPicker
+          onConfirm={handleImageCrop}
+          onCancel={() => setShowCropPicker(false)}
+        />
       )}
     </div>
   )
