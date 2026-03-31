@@ -448,6 +448,7 @@ export default function AdminCouponsPage() {
       if (!sign.signature) throw new Error(sign.error || "Failed to get signature")
 
       // 2. Upload directly to Cloudinary (no Vercel size limit)
+      // Must send exactly the same params that were signed
       const fd = new FormData()
       fd.append("file", file)
       fd.append("api_key", sign.apiKey)
@@ -455,7 +456,6 @@ export default function AdminCouponsPage() {
       fd.append("signature", sign.signature)
       fd.append("folder", sign.folder)
       fd.append("format", sign.format)
-      fd.append("quality", sign.quality)
       if (sign.transformation) fd.append("transformation", sign.transformation)
 
       const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloudName}/image/upload`, {
