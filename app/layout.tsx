@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Noto_Sans_Thai, Noto_Sans } from "next/font/google"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
 const notoSansThai = Noto_Sans_Thai({
@@ -59,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://i.imgur.com" />
       </head>
-      <body>{children}</body>
+      <body>{children}<Analytics /></body>
     </html>
   )
 }

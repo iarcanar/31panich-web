@@ -1,7 +1,7 @@
 {
   "name": "31panich-web",
-  "version": "1.4.22",
-  "adminVersion": "1.0.8",
+  "version": "1.4.23",
+  "adminVersion": "1.0.9",
   "private": true,
   "scripts": {
     "dev": "rimraf .next && next dev --turbopack",
@@ -12,6 +12,7 @@
   "dependencies": {
     "@google/genai": "^1.46.0",
     "@upstash/redis": "^1.37.0",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.3.1",
     "html2canvas": "^1.4.1",
     "jsbarcode": "^3.12.3",
