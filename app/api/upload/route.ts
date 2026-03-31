@@ -1,34 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import sharp from "sharp"
 import { v2 as cloudinary } from "cloudinary"
-import { writeFile } from "@/lib/blob-store"
 
-const MAX_WIDTH = 800
-const COUPON_SIZE = 400
-const QUALITY = 80
+export const maxDuration = 30
 
-// Configure Cloudinary from env
-cloudinary.config({
-  secure: true,
-  // Reads CLOUDINARY_URL env automatically: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
-})
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
-async function uploadToCloudinary(buffer: Buffer, folder: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: `31-PANICH/${folder}`,
-        format: "webp",
-        resource_type: "image",
-      },
-      (error, result) => {
-        if (error) reject(error)
-        else resolve(result!.secure_url)
-      },
-    )
-    stream.end(buffer)
-  })
-}
+// Configure Cloudinary from env (reads CLOUDINARY_URL automatically)
+cloudinary.config({ secure: true })
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,46 +18,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No valid image file" }, { status: 400 })
     }
 
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: `ไฟล์ใหญ่เกิน ${MAX_FILE_SIZE / 1024 / 1024}MB` }, { status: 400 })
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer())
-    let processed: Buffer
-
-    if (folder === "coupons") {
-      const cropX = parseInt(formData.get("cropX") as string) || 0
-      const cropY = parseInt(formData.get("cropY") as string) || 0
-      const cropSize = parseInt(formData.get("cropSize") as string) || 0
-
-      let pipeline = sharp(buffer)
-      if (cropSize > 0) {
-        pipeline = pipeline.extract({ left: cropX, top: cropY, width: cropSize, height: cropSize })
-      }
-      processed = await pipeline
-        .resize({ width: COUPON_SIZE, height: COUPON_SIZE, fit: "cover" })
-        .webp({ quality: QUALITY })
-        .toBuffer()
-    } else {
-      processed = await sharp(buffer)
-        .resize({ width: MAX_WIDTH, withoutEnlargement: true })
-        .webp({ quality: QUALITY })
-        .toBuffer()
-    }
-
-    // Upload to Cloudinary if configured, fallback to blob-store
-    let url: string
-    if (process.env.CLOUDINARY_URL) {
-      url = await uploadToCloudinary(processed, folder)
-    } else {
-      const filename = `${crypto.randomUUID()}.webp`
-      url = await writeFile(`${folder}/${filename}`, processed, "image/webp")
-    }
-
     const originalKB = Math.round(buffer.length / 1024)
-    const optimizedKB = Math.round(processed.length / 1024)
+
+    // Build Cloudinary transformation
+    const isCoupon = folder === "coupons"
+    const cropX = parseInt(formData.get("cropX") as string) || 0
+    const cropY = parseInt(formData.get("cropY") as string) || 0
+    const cropSize = parseInt(formData.get("cropSize") as string) || 0
+
+    const transformation: Record<string, unknown>[] = []
+
+    if (isCoupon && cropSize > 0) {
+      // 1:1 crop at position then resize to 400x400
+      transformation.push(
+        { width: cropSize, height: cropSize, x: cropX, y: cropY, crop: "crop" },
+        { width: 400, height: 400, crop: "fill" },
+      )
+    } else if (isCoupon) {
+      transformation.push({ width: 400, height: 400, crop: "fill" })
+    } else {
+      // Products: max 800px wide
+      transformation.push({ width: 800, crop: "limit" })
+    }
+
+    // Upload to Cloudinary with server-side transformation
+    const url = await new Promise<string>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: `31-PANICH/${folder}`,
+          format: "webp",
+          quality: "auto:good",
+          resource_type: "image",
+          transformation,
+        },
+        (error, result) => {
+          if (error) reject(error)
+          else resolve(result!.secure_url)
+        },
+      )
+      stream.end(buffer)
+    })
+
+    const optimizedKB = "auto"
 
     return NextResponse.json({
       url,
       originalSize: `${originalKB} KB`,
-      optimizedSize: `${optimizedKB} KB`,
-      saved: `${Math.round((1 - processed.length / buffer.length) * 100)}%`,
+      optimizedSize: optimizedKB,
+      saved: "Cloudinary auto",
     })
   } catch (err) {
     console.error("[api/upload/POST]", err)
