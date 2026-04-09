@@ -65,6 +65,16 @@ Race-safe without a database. Per-instance lock (Map-based queue) — good enoug
 - **`upstash-status` cached**: 2 Redis commands per dashboard load → 1 set per 2 min
 - **Legacy code removed**: `lib/medusa.ts` and `components/home/FeaturedProducts.tsx` were dead code, deleted
 
+## ⚠ Quota exception: product detail page is force-dynamic
+
+`web/app/(shop)/products/[category]/[slug]/page.tsx` deliberately uses `export const dynamic = "force-dynamic"` and does **not** use ISR or `generateStaticParams`. Every visit costs 1 lambda invocation.
+
+**Why this exception exists**: Vercel Node 24 runtime fails on-demand ISR for newly-created Thai-slug routes. Forcing dynamic bypasses the bug. Quota cost is ~1500 invocations/day at current scale (~150 products × ~10 views/day) — still well under the Hobby soft limit.
+
+**Full context**: see [`debugging.md`](./debugging.md) — section "Product detail page returns HTTP 500 right after I created or renamed a product".
+
+**Do not revert** this to ISR without verifying the Vercel platform bug is fixed. If product detail traffic ever grows large (e.g., 50k+ pageviews/day), the right fix is to debug the underlying ISR issue, not to flip this back blindly.
+
 ## Pending (Phase 3 of active improvement plan)
 
 - **`/admin/quota` dashboard** — real-time usage display (4 metric cards) + 7-day history + threshold-based alerts + budget mode (auto-disable AI when critical)

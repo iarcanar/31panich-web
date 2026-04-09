@@ -8,6 +8,37 @@ audience: both
 
 Symptom → root cause → fix. Add to this file whenever you hit a non-obvious issue and resolve it.
 
+## ⚠ "Product detail page returns HTTP 500 right after I created or renamed a product"
+
+**Status**: known Vercel platform issue. **Already mitigated — do NOT undo the mitigation without reading this section.**
+
+**Symptom:**
+- Admin creates a new product, or renames an existing one (which changes its `slug`)
+- Click "ดูรายละเอียด" → frontend `/products/<category>/<new-slug>` returns **HTTP 500**
+- `/api/products` returns the product correctly
+- `revalidatePath` is called by the PUT/POST handler, but doesn't help
+- Waiting 30+ minutes doesn't help
+- Pre-existing products (slugs that were in the build snapshot) still work fine
+- `next dev` AND `next start` render the SAME url+data successfully on the local machine
+
+**Root cause:** Vercel runtime started failing on-demand ISR for newly-created routes whose slug contains Thai characters, since the platform moved to **Node 24**. The build-time pre-render works (which is why old products are fine); only the runtime-time on-demand ISR for new slugs fails. Reproduces only on Vercel, never locally.
+
+**Mitigation in place** (commit `3f360ac`):
+- `web/app/(shop)/products/[category]/[slug]/page.tsx` has `export const dynamic = "force-dynamic"` and **no longer uses `generateStaticParams` or `revalidate`**
+- Every product detail page visit now hits a lambda. Data comes from Upstash Redis with the 5-min in-memory cache in `lib/blob-store.ts`, so it stays fast
+- Quota cost: ~150 products × ~10 views/product/day = ~1500 invocations/day, well under Vercel Hobby's ~100k/day soft limit. Bandwidth and image-opt are unaffected (Cloudinary CDN serves images)
+
+**🚫 Do not revert this** unless you have **verified end-to-end** that:
+1. Vercel has fixed the runtime ISR bug (check Vercel changelog / status / forum)
+2. You have reproduced a successful flow: deploy → admin creates a new Thai-named product → open the new URL → 200 (not 500)
+3. The CRUD handlers in `app/api/products/route.ts` and `app/api/products/[id]/route.ts` still call `revalidatePath` correctly
+
+If you DO revert, do it incrementally and test each product creation. Bring back `generateStaticParams` first (with a small subset), then add `revalidate`, watching production for 500s after each step.
+
+**Other pages are unaffected** — `/products/[category]`, homepage, about, contact etc. still use ISR + `generateStaticParams` and work fine. Only the product **detail** page is forced dynamic.
+
+**Long-term**: investigate root cause via Vercel runtime logs / log drain. Prime suspect is the URL decode / `getProductBySlug` interaction with Node 24 + Thai character handling, but local repro (Node 22) does not show the issue.
+
 ## "AI gives a wrong / off-brand answer"
 
 **Where to look first:**
