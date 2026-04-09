@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect, createContext, useContext } from "react"
 import type { AdminUser } from "@/lib/auth"
+import type { QuotaStatus } from "@/lib/quota-check"
 
 // ─── Context เพื่อส่ง user ให้ child pages ─────────────
 interface AuthContextType {
@@ -37,6 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const [loggingOut, setLoggingOut] = useState(false)
   const [user, setUser] = useState<AdminUser | null>(null)
+  const [quotaStatus, setQuotaStatus] = useState<QuotaStatus | null>(null)
 
   useEffect(() => {
     if (pathname === "/admin/login") return
@@ -45,6 +47,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then((data) => { if (data.user) setUser(data.user) })
       .catch(() => {})
   }, [pathname])
+
+  // Notification dot for "ตั้งค่า" link.
+  // Reads cached status from localStorage (written by /admin/settings page).
+  // If cache stale (>30 min) and user is admin, fetch fresh once.
+  useEffect(() => {
+    if (pathname === "/admin/login") return
+    if (!user || user.role !== "admin") return
+
+    // Try cache first — settings page writes here every visit
+    try {
+      const cached = localStorage.getItem("quota:check")
+      if (cached) {
+        const { status, ts } = JSON.parse(cached) as { status: QuotaStatus; ts: number }
+        if (Date.now() - ts < 30 * 60 * 1000) {
+          setQuotaStatus(status)
+          return
+        }
+      }
+    } catch {
+      // localStorage may be disabled
+    }
+
+    // Cache stale — fetch fresh in background. Lazy-load checkQuota to keep
+    // the layout bundle small.
+    let cancelled = false
+    Promise.all([
+      fetch("/api/admin/vercel-status").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch("/api/admin/upstash-status").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ])
+      .then(async ([vercelData, upstashData]) => {
+        if (cancelled) return
+        const { checkQuota } = await import("@/lib/quota-check")
+        const result = checkQuota(vercelData, upstashData)
+        setQuotaStatus(result.status)
+        try {
+          localStorage.setItem("quota:check", JSON.stringify({ status: result.status, ts: Date.now() }))
+        } catch {
+          // ignore
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [pathname, user])
 
   // ไม่แสดง nav bar ในหน้า login
   if (pathname === "/admin/login") {
@@ -77,21 +125,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {NAV.map((item) => {
                   const active = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href)
                   const restricted = "adminOnly" in item && item.adminOnly && !isAdmin
+                  const showQuotaDot =
+                    item.href === "/admin/settings" &&
+                    !restricted &&
+                    quotaStatus !== null &&
+                    quotaStatus !== "ok"
                   return (
                     <Link
                       key={item.href}
                       href={restricted ? "#" : item.href}
                       onClick={restricted ? (e) => e.preventDefault() : undefined}
-                      className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      className={`relative px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                         restricted
                           ? "text-[#475569] cursor-not-allowed"
                           : active
                             ? "bg-white/10 text-white"
                             : "text-[#94a3b8] hover:text-white hover:bg-white/5"
                       }`}
-                      title={restricted ? "เฉพาะ Admin เท่านั้น" : undefined}
+                      title={
+                        restricted
+                          ? "เฉพาะ Admin เท่านั้น"
+                          : showQuotaDot
+                            ? `โควต้า ${quotaStatus === "critical" ? "เกินวงเงิน" : "ใกล้เกิน"} — คลิกเพื่อดูคำแนะนำ`
+                            : undefined
+                      }
                     >
                       {item.label}
+                      {showQuotaDot && (
+                        <span
+                          className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${
+                            quotaStatus === "critical" ? "bg-red-500" : "bg-amber-500"
+                          } animate-pulse`}
+                          aria-label={quotaStatus === "critical" ? "critical quota" : "warning quota"}
+                        />
+                      )}
                     </Link>
                   )
                 })}

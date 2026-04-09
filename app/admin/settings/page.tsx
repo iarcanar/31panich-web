@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../layout"
 import { useRouter } from "next/navigation"
+import { checkQuota, type QuotaCheckResult } from "@/lib/quota-check"
 
 // ─── Config: อัพเดตเมื่อต่ออายุ ─────────────────────────
 const HOSTING = {
@@ -105,6 +106,7 @@ export default function SettingsPage() {
   const [loadingVercel, setLoadingVercel] = useState(true)
   const [upstash, setUpstash] = useState<UpstashData | null>(null)
   const [loadingUpstash, setLoadingUpstash] = useState(true)
+  const [quota, setQuota] = useState<QuotaCheckResult | null>(null)
 
   // Admin-only guard
   useEffect(() => {
@@ -126,6 +128,20 @@ export default function SettingsPage() {
       .finally(() => setLoadingUpstash(false))
   }, [])
 
+  // Compute quota status once both fetches resolve. Pure function — no I/O.
+  // Cache the result in localStorage so the admin layout's notification dot
+  // can read it without making its own fetches.
+  useEffect(() => {
+    if (loadingVercel || loadingUpstash) return
+    const result = checkQuota(vercel, upstash)
+    setQuota(result)
+    try {
+      localStorage.setItem("quota:check", JSON.stringify({ status: result.status, ts: Date.now() }))
+    } catch {
+      // ignore — localStorage may be disabled
+    }
+  }, [loadingVercel, loadingUpstash, vercel, upstash])
+
   if (user && !isAdmin) return null
 
   const countdown = formatCountdown(HOSTING.expiryDate)
@@ -144,6 +160,9 @@ export default function SettingsPage() {
         </h1>
         <p className="text-xs text-white/40 mt-1">Infrastructure & Tech Stack Overview</p>
       </div>
+
+      {/* ─── Quota Alerts ─── (only renders when there are warnings/criticals) */}
+      {quota && quota.alerts.length > 0 && <QuotaAlertSection result={quota} />}
 
       {/* ─── Row 1: Site Info + Tech Stack ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -394,6 +413,86 @@ export default function SettingsPage() {
 }
 
 // ─── Sub-components ──────────────────────────────────────
+
+function QuotaAlertSection({ result }: { result: QuotaCheckResult }) {
+  const isCritical = result.status === "critical"
+  const borderColor = isCritical ? "border-red-500/40" : "border-amber-500/40"
+  const bgColor = isCritical ? "bg-red-500/10" : "bg-amber-500/10"
+  const titleColor = isCritical ? "text-red-400" : "text-amber-400"
+  const icon = isCritical ? "🚨" : "⚠️"
+  const title = isCritical ? "โควต้าใกล้เกินวงเงิน — ต้องดำเนินการทันที" : "โควต้าใกล้เกินวงเงิน — แนะนำให้ปรับ"
+
+  return (
+    <div className={`mb-6 rounded-xl border-2 ${borderColor} ${bgColor} p-5`}>
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className={`text-base font-bold ${titleColor} flex items-center gap-2`}>
+            <span>{icon}</span>
+            <span>{title}</span>
+          </h2>
+          <p className="text-[11px] text-white/40 mt-1">
+            ตรวจพบ {result.alerts.length} รายการที่ใกล้/เกินวงเงิน Vercel/Upstash free tier
+          </p>
+        </div>
+        <span className="text-[10px] text-white/30 font-mono shrink-0">
+          {new Date(result.checkedAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
+        </span>
+      </div>
+
+      <div className="space-y-4">
+        {result.alerts.map((alert) => {
+          const isAlertCrit = alert.level === "critical"
+          const dotColor = isAlertCrit ? "bg-red-500" : "bg-amber-500"
+          const pctColor = isAlertCrit ? "text-red-400" : "text-amber-400"
+          return (
+            <div key={alert.metric} className="rounded-lg bg-black/20 border border-white/5 p-4">
+              {/* Metric header */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${dotColor} animate-pulse`} />
+                  <span className="text-sm font-semibold text-white">{alert.metric}</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-base font-bold ${pctColor}`}>{alert.percent}%</span>
+                  <span className="text-[10px] text-white/40 font-mono">
+                    {alert.used} / {alert.limit}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bar */}
+              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-3">
+                <div
+                  className={`h-full rounded-full ${dotColor}`}
+                  style={{ width: `${Math.min(100, alert.percent)}%` }}
+                />
+              </div>
+
+              {/* Recommendations */}
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1.5">
+                  คำแนะนำการปรับ
+                </p>
+                <ul className="space-y-1">
+                  {alert.recommendations.map((rec, i) => (
+                    <li key={i} className="text-[11px] text-white/70 flex items-start gap-2 leading-relaxed">
+                      <span className="text-cyan-400 shrink-0">→</span>
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="text-[10px] text-white/30 mt-4 leading-relaxed">
+        ดูรายละเอียดเพิ่มเติมที่ <code className="text-white/50">web/docs/quota-strategy.md</code> สำหรับ pattern + anti-pattern
+      </p>
+    </div>
+  )
+}
 
 function Card({ title, icon, className = "", children }: {
   title: string; icon: string; className?: string; children: React.ReactNode
