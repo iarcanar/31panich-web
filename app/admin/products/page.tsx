@@ -1591,7 +1591,22 @@ export default function AdminProductsPage() {
                           )}
                           <div className="min-w-0">
                             <button onClick={() => handleEdit(p)} className="text-[#f1f5f9] font-medium text-sm truncate hover:text-cyan-400 transition-colors text-left">{p.name}</button>
-                            {p.brand && <p className="text-[#64748b] text-[11px] flex items-center gap-0">{p.brand}{p.sku && <span className="ml-1 text-[#2a2a3a]">|</span>}{p.sku && <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.sku); setCopiedSku(p.id); setTimeout(() => setCopiedSku(null), 1500) }} className="ml-1 font-mono hover:text-cyan-400 transition-colors cursor-copy" title="คลิกเพื่อคัดลอก SKU">{p.sku}</button>}{copiedSku === p.id && <span className="ml-1.5 text-[10px] text-emerald-400 animate-pulse">copied!</span>}</p>}
+                            {(p.brand || p.sku) && (
+                              <p className="text-[#64748b] text-[11px] flex items-center gap-0">
+                                {p.brand}
+                                {p.brand && p.sku && <span className="ml-1 text-[#2a2a3a]">|</span>}
+                                {p.sku && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.sku); setCopiedSku(p.id); setTimeout(() => setCopiedSku(null), 1500) }}
+                                    className={`${p.brand ? "ml-1" : ""} font-mono hover:text-cyan-400 transition-colors cursor-copy`}
+                                    title="คลิกเพื่อคัดลอก SKU"
+                                  >
+                                    {p.sku}
+                                  </button>
+                                )}
+                                {copiedSku === p.id && <span className="ml-1.5 text-[10px] text-emerald-400 animate-pulse">copied!</span>}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>
