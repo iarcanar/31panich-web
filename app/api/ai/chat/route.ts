@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
       { role: "user" as const, parts: [{ text: message }] },
     ]
 
-    const rawReply = await generateText(systemInstruction, contents, 768)
+    const rawReply = await generateText(systemInstruction, contents, 2048)
     const { cleanReply: reply, searchKeyword } = parseSearchTag(rawReply)
 
     // Save to history (clean reply without [SEARCH:] tag)

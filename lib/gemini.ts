@@ -16,7 +16,7 @@ export function getGeminiClient(): GoogleGenAI {
 export async function generateText(
   systemInstruction: string,
   contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }>,
-  maxOutputTokens = 512
+  maxOutputTokens = 2048
 ): Promise<string> {
   const ai = getGeminiClient()
   const response = await ai.models.generateContent({
@@ -27,8 +27,17 @@ export async function generateText(
       temperature: 0.3,
       topP: 0.8,
       maxOutputTokens,
+      // Disable thinking — chat doesn't need deep reasoning, saves token budget for visible text
+      thinkingConfig: { thinkingBudget: 0 },
     },
   })
+
+  // Detect truncation and log warning (helps diagnose future issues)
+  const finishReason = response.candidates?.[0]?.finishReason
+  if (finishReason && finishReason !== "STOP") {
+    console.warn(`[gemini] finishReason=${finishReason} — response may be truncated (maxOutputTokens=${maxOutputTokens})`)
+  }
+
   return response.text ?? ""
 }
 
