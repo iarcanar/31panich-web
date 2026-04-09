@@ -1,4 +1,4 @@
-export const revalidate = 300 // ISR: revalidate ทุก 5 นาที
+export const revalidate = 3600 // ISR: revalidate ทุก 1 ชั่วโมง (ลด function invokes 92%)
 
 import Image from "next/image"
 import BestsellerSection from "@/components/home/BestsellerSection"

@@ -154,4 +154,4 @@ async function seedFromLocal<T>(filename: string, fallback: T): Promise<T> {
   }
 }
 
-export { useBlob, useRedis }
+export { useBlob, useRedis, redis }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generateText, generateTextWithSearch } from "@/lib/gemini"
+import { cachedGenerateText, cachedGenerateTextWithSearch } from "@/lib/gemini-cache"
 import { getProductById } from "@/lib/products"
 import { buildEnrichContext } from "@/lib/ai-products"
 
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     const searchQuery = `${product.name} ${product.brand || ""}`.trim()
     let research = ""
     try {
-      research = await generateTextWithSearch(
+      research = await cachedGenerateTextWithSearch(
         RESEARCH_INSTRUCTION.replace("{QUERY}", searchQuery),
         [{ role: "user" as const, parts: [{ text: `ค้นหาข้อมูลสินค้า: ${searchQuery}` }] }],
         1024
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
         .replace("{DATA}", context)
         .replace("{RESEARCH}", research)
 
-      const result = await generateText(
+      const result = await cachedGenerateText(
         systemInstruction,
         [{ role: "user" as const, parts: [{ text: "เขียนคำอธิบายสินค้าใหม่" }] }],
         2048
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
         .replace("{DATA}", context)
         .replace("{RESEARCH}", researchSection)
 
-      const rawResult = await generateText(
+      const rawResult = await cachedGenerateText(
         systemInstruction,
         [{ role: "user" as const, parts: [{ text: "ตรวจสอบข้อมูลสินค้านี้และเขียนคำอธิบายปรับปรุง" }] }],
         4096

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/auth"
 
 /** Resolve Upstash env vars (Vercel KV integration uses different names) */
@@ -15,11 +15,21 @@ async function redisCommand(url: string, token: string, ...args: string[]) {
   return { data: res.ok ? await res.json() : null, headers: res.headers }
 }
 
-export async function GET() {
+// In-memory cache (per lambda instance) — saves 2 Redis commands per dashboard load.
+// Pass ?fresh=1 to bypass.
+const CACHE_TTL_MS = 2 * 60 * 1000 // 2 minutes (shorter than Vercel — usage moves faster)
+let cached: { data: Record<string, unknown>; ts: number } | null = null
+
+export async function GET(request: NextRequest) {
   try {
     const user = await getSessionUser()
     if (!user || user.role !== "admin") {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+    }
+
+    const fresh = request.nextUrl.searchParams.get("fresh") === "1"
+    if (!fresh && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      return NextResponse.json({ ...cached.data, _cached: true, _cachedAt: cached.ts })
     }
 
     const env = getUpstashEnv()
@@ -56,7 +66,7 @@ export async function GET() {
       }
     } catch {}
 
-    return NextResponse.json({
+    const result = {
       configured: true,
       memory: {
         used: memoryUsed,
@@ -66,7 +76,9 @@ export async function GET() {
       },
       keys: keyCount,
       dailyCommands,
-    })
+    }
+    cached = { data: result, ts: Date.now() }
+    return NextResponse.json(result)
   } catch {
     return NextResponse.json({ error: "internal error" }, { status: 500 })
   }
