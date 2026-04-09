@@ -1542,6 +1542,10 @@ export default function AdminProductsPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-[#f1f5f9] text-sm font-medium truncate">{p.name}</p>
+                    {/* ⚠ COMPACT card view — there is a TWIN render in the table view below
+                        (search for "p.brand || p.sku" — should match 2 places).
+                        Always update both when changing how brand/sku is displayed.
+                        Edge case: brand can be empty string while sku exists. */}
                     {(p.brand || p.sku) && (
                       <p className="text-[#64748b] text-[11px] truncate">
                         {p.brand && p.sku ? `${p.brand} | ${p.sku}` : p.brand || p.sku}
@@ -1591,6 +1595,11 @@ export default function AdminProductsPage() {
                           )}
                           <div className="min-w-0">
                             <button onClick={() => handleEdit(p)} className="text-[#f1f5f9] font-medium text-sm truncate hover:text-cyan-400 transition-colors text-left">{p.name}</button>
+                            {/* ⚠ TABLE view — there is a TWIN render in the compact card view above
+                                (search for "p.brand || p.sku" — should match 2 places).
+                                Always update both when changing how brand/sku is displayed.
+                                Edge case: brand can be empty string while sku exists.
+                                History: previously {p.brand && ...} hid SKU when brand empty (fixed in 1.3.2). */}
                             {(p.brand || p.sku) && (
                               <p className="text-[#64748b] text-[11px] flex items-center gap-0">
                                 {p.brand}

@@ -8,6 +8,21 @@ audience: both
 
 Symptom → root cause → fix. Add to this file whenever you hit a non-obvious issue and resolve it.
 
+## ⚠ "I changed how products display in the admin list and only HALF of them updated"
+
+**Status**: known structural quirk in `app/admin/products/page.tsx`. The product list has **two rendered views in the same file**:
+
+1. **Compact card view** (~line 1545) — used for the small-card layout
+2. **Table view** (~line 1597) — used for the table layout with clickable copy-SKU button
+
+Both views render the same fields (name, brand, sku, price, stock, image) but have **separate JSX trees**. They look identical to a casual reader and both contain a render block guarded by something like `(p.brand || p.sku) && ...`.
+
+**Search trick** before editing: `grep -n "p.brand || p.sku" web/app/admin/products/page.tsx` — you should see **two matches**. If you only update one, half the rows in production will look broken.
+
+**Past incident** (2026-04-09): brand-empty rows lost their SKU display. Fix in 1.3.1 only patched the compact view at line 1545; the table view at 1594 still had the old `{p.brand && ...}` guard, so SKUs stayed hidden. Real fix was 1.3.2 which patched both. Inline `⚠` comments now mark both render blocks pointing at each other.
+
+**Rule of thumb**: when editing the product list display, **always** open both blocks side-by-side and apply the same change. If you decompose this file in the future (Phase 4B refactor), extract a single shared `<ProductRow>` so this can never happen again.
+
 ## ⚠ "Product detail page returns HTTP 500 right after I created or renamed a product"
 
 **Status**: known Vercel platform issue. **Already mitigated — do NOT undo the mitigation without reading this section.**
