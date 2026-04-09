@@ -33,7 +33,7 @@ export default function AiEnrichButton({ productId, currentDescription, onDescri
         setStatus({ label: "กำลังบันทึกสินค้าก่อน...", type: "ok" })
         id = await onRequestSave()
         if (!id) {
-          setStatus({ label: "กรุณากรอกชื่อสินค้าและราคาก่อน", type: "warning" })
+          setStatus({ label: "กรุณากรอกชื่อสินค้าและราคา (หรือเพิ่มตัวเลือก) ก่อน", type: "warning" })
           setLoading(false)
           return
         }

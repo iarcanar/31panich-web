@@ -218,7 +218,18 @@ export default function AdminProductsPage() {
 
   // ─── Save (mode: "close" = กลับ list, "preview" = เปิดหน้าสินค้าใน tab ใหม่)
   async function handleSave(mode: "close" | "preview" | "stay" = "close"): Promise<{ id: string } | null> {
-    if (!form.name || !form.price) return null
+    // Validation: must have name AND (price OR at least one valid variant)
+    const hasValidVariants = form.variants.some(
+      (v) => v.label.trim() && Number(v.price) > 0,
+    )
+    if (!form.name) {
+      if (mode !== "stay") alert("กรุณากรอกชื่อสินค้า")
+      return null
+    }
+    if (!form.price && !hasValidVariants) {
+      if (mode !== "stay") alert("กรุณากรอกราคา หรือเพิ่มตัวเลือก (variant) ที่มีราคา")
+      return null
+    }
     setSaving(true)
     const cleanVariants = form.variants
       .filter((v) => v.label.trim())
