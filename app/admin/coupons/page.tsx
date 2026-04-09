@@ -2,65 +2,18 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
-import JsBarcode from "jsbarcode"
 import { CATEGORIES } from "@/lib/categories"
 import type { Coupon } from "@/lib/coupons"
 import { useAuth } from "../layout"
 import ImageCropPicker from "@/components/admin/ImageCropPicker"
 import CouponClaimModal from "@/components/coupon/CouponClaimModal"
-
-// ─── Reusable UI (matching products admin style) ─────────
-
-function SectionHeader({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-[11px] font-medium text-[#94a3b8] uppercase tracking-wider mb-3">{children}</h3>
-}
-
-function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
-  return (
-    <label className="block text-xs font-medium text-[#94a3b8] mb-1.5">
-      {children}{required && <span className="text-red-400 ml-0.5">*</span>}
-    </label>
-  )
-}
-
-function TextInput({ value, onChange, placeholder, type = "text", mono }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; type?: string; mono?: boolean
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={`w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-sm transition-colors focus:border-[#94a3b8] outline-none ${mono ? "font-mono" : ""} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-    />
-  )
-}
-
-function Toggle({ checked, onChange, label, color = "primary" }: {
-  checked: boolean; onChange: (v: boolean) => void; label: string; color?: "primary" | "emerald" | "amber"
-}) {
-  const colors = { primary: "bg-[#94a3b8]", emerald: "bg-emerald-500", amber: "bg-amber-500" }
-  return (
-    <button type="button" onClick={() => onChange(!checked)} className="flex items-center gap-2.5 group cursor-pointer">
-      <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${checked ? colors[color] : "bg-[#1e1e2e] border border-[#2a2a3a]"}`}>
-        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${checked ? "left-[18px]" : "left-0.5"}`} />
-      </div>
-      <span className={`text-sm transition-colors ${checked ? "text-[#f1f5f9]" : "text-[#64748b]"}`}>{label}</span>
-    </button>
-  )
-}
-
-function BarcodePreview({ value }: { value: string }) {
-  const ref = useRef<SVGSVGElement>(null)
-  useEffect(() => {
-    if (ref.current && value) {
-      try { JsBarcode(ref.current, value, { format: "CODE128", width: 1.5, height: 40, displayValue: true, fontSize: 12, background: "transparent", lineColor: "#94a3b8" }) } catch {}
-    }
-  }, [value])
-  if (!value) return null
-  return <svg ref={ref} className="mt-2" />
-}
+import {
+  SectionHeader,
+  FieldLabel,
+  TextInput,
+  Toggle,
+  Barcode,
+} from "@/components/admin/ui"
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -527,7 +480,7 @@ export default function AdminCouponsPage() {
                     สุ่มรหัส
                   </button>
                 </div>
-                <BarcodePreview value={form.code} />
+                <Barcode value={form.code} variant="transparent" />
               </div>
               <div>
                 <FieldLabel>รายละเอียด</FieldLabel>
