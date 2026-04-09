@@ -1,18 +1,32 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { getProducts, getProductBySlug, getProductsByCategory, CATEGORIES } from "@/lib/products"
+import { getProductBySlug, getProductsByCategory, CATEGORIES } from "@/lib/products"
 import { getCatalogById } from "@/lib/catalogs"
 import { breadcrumbSchema } from "@/lib/structured-data"
 import ProductDetailView from "@/components/product/ProductDetailView"
 
-export const revalidate = 3600 // ISR: revalidate ทุก 1 ชั่วโมง
+// Force dynamic rendering on every request.
+//
+// Why: previously this page used `generateStaticParams` + `revalidate = 3600`
+// which works fine until a user creates or renames a product (changing its
+// slug). The new slug is not in the static params, so Vercel has to do an
+// on-demand ISR render at runtime — and that has been failing with HTTP 500
+// for newly-created Thai-slug products since Vercel moved the runtime to
+// Node 24. Pre-rendered pages from the build still work, only the freshly-
+// created ones fail.
+//
+// Trade-off: each product page now costs one function invocation per visit
+// instead of being served from the static cache. With ~150 products and
+// modest traffic (target ~10 views/product/day) this is well under the
+// Vercel Hobby soft limit (~100k invocations/day) and the response is fast
+// because product data lives in Upstash Redis with a 5-minute in-memory cache
+// (see lib/blob-store.ts).
+//
+// Long term: investigate the on-demand ISR failure and revert this if Vercel
+// fixes it. See web/docs/debugging.md.
+export const dynamic = "force-dynamic"
 
 type Props = { params: Promise<{ category: string; slug: string }> }
-
-export async function generateStaticParams() {
-  const products = await getProducts()
-  return products.map((p) => ({ category: p.category, slug: p.slug }))
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
