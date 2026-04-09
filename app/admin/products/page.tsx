@@ -1542,7 +1542,11 @@ export default function AdminProductsPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-[#f1f5f9] text-sm font-medium truncate">{p.name}</p>
-                    {p.brand && <p className="text-[#64748b] text-[11px] truncate">{p.brand}{p.sku ? ` | ${p.sku}` : ""}</p>}
+                    {(p.brand || p.sku) && (
+                      <p className="text-[#64748b] text-[11px] truncate">
+                        {p.brand && p.sku ? `${p.brand} | ${p.sku}` : p.brand || p.sku}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-amber-400 font-semibold text-sm font-mono">฿{p.price.toLocaleString()}</p>
