@@ -217,8 +217,8 @@ export default function AdminProductsPage() {
   }
 
   // ─── Save (mode: "close" = กลับ list, "preview" = เปิดหน้าสินค้าใน tab ใหม่)
-  async function handleSave(mode: "close" | "preview" = "close") {
-    if (!form.name || !form.price) return
+  async function handleSave(mode: "close" | "preview" | "stay" = "close"): Promise<{ id: string } | null> {
+    if (!form.name || !form.price) return null
     setSaving(true)
     const cleanVariants = form.variants
       .filter((v) => v.label.trim())
@@ -272,17 +272,25 @@ export default function AdminProductsPage() {
     setSaving(false)
     if (!res.ok) {
       alert("บันทึกไม่สำเร็จ กรุณาลองใหม่")
-      return
+      return null
     }
+    const saved = await res.json()
     if (mode === "preview") {
-      const saved = await res.json()
       fetchProducts()
       setFormSnapshot(JSON.stringify({ ...form, discountInput }))
       window.open(`/products/${saved.category}/${encodeURIComponent(saved.slug)}`, "_blank")
+    } else if (mode === "stay") {
+      // Save without closing — used by AI enrich flow on a new draft
+      // so the form transitions to "edit existing product" mode and the
+      // returned id can immediately be used to call /api/ai/enrich.
+      if (!editingId) setEditingId(saved.id)
+      setFormSnapshot(JSON.stringify({ ...form, discountInput }))
+      fetchProducts()
     } else {
       fetchProducts()
       closeForm()
     }
+    return { id: saved.id }
   }
 
   // ─── Edit
@@ -1152,6 +1160,12 @@ export default function AdminProductsPage() {
                     onFlash={() => {
                       setDescFlash(true)
                       setTimeout(() => setDescFlash(false), 1500)
+                    }}
+                    onRequestSave={async () => {
+                      // Save the draft without closing the form, then return
+                      // the new product id so AiEnrichButton can call /api/ai/enrich
+                      const saved = await handleSave("stay")
+                      return saved?.id ?? null
                     }}
                   />
                 </div>

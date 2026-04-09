@@ -7,24 +7,42 @@ interface Props {
   currentDescription: string
   onDescriptionChange: (desc: string) => void
   onFlash?: () => void
+  /** Called when user clicks AI before saving the product. Should save the
+   *  draft and return the new product id, or null if validation fails. */
+  onRequestSave?: () => Promise<string | null>
 }
 
-export default function AiEnrichButton({ productId, currentDescription, onDescriptionChange, onFlash }: Props) {
+export default function AiEnrichButton({ productId, currentDescription, onDescriptionChange, onFlash, onRequestSave }: Props) {
   const [loading, setLoading] = useState(false)
   const [action, setAction] = useState<"check" | "suggest" | null>(null)
   const [status, setStatus] = useState<{ label: string; type: "ok" | "warning" | "error" } | null>(null)
-
-  if (!productId) return null
 
   async function handleAction(act: "check" | "suggest") {
     setLoading(true)
     setStatus(null)
     setAction(act)
     try {
+      // Resolve product id: use existing one, or save the draft first
+      let id = productId
+      if (!id) {
+        if (!onRequestSave) {
+          setStatus({ label: "กรุณาบันทึกสินค้าก่อน", type: "warning" })
+          setLoading(false)
+          return
+        }
+        setStatus({ label: "กำลังบันทึกสินค้าก่อน...", type: "ok" })
+        id = await onRequestSave()
+        if (!id) {
+          setStatus({ label: "กรุณากรอกชื่อสินค้าและราคาก่อน", type: "warning" })
+          setLoading(false)
+          return
+        }
+      }
+
       const res = await fetch("/api/ai/enrich", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, action: act }),
+        body: JSON.stringify({ productId: id, action: act }),
       })
       const data = await res.json()
 
