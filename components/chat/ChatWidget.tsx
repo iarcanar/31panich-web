@@ -50,6 +50,14 @@ export default function ChatWidget() {
     }
   }, [messages, loading, panelOpen])
 
+  // Lock body scroll when chat panel is open (prevents scroll-through on mobile)
+  useEffect(() => {
+    if (!panelOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = prev }
+  }, [panelOpen])
+
   // Click-outside → collapse chat
   useEffect(() => {
     if (!panelOpen) return
