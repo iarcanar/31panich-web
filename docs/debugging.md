@@ -8,6 +8,16 @@ audience: both
 
 Symptom → root cause → fix. Add to this file whenever you hit a non-obvious issue and resolve it.
 
+## "เปิดแชท AI แล้วเลื่อนจอ ทำให้หน้าเว็บเลื่อนตามทะลุ"
+
+**Status**: fixed in v1.5.8 (commit `09bfae9`)
+
+**Root cause**: `ChatWidget` panel เป็น `position: fixed` overlay แต่ไม่ได้ lock body scroll → touch-scroll บน panel area เลื่อนทั้ง chat messages และ page background พร้อมกัน (scroll-through/scroll-chaining)
+
+**Fix**: `useEffect` ที่ set `document.body.style.overflow = "hidden"` เมื่อ `panelOpen = true` แล้ว restore เมื่อปิด ใน `web/components/chat/ChatWidget.tsx` (~line 54-58)
+
+**ถ้าแก้ ChatWidget แล้วปัญหากลับ**: ตรวจว่า useEffect ที่ lock scroll ยังอยู่ — search `body.style.overflow` ใน ChatWidget ต้องเจอ 1 match
+
 ## ⚠ "I changed how products display in the admin list and only HALF of them updated"
 
 **Status**: known structural quirk in `app/admin/products/page.tsx`. The product list has **two rendered views in the same file**:
