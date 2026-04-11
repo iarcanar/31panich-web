@@ -26,15 +26,20 @@ export default function HomePage() {
       {/* Hero Banner — Mobile: full-bleed behind header + CTA overlay */}
       <section className="lg:hidden -mt-16 relative w-full aspect-[2/1]">
         <Image
-          src="/banner-mobile.webp"
-          alt="ร้านสามหนึ่งพานิช วัสดุก่อสร้าง เครื่องมือช่าง ลพบุรี"
+          src="/banner-mobile-songkran.webp"
+          alt="ร้านสามหนึ่งพานิช สุขสันต์วันสงกรานต์ 2569"
           fill
           className="object-cover"
           sizes="100vw"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent flex items-end justify-center pb-5 px-5 pt-16">
+        {/* ฟ้าเข้ม blend multiply ทั้งภาพ */}
+        <div className="absolute inset-0 bg-cyan-900/40 mix-blend-multiply" />
+        {/* Gradient: ดำล่าง ไล่ขึ้น */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
+        <div className="absolute inset-0 flex items-end justify-center pb-5 px-5 pt-16">
           <div className="text-center">
+            <p className="text-cyan-300 text-sm font-medium tracking-widest drop-shadow-lg mb-1">🌊 สุขสันต์วันสงกรานต์ 🌊</p>
             <h1 className="text-white font-bold text-xl drop-shadow-lg">ร้านสามหนึ่งพานิช ลพบุรี</h1>
             <p className="text-gray-300 text-xs mt-1">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
             <div className="mt-3">
@@ -47,16 +52,22 @@ export default function HomePage() {
       {/* Hero Banner — Desktop + CTA overlay */}
       <section className="hidden lg:block w-full relative">
         <Image
-          src="/site2026_R_space.webp"
-          alt="ร้านสามหนึ่งพานิช ศูนย์รับผสมสี วัสดุก่อสร้าง ประปา"
+          src="/site2026_R_space_songkran.webp"
+          alt="ร้านสามหนึ่งพานิช สุขสันต์วันสงกรานต์ 2569"
           width={1920}
-          height={600}
+          height={589}
           className="w-full h-auto"
           priority
         />
-        {/* Left overlay — ชื่อร้าน + CTA */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/80 via-[#0a0a0f]/30 to-transparent flex items-center pl-[10%]">
+        {/* Left gradient — ดำเข้ม ไล่ไปใส เพื่อให้ตัวอักษรเด่น */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/85 via-[#0a0a0f]/40 to-transparent" />
+        {/* Right gradient — ดำเข้ม + ฟ้าเคลือบทับ dissolve */}
+        <div className="absolute inset-0 bg-gradient-to-l from-[#0a0a0f]/70 via-[#0a0a0f]/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-l from-cyan-700/20 via-transparent to-transparent" />
+        {/* Left overlay — สงกรานต์ + ชื่อร้าน + CTA */}
+        <div className="absolute inset-0 flex items-center pl-[10%]">
           <div>
+            <p className="text-cyan-300 text-lg xl:text-xl font-medium tracking-[0.25em] drop-shadow-lg mb-2">🌊 สุขสันต์วันสงกรานต์ 🌊</p>
             <h1 className="text-white font-bold text-4xl drop-shadow-lg">ร้านสามหนึ่งพานิช ลพบุรี</h1>
             <p className="text-gray-300 text-base mt-2">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
             <div className="mt-5">
@@ -73,7 +84,7 @@ export default function HomePage() {
           </div>
           <p className="text-white font-normal text-xl xl:text-2xl mt-3 tracking-wide drop-shadow-lg">ก่อสร้าง-ซ่อมแซม</p>
           <p className="text-white font-normal text-xl xl:text-2xl tracking-wide drop-shadow-lg">ไฟฟ้า/ประปา/สว่าน/ปั๊มน้ำ</p>
-          <p className="mt-3 font-bold text-2xl xl:text-3xl px-8 py-1.5 rounded-lg text-[#3a1366] inline-block banner-shimmer" style={{ background: "linear-gradient(to right, transparent, #22d3ee 20%, #7dd3fc 80%, transparent)" }}><span className="relative z-10">ราคาไม่แพง!</span><BannerShimmer /></p>
+          <p className="mt-3 font-bold text-2xl xl:text-3xl px-8 py-1.5 rounded-lg text-[#3a1366] inline-block banner-shimmer" style={{ background: "linear-gradient(to right, transparent, #22d3ee 10%, #7dd3fc 90%, transparent)" }}><span className="relative z-10">ราคาไม่แพง!</span><BannerShimmer /></p>
         </div>
       </section>
 
