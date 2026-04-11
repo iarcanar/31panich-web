@@ -6,15 +6,68 @@ import { logChat } from "@/lib/chat-logger"
 import { getAiConfig } from "@/lib/ai-config"
 import { getRelevantKnowledge } from "@/lib/ai-knowledge"
 import { PHONE, LINE_ID, HOURS_TEXT } from "@/lib/store-config"
-import { getActiveHoliday, getUpcomingHoliday } from "@/lib/holidays"
+import { getActiveHoliday, getUpcomingHoliday, type ActiveHoliday } from "@/lib/holidays"
 
-/** Check if current Bangkok time is within business hours (07:30-17:30) */
+// ─── Helpers ────────────────────────────────────────────
+
 function isStoreOpen(): boolean {
   const now = new Date()
   const bkk = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }))
   const minutes = bkk.getHours() * 60 + bkk.getMinutes()
   return minutes >= 450 && minutes < 1050
 }
+
+function fmtThai(iso: string): string {
+  return new Date(iso + "T00:00:00+07:00").toLocaleDateString("th-TH", { day: "numeric", month: "long" })
+}
+
+// ─── Holiday keyword detection ──────────────────────────
+
+const HOLIDAY_KEYWORDS = [
+  "หยุด", "วันหยุด", "เทศกาล", "ปีใหม่", "หยุดยาว",
+  "กี่โมง", "เปิดกี่", "ปิดกี่", "เปิดวัน", "ปิดวัน",
+  "เปิดไหม", "ปิดไหม", "เปิดมั้ย", "ปิดมั้ย",
+]
+
+function isHolidayRelated(message: string, holidayObj: ActiveHoliday | null): boolean {
+  const allKeywords = [...HOLIDAY_KEYWORDS]
+  if (holidayObj) {
+    allKeywords.push(holidayObj.name.replace(/\s*\d{4}$/, ""))
+  }
+  // Normalize Unicode (NFC) to handle Thai tone mark encoding differences
+  const normalizedMsg = message.normalize("NFC")
+  return allKeywords.some((kw) => normalizedMsg.includes(kw.normalize("NFC")))
+}
+
+// ─── Pipeline A: Holiday response (short, focused) ─────
+
+const HOLIDAY_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผู้ช่วยของร้านสามหนึ่งพานิช ร้านวัสดุก่อสร้าง จ.ลพบุรี
+คุณเป็นผู้ชาย ใช้คำลงท้ายว่า "ครับ" เท่านั้น ห้ามใช้ "ค่ะ/คะ/นะคะ"
+
+ข้อมูลสำคัญที่ต้องตอบ:
+{HOLIDAY_FACTS}
+
+เวลาปัจจุบัน: {NOW}
+เวลาทำการปกติ: {HOURS}
+
+ลูกค้ากำลังถามเรื่องวันหยุดหรือเวลาเปิดปิด ให้ตอบข้อมูลวันหยุดข้างต้นทันที
+ตอบสั้นๆ เป็นกันเอง ใส่คำอวยพรท้ายข้อความ ห้ามเปลี่ยนวันที่เด็ดขาด`
+
+function buildHolidayPrompt(now: string, holidayObj: ActiveHoliday, isActive: boolean): string {
+  const facts = [
+    `ร้าน${isActive ? "หยุด" : "จะหยุด"}${holidayObj.name}`,
+    `วันหยุด: ${fmtThai(holidayObj.closedFrom)} ถึง ${fmtThai(holidayObj.closedTo)}`,
+    `เปิดทำการ: ${holidayObj.reopenDayName}ที่ ${fmtThai(holidayObj.reopenDate)} เวลา ${HOURS_TEXT}`,
+    `คำอวยพร: "${holidayObj.greeting}"`,
+  ].join("\n")
+
+  return HOLIDAY_TEMPLATE
+    .replace("{NOW}", now)
+    .replace("{HOURS}", HOURS_TEXT)
+    .replace("{HOLIDAY_FACTS}", facts)
+}
+
+// ─── Pipeline B: Normal product response ────────────────
 
 const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผู้ช่วยของร้านสามหนึ่งพานิช ร้านวัสดุก่อสร้างและอุปกรณ์ช่างครบวงจร จ.ลพบุรี
 คุณเป็นผู้ชาย ใช้คำลงท้ายว่า "ครับ" เท่านั้น ห้ามใช้ "ค่ะ/คะ/นะคะ" โดยเด็ดขาด
@@ -23,9 +76,6 @@ const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผ
 
 เวลาปัจจุบัน: {NOW}
 สถานะร้าน: {STORE_STATUS}
-{HOLIDAY_INFO}
-- เมื่อลูกค้าถามเรื่องเปิด/ปิดร้าน วันหยุด สงกรานต์ ปีใหม่ หรือเทศกาล → ต้องตอบตามข้อมูล "สถานะร้าน" และ "วันหยุด" ด้านบนเสมอ ห้ามตอบว่า "เปิดทุกวัน" ถ้ามีข้อมูลวันหยุดอยู่
-- ห้ามพูดถึงวันหยุดเทศกาลเอง จนกว่าลูกค้าจะถามก่อน
 
 {CONTACT_RULES}
 
@@ -66,7 +116,6 @@ const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผ
 
 {PRODUCTS}`
 
-/** Extract [SEARCH:keyword] tag from AI reply, return cleaned reply + keyword */
 function parseSearchTag(reply: string): { cleanReply: string; searchKeyword?: string } {
   const match = reply.match(/\[SEARCH:([^\]]+)\]/i)
   if (!match) return { cleanReply: reply }
@@ -75,6 +124,8 @@ function parseSearchTag(reply: string): { cleanReply: string; searchKeyword?: st
   if (!keyword || keyword.length < 2) return { cleanReply }
   return { cleanReply, searchKeyword: keyword }
 }
+
+// ─── Main handler ───────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,7 +145,7 @@ export async function POST(request: NextRequest) {
 
     if (sessionId) {
       const existing = getSession(sessionId)
-      if (!existing) sessionId = undefined // expired
+      if (!existing) sessionId = undefined
     }
 
     if (!sessionId) {
@@ -110,90 +161,81 @@ export async function POST(request: NextRequest) {
     }
 
     const session = getSession(sessionId)!
-
-    // Build product context for AI
-    const { context: productContext } = await buildChatContextWithProducts(message)
-    const knowledge = getRelevantKnowledge(message)
     const now = new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "full", timeStyle: "short" })
     const storeOpen = isStoreOpen()
-    const { instructions } = await getAiConfig()
 
     // Holiday check
     const activeHoliday = await getActiveHoliday()
     const upcomingHoliday = !activeHoliday ? await getUpcomingHoliday() : null
-    const effectiveOpen = activeHoliday ? false : storeOpen
+    const holidayObj = activeHoliday || upcomingHoliday
 
-    // Format ISO date → "12 เมษายน"
-    function fmtThai(iso: string) {
-      return new Date(iso + "T00:00:00+07:00").toLocaleDateString("th-TH", { day: "numeric", month: "long" })
-    }
+    // ── Step 1: Keyword detection → route to pipeline ──
+    const holidayDetected = isHolidayRelated(message, holidayObj)
 
-    // Build time-aware rules
-    const storeStatus = activeHoliday
-      ? `ปิดวันหยุด${activeHoliday.name} — เปิดทำการ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)} เวลา ${HOURS_TEXT}`
-      : effectiveOpen
+    let reply: string
+    let searchKeyword: string | undefined
+
+    if (holidayDetected && holidayObj) {
+      // ══ Pipeline A: Holiday (มีข้อมูลวันหยุด) ══
+      const holidayPrompt = buildHolidayPrompt(now, holidayObj, !!activeHoliday)
+      const contents = [
+        ...session.history,
+        { role: "user" as const, parts: [{ text: message }] },
+      ]
+      reply = await generateText(holidayPrompt, contents, 512)
+      searchKeyword = undefined
+    } else if (holidayDetected && !holidayObj) {
+      // ══ Pipeline A2: ถามวันหยุด แต่ไม่มีข้อมูล ══
+      reply = `ร้านเปิดบริการทุกวัน ${HOURS_TEXT} ครับ\n\nสำหรับวันหยุดเทศกาล ทางร้านจะแจ้งให้ทราบล่วงหน้าผ่านช่องทางโซเชียลมีเดียก่อนถึงวันหยุดนั้นครับ 😊`
+      searchKeyword = undefined
+    } else {
+      // ══ Pipeline B: Normal (products + general) ══
+      const { context: productContext } = await buildChatContextWithProducts(message)
+      const knowledge = getRelevantKnowledge(message)
+      const { instructions } = await getAiConfig()
+      const effectiveOpen = activeHoliday ? false : storeOpen
+
+      const storeStatus = effectiveOpen
         ? `เปิดอยู่ (ในเวลาทำการ ${HOURS_TEXT})`
         : `ปิดแล้ว (นอกเวลาทำการ — เปิดใหม่พรุ่งนี้ ${HOURS_TEXT})`
 
-    let holidayInfo = ""
-    if (activeHoliday) {
-      holidayInfo = [
-        `★★★ ข้อมูลวันหยุด (ห้ามตอบผิดจากนี้เด็ดขาด):`,
-        `- ร้านหยุด${activeHoliday.name}`,
-        `- วันหยุด: ${fmtThai(activeHoliday.closedFrom)} ถึง ${fmtThai(activeHoliday.closedTo)} (รวม 5 วัน)`,
-        `- วันเปิดทำการ: ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)} เวลา ${HOURS_TEXT}`,
-        `- คำอวยพร: "${activeHoliday.greeting}"`,
-        `- เมื่อลูกค้าถามเรื่องวันหยุด/เปิดปิด/สงกรานต์ → ตอบตามข้อมูลข้างต้นเท่านั้น ห้ามเปลี่ยนวันที่`,
-      ].join("\n")
-    } else if (upcomingHoliday) {
-      holidayInfo = [
-        `★★★ วันหยุดใกล้ถึง (ห้ามตอบผิดจากนี้เด็ดขาด):`,
-        `- ร้านจะหยุด${upcomingHoliday.name}`,
-        `- วันหยุด: ${fmtThai(upcomingHoliday.closedFrom)} ถึง ${fmtThai(upcomingHoliday.closedTo)}`,
-        `- วันเปิดทำการ: ${upcomingHoliday.reopenDayName}ที่ ${fmtThai(upcomingHoliday.reopenDate)} เวลา ${HOURS_TEXT}`,
-        `- คำอวยพร: "${upcomingHoliday.greeting}"`,
-        `- เมื่อลูกค้าถามเรื่องวันหยุด/สงกรานต์/เปิดปิด → แจ้งวันที่ตามข้างต้นเท่านั้น ห้ามเปลี่ยนวันที่`,
-      ].join("\n")
-    } else {
-      holidayInfo = "ไม่มีวันหยุดเทศกาลในช่วงนี้\n- ถ้าลูกค้าถามเรื่องวันหยุด → ตอบว่า \"เราจะแจ้งให้ทราบผ่านช่องทางโซเชียลมีเดียก่อนถึงวันหยุดนั้นครับ\""
+      const contactRules = effectiveOpen
+        ? `ช่องทางติดต่อ:\n- เขียนแค่ "LINE ${LINE_ID}" หรือ "โทร ${PHONE}" ห้ามใส่ URL ระบบแปลงเป็นลิงก์กดได้เอง`
+        : `ช่องทางติดต่อ (${activeHoliday ? "วันหยุด" : "นอกเวลาทำการ"}):\n- ตอบคำถามทั่วไปได้ตามปกติ ไม่ต้องพูดถึงเรื่องเวลาเปิด/ปิด ถ้าลูกค้าไม่ได้ถาม\n- เฉพาะเมื่อต้องส่งต่อพนักงาน → ห้ามแนะนำ LINE ${LINE_ID} หรือโทร ${PHONE} เพราะไม่มีคนตอบ ให้แนะนำมาสอบถามอีกครั้ง${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)}` : "ในเวลาทำการ"}แทน`
+
+      const fallbackNoProduct = effectiveOpen
+        ? `บอกตรงๆ ว่าอาจไม่มีในระบบ แนะนำสอบถาม LINE ${LINE_ID}`
+        : `บอกว่าสินค้าประเภทนี้ยังไม่มีข้อมูลในระบบ สอบถามเพิ่มเติมได้${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)}` : `ในเวลาทำการ ${HOURS_TEXT}`} ครับ`
+
+      const fallbackOfflineProduct = effectiveOpen
+        ? `แนะนำลูกค้าติดต่อ LINE ${LINE_ID} หรือเข้ามาที่หน้าร้านโดยตรง`
+        : `สินค้าตัวนี้มีที่หน้าร้าน สอบถามรายละเอียดเพิ่มได้${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)}` : `ในเวลาทำการ ${HOURS_TEXT}`} ครับ`
+
+      const systemInstruction = SYSTEM_TEMPLATE
+        .replace("{INSTRUCTIONS}", instructions)
+        .replace("{PRODUCTS}", productContext + knowledge)
+        .replace("{NOW}", now)
+        .replace("{STORE_STATUS}", storeStatus)
+        .replace("{CONTACT_RULES}", contactRules)
+        .replace(/\{FALLBACK_NO_PRODUCT\}/g, fallbackNoProduct)
+        .replace(/\{FALLBACK_OFFLINE_PRODUCT\}/g, fallbackOfflineProduct)
+
+      const contents = [
+        ...session.history,
+        { role: "user" as const, parts: [{ text: message }] },
+      ]
+
+      const rawReply = await generateText(systemInstruction, contents, 2048)
+      const parsed = parseSearchTag(rawReply)
+      reply = parsed.cleanReply
+      searchKeyword = parsed.searchKeyword
     }
 
-    const contactRules = effectiveOpen
-      ? `ช่องทางติดต่อ:\n- เขียนแค่ "LINE ${LINE_ID}" หรือ "โทร ${PHONE}" ห้ามใส่ URL ระบบแปลงเป็นลิงก์กดได้เอง`
-      : `ช่องทางติดต่อ (${activeHoliday ? "วันหยุด" : "นอกเวลาทำการ"}):\n- ตอบคำถามทั่วไปได้ตามปกติ ไม่ต้องพูดถึงเรื่องเวลาเปิด/ปิด ถ้าลูกค้าไม่ได้ถาม\n- เฉพาะเมื่อต้องส่งต่อพนักงาน (สินค้าไม่มีในระบบ ต้องสอบถามเพิ่ม) → ห้ามแนะนำ LINE ${LINE_ID} หรือโทร ${PHONE} เพราะไม่มีคนตอบ ให้แนะนำมาสอบถามอีกครั้ง${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${activeHoliday.reopenDate}` : "ในเวลาทำการ"}แทน`
-
-    const fallbackNoProduct = effectiveOpen
-      ? `บอกตรงๆ ว่าอาจไม่มีในระบบ แนะนำสอบถาม LINE ${LINE_ID}`
-      : `บอกว่าสินค้าประเภทนี้ยังไม่มีข้อมูลในระบบ สอบถามเพิ่มเติมได้${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${activeHoliday.reopenDate}` : `ในเวลาทำการ ${HOURS_TEXT}`} ครับ`
-
-    const fallbackOfflineProduct = effectiveOpen
-      ? `แนะนำลูกค้าติดต่อ LINE ${LINE_ID} หรือเข้ามาที่หน้าร้านโดยตรง`
-      : `สินค้าตัวนี้มีที่หน้าร้าน สอบถามรายละเอียดเพิ่มได้${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${activeHoliday.reopenDate}` : `ในเวลาทำการ ${HOURS_TEXT}`} ครับ`
-
-    const systemInstruction = SYSTEM_TEMPLATE
-      .replace("{INSTRUCTIONS}", instructions)
-      .replace("{PRODUCTS}", productContext + knowledge)
-      .replace("{NOW}", now)
-      .replace("{STORE_STATUS}", storeStatus)
-      .replace("{HOLIDAY_INFO}", holidayInfo)
-      .replace("{CONTACT_RULES}", contactRules)
-      .replace(/\{FALLBACK_NO_PRODUCT\}/g, fallbackNoProduct)
-      .replace(/\{FALLBACK_OFFLINE_PRODUCT\}/g, fallbackOfflineProduct)
-
-    // Build contents with history + new message
-    const contents = [
-      ...session.history,
-      { role: "user" as const, parts: [{ text: message }] },
-    ]
-
-    const rawReply = await generateText(systemInstruction, contents, 2048)
-    const { cleanReply: reply, searchKeyword } = parseSearchTag(rawReply)
-
-    // Save to history (clean reply without [SEARCH:] tag)
+    // Save to history
     addToHistory(sessionId, "user", message)
     addToHistory(sessionId, "model", reply)
 
-    // Log for admin analytics
+    // Log
     const forwarded = request.headers.get("x-forwarded-for")
     const ip = forwarded ? forwarded.split(",")[0].trim() : "localhost"
     try { await logChat(ip, message, reply) } catch { /* never break chat */ }
