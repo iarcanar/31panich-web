@@ -210,3 +210,24 @@ Check `web/lib/auth.ts` → `canPerform(role, action)`. Two-layer enforcement:
 2. Each destructive route also calls `canPerform()` defensively
 
 Manager has access to: product CRUD (including delete), coupon view/edit/create. Manager does NOT have access to: delete coupons, edit AI config, view AI logs, settings page (nav hidden + middleware blocks).
+
+## ปุ่มโทร/LINE ไม่ซ่อนตอนปิดร้าน
+
+**Status**: Fixed in v1.6.0 — ContactLink component
+
+**How it works** (v1.6.0+): ทุกจุดที่ใช้ `<ContactLink>` จะถูก guard อัตโนมัติผ่าน `useBusinessHours` hook:
+- **เปิดทำการ (7.30–17.30)**: แสดงปุ่มปกติ คลิกโทร/เปิด LINE ได้
+- **นอกเวลาทำการ / วันหยุด**: แสดง label "นอกเวลาทำการ" หรือ "หยุด[ชื่อเทศกาล]" แทนปุ่ม, opacity ลด, คลิกไม่ได้
+
+**จุดที่ได้รับ guard (ผ่าน ContactLink):**
+- Hero banner mobile + desktop (ผ่าน `HeroContactButton`)
+- หน้า contact, warranty, about, promotions
+- Product detail, category product grid
+- PromoGrid, FeaturedProductBanner, ContactSection
+- FloatingOrderButton (มี guard ของตัวเอง)
+- ChatWidget (มี guard ของตัวเอง)
+
+**จุดที่ไม่ต้อง guard (ยอมรับ):**
+- Footer LINE QR — เป็นแค่ link add friend, LINE OA มี auto-reply บอกว่าปิดทำการอยู่แล้ว ลูกค้า add ได้ตลอด
+
+**ถ้าเพิ่มปุ่มโทร/LINE ที่ใหม่**: ต้องใช้ `<ContactLink type="phone">` หรือ `<ContactLink type="line">` เสมอ ห้ามใช้ `<a href="tel:">` ตรง

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
 import { useBusinessHours } from "@/hooks/useBusinessHours"
 import { PHONE_RAW, LINE_URL, HOURS_TEXT } from "@/lib/store-config"
 
@@ -13,44 +12,35 @@ interface Props {
 
 export default function ContactLink({ type, children, className = "", onClick }: Props) {
   const { isOpen, holiday, isHoliday } = useBusinessHours()
-  const [showClosed, setShowClosed] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
-
-  function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    if (onClick) onClick(e)
-    if (!isOpen) {
-      e.preventDefault()
-      setShowClosed(true)
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(() => setShowClosed(false), 3000)
-    }
-  }
-
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
-  }, [])
 
   const closedText = isHoliday && holiday
     ? `หยุด${holiday.name} · เปิด${holiday.reopenDayName}`
-    : `ปิดทำการ · เปิด ${HOURS_TEXT}`
+    : `นอกเวลาทำการ · เปิด ${HOURS_TEXT}`
+
+  // ปิดทำการ → แสดง label แทนปุ่ม
+  if (!isOpen) {
+    return (
+      <span className={`relative inline-flex items-center gap-1.5 opacity-50 cursor-not-allowed select-none ${className}`}>
+        {children}
+        <span className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-medium rounded-full px-2 py-0.5 whitespace-nowrap">
+          <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {closedText}
+        </span>
+      </span>
+    )
+  }
 
   return (
     <a
       href={type === "phone" ? `tel:${PHONE_RAW}` : LINE_URL}
       target={type === "line" ? "_blank" : undefined}
       rel={type === "line" ? "noopener noreferrer" : undefined}
-      onClick={handleClick}
-      className={`relative ${className}`}
+      onClick={onClick}
+      className={className}
     >
       {children}
-      {showClosed && (
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#14141f] border border-amber-500/30 text-amber-400 text-[11px] font-medium rounded-lg px-3 py-1.5 whitespace-nowrap shadow-xl z-[100] pointer-events-none">
-          <svg className="w-3 h-3 inline mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {closedText}
-        </span>
-      )}
     </a>
   )
 }
