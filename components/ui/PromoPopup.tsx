@@ -27,12 +27,8 @@ export default function PromoPopup() {
   const [closing, setClosing] = useState(false)
 
   useEffect(() => {
-    const today = todayBangkok()
-
-    // Check date range
-    if (today < PROMO.showFrom || today > PROMO.showTo) return
-
     // Check "don't show today" preference
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" })
     const stored = localStorage.getItem(`popup:${PROMO.id}`)
     if (stored === today) return
 
