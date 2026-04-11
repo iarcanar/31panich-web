@@ -199,10 +199,10 @@ export default function PromotionCouponsStrip() {
       {popupOpen && INLINE_AD && (
         <>
           <div
-            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
+            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm animate-fade-in"
             onClick={() => setPopupOpen(false)}
           />
-          <div className="fixed inset-0 z-[201] flex items-center justify-center p-4 animate-[scaleIn_0.2s_ease-out]">
+          <div className="fixed inset-0 z-[201] flex items-center justify-center p-4" style={{ animation: "scale-in 0.2s ease-out" }}>
             <div className="relative w-full max-w-lg bg-[#12121c] border border-purple-500/20 rounded-2xl shadow-2xl shadow-purple-900/30 overflow-hidden">
               {/* Close */}
               <button
@@ -263,10 +263,6 @@ export default function PromotionCouponsStrip() {
               </div>
             </div>
           </div>
-          <style>{`
-            @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-            @keyframes scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
-          `}</style>
         </>
       )}
     </section>
