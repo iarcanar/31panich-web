@@ -60,7 +60,7 @@ Organized by domain, not by component type.
 | `points/` | `HowToCollect` (loyalty program explainer) |
 | `admin/` | `AdminModeProvider`, `AiEnrichButton`, `ImageCropPicker` |
 | `layout/` | `Header`, `Footer`, `FloatingOrderButton` (cross-page chrome) |
-| `ui/` | Generic primitives: `ScrollToTop`, `ContactLink`, `SectionHeading`, `ScrollGlowFrame`, `ScrollAccentLine` |
+| `ui/` | Generic primitives: `ScrollToTop`, `ContactLink`, `SectionHeading`, `ScrollGlowFrame`, `ScrollAccentLine`, `PromoPopup` + `PromoPopupLazy` (popup banner — config-driven, แก้ภาพ+ข้อความที่ PROMO/CONTENT ด้านบนไฟล์) |
 
 ## `web/lib/`
 
@@ -109,7 +109,7 @@ JSON data files. In dev these are read/written directly. In production they live
 |---|---|
 | `products/` | Product photos (WebP) |
 | `brands/` | Brand logos |
-| `promotions/` | Promotion campaign images |
+| `promotions/` | Promotion campaign images + popup banner images (ใช้โดย `PromoPopup`) |
 | `points/` | Loyalty reward images |
 | `category-icons/` | One SVG per category (15 files: `tools.svg`, `paint.svg`, etc.) |
 | `catalog/` | PDF product catalogs |

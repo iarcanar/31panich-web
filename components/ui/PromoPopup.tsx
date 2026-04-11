@@ -3,19 +3,49 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 
+/* ─────────────────────────────────────────────
+ *  CONFIG — เปลี่ยนโปรโมชั่นแก้แค่ตรงนี้ที่เดียว
+ *  1. วางภาพใน public/promotions/
+ *  2. อัปเดต PROMO ด้านล่าง (width/height = ขนาดจริงของภาพ)
+ *  3. แก้ content ใน CONTENT
+ *  Done — ไม่ต้องแก้ JSX ด้านล่าง
+ * ───────────────────────────────────────────── */
+
 interface PromoPopupConfig {
   id: string
   image: string
-  showFrom: string   // ISO date "YYYY-MM-DD"
-  showTo: string     // ISO date "YYYY-MM-DD"
+  imageWidth: number   // ความกว้างจริงของภาพ (px)
+  imageHeight: number  // ความสูงจริงของภาพ (px)
+  alt: string
+}
+
+interface PromoContent {
+  title: string
+  body: string
+  infoPrimary: string   // ข้อความด้านซ้าย (เช่น หยุด ...)
+  infoSecondary: string // ข้อความด้านขวา (เช่น เปิด ...)
+  footer: string
 }
 
 const PROMO: PromoPopupConfig = {
   id: "songkran-2569",
   image: "/promotions/songkran-2569-popup.webp",
-  showFrom: "2026-04-11",
-  showTo: "2026-04-16",
+  imageWidth: 800,
+  imageHeight: 538,
+  alt: "โปรโมชั่นสงกรานต์ 2569",
 }
+
+const CONTENT: PromoContent = {
+  title: "🎉 สุขสันต์วันสงกรานต์ 🌊",
+  body: "วันนี้ (11 เม.ย.) เปิดร้านวันสุดท้ายก่อนหยุดยาว\nหากต้องการสั่งของ แวะได้เลยก่อน 17.30 น.",
+  infoPrimary: "🗓️ หยุด 12–16 เมษายน",
+  infoSecondary: "✅ เปิด ศุกร์ 17 เม.ย.",
+  footer: "ขอให้ทุกท่านเดินทางปลอดภัย ไปเล่นน้ำสนุกๆ กลับมาสุขภาพดีทุกคนนะคะ 🙏",
+}
+
+/* ─────────────────────────────────────────────
+ *  COMPONENT — ไม่ต้องแก้ไข
+ * ───────────────────────────────────────────── */
 
 function todayBangkok(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" })
@@ -27,12 +57,10 @@ export default function PromoPopup() {
   const [closing, setClosing] = useState(false)
 
   useEffect(() => {
-    // Check "don't show today" preference
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" })
+    const today = todayBangkok()
     const stored = localStorage.getItem(`popup:${PROMO.id}`)
     if (stored === today) return
 
-    // Small delay so page loads first
     const timer = setTimeout(() => setVisible(true), 1200)
     return () => clearTimeout(timer)
   }, [])
@@ -70,48 +98,40 @@ export default function PromoPopup() {
             </svg>
           </button>
 
-          {/* Image — 4:3 ratio container */}
-          <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
-            <Image
-              src={PROMO.image}
-              alt="โปรโมชั่นสงกรานต์ 2569"
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 95vw, 512px"
-              priority
-            />
-          </div>
+          {/* Image — ปรับตาม ratio จริงอัตโนมัติ ไม่ crop */}
+          <Image
+            src={PROMO.image}
+            alt={PROMO.alt}
+            width={PROMO.imageWidth}
+            height={PROMO.imageHeight}
+            className="w-full h-auto"
+            sizes="(max-width: 640px) 95vw, 512px"
+            priority
+          />
 
           {/* Text content */}
           <div className="px-5 py-4 space-y-3">
-            {/* Title */}
             <h2 className="text-center text-xl font-black text-white tracking-wide">
-              <span className="text-cyan-300">🎉</span> สุขสันต์วันสงกรานต์ <span className="text-cyan-300">🌊</span>
+              {CONTENT.title}
             </h2>
 
-            {/* Body */}
             <div className="text-center text-sm text-gray-300 leading-relaxed space-y-2">
               <p>
-                วันนี้ <span className="text-white font-semibold">(11 เม.ย.)</span> เปิดร้านวันสุดท้ายก่อนหยุดยาว
-                <br />
-                หากต้องการสั่งของ แวะได้เลยก่อน <span className="text-amber-400 font-bold">17.30 น.</span>
+                {CONTENT.body.split("\n").map((line, i) => (
+                  <span key={i}>
+                    {i > 0 && <br />}
+                    {line}
+                  </span>
+                ))}
               </p>
 
               <div className="flex items-center justify-center gap-4 py-1">
-                <div className="flex items-center gap-1.5 text-red-400">
-                  <span className="text-base">🗓️</span>
-                  <span className="font-semibold">หยุด 12–16 เมษายน</span>
-                </div>
+                <span className="font-semibold text-red-400">{CONTENT.infoPrimary}</span>
                 <div className="w-px h-5 bg-white/10" />
-                <div className="flex items-center gap-1.5 text-emerald-400">
-                  <span className="text-base">✅</span>
-                  <span className="font-semibold">เปิด ศุกร์ 17 เม.ย.</span>
-                </div>
+                <span className="font-semibold text-emerald-400">{CONTENT.infoSecondary}</span>
               </div>
 
-              <p className="text-gray-400 text-xs">
-                ขอให้ทุกท่านเดินทางปลอดภัย ไปเล่นน้ำสนุกๆ กลับมาสุขภาพดีทุกคนนะคะ 🙏
-              </p>
+              <p className="text-gray-400 text-xs">{CONTENT.footer}</p>
             </div>
 
             {/* Don't show today checkbox + close */}
