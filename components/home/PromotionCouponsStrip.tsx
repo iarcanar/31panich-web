@@ -82,6 +82,8 @@ export default function PromotionCouponsStrip() {
     </section>
   )
 
+  const [popupOpen, setPopupOpen] = useState(false)
+
   if (coupons.length === 0) return null
 
   const showAd = isAdActive(INLINE_AD)
@@ -148,17 +150,20 @@ export default function PromotionCouponsStrip() {
             </div>
           </div>
 
-          {/* Inline Ad Banner */}
+          {/* Inline Ad Banner — click to open popup */}
           {showAd && INLINE_AD && (
             <div className="md:col-span-3 mt-4 md:mt-0">
-              <div className="relative bg-[#12121c] border border-purple-500/15 rounded-2xl overflow-hidden h-full flex flex-col">
+              <button
+                onClick={() => setPopupOpen(true)}
+                className="relative bg-[#12121c] border border-purple-500/15 hover:border-purple-500/30 rounded-2xl overflow-hidden h-full w-full flex flex-col cursor-pointer transition-colors group text-left"
+              >
                 {/* Image */}
                 <div className="relative w-full flex-1 min-h-[200px]">
                   <Image
                     src={INLINE_AD.image}
                     alt="โปรโมชั่นสงกรานต์ 2569"
                     fill
-                    className="object-cover"
+                    className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
                     sizes="(max-width: 768px) 100vw, 60vw"
                   />
                 </div>
@@ -180,11 +185,86 @@ export default function PromotionCouponsStrip() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      {/* Popup overlay — triggered by clicking inline ad */}
+      {popupOpen && INLINE_AD && (
+        <>
+          <div
+            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
+            onClick={() => setPopupOpen(false)}
+          />
+          <div className="fixed inset-0 z-[201] flex items-center justify-center p-4 animate-[scaleIn_0.2s_ease-out]">
+            <div className="relative w-full max-w-lg bg-[#12121c] border border-purple-500/20 rounded-2xl shadow-2xl shadow-purple-900/30 overflow-hidden">
+              {/* Close */}
+              <button
+                onClick={() => setPopupOpen(false)}
+                className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white/70 hover:text-white transition-colors backdrop-blur-sm"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Image */}
+              <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
+                <Image
+                  src={INLINE_AD.image}
+                  alt="โปรโมชั่นสงกรานต์ 2569"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 95vw, 512px"
+                  priority
+                />
+              </div>
+
+              {/* Text */}
+              <div className="px-5 py-4 space-y-3">
+                <h2 className="text-center text-xl font-black text-white tracking-wide">
+                  <span className="text-cyan-300">🎉</span> สุขสันต์วันสงกรานต์ <span className="text-cyan-300">🌊</span>
+                </h2>
+                <div className="text-center text-sm text-gray-300 leading-relaxed space-y-2">
+                  <p>
+                    วันนี้ <span className="text-white font-semibold">(11 เม.ย.)</span> เปิดร้านวันสุดท้ายก่อนหยุดยาว
+                    <br />
+                    หากต้องการสั่งของ แวะได้เลยก่อน <span className="text-amber-400 font-bold">17.30 น.</span>
+                  </p>
+                  <div className="flex items-center justify-center gap-4 py-1">
+                    <div className="flex items-center gap-1.5 text-red-400">
+                      <span className="text-base">🗓️</span>
+                      <span className="font-semibold">หยุด 12–16 เมษายน</span>
+                    </div>
+                    <div className="w-px h-5 bg-white/10" />
+                    <div className="flex items-center gap-1.5 text-emerald-400">
+                      <span className="text-base">✅</span>
+                      <span className="font-semibold">เปิด ศุกร์ 17 เม.ย.</span>
+                    </div>
+                  </div>
+                  <p className="text-gray-400 text-xs">
+                    ขอให้ทุกท่านเดินทางปลอดภัย ไปเล่นน้ำสนุกๆ กลับมาสุขภาพดีทุกคนนะคะ 🙏
+                  </p>
+                </div>
+                <div className="flex justify-end pt-1 border-t border-white/5">
+                  <button
+                    onClick={() => setPopupOpen(false)}
+                    className="text-xs text-purple-400 hover:text-purple-300 font-medium px-3 py-1.5 rounded-lg hover:bg-purple-400/10 transition-colors"
+                  >
+                    ปิด
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <style>{`
+            @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+            @keyframes scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+          `}</style>
+        </>
+      )}
     </section>
   )
 }
