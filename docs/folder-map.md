@@ -38,9 +38,11 @@ Next.js App Router. Two route groups, plus the API tree.
 | `admin/products/` | Product CRUD + AI enrich | `page.tsx` (large — see Phase 4 refactor in [active plan](../../../Users/Welcome/.claude/projects/C--31-Site/memory/project_active_improvement_plan.md)) |
 | `admin/coupons/` | Coupon CRUD | `page.tsx` |
 | `admin/settings/` | Edit AI system prompt + view hosting/links | `page.tsx` |
-| `admin/analytics/`, `ai-logs/`, `test-claim/` | Read-only admin views | `page.tsx` each |
+| `admin/analytics/`, `ai-logs/`, `test-claim/` | Admin views — `ai-logs` = AI Back-end (chat logs + AI prompt + วันหยุด) | `page.tsx` each |
 | `api/admin/` | Admin-only API routes | All require `getSessionUser()` admin check |
-| `api/ai/chat/` | Customer chat with Gemini | `route.ts` — public, no auth |
+| `api/ai/chat/` | Customer chat with Gemini (dual pipeline: holiday / product) | `route.ts` — public, no auth |
+| `api/holidays/active/` | Active holiday check for frontend (ISR 5min) | `route.ts` — public |
+| `api/admin/holidays/` | Holiday CRUD (admin-only) | `route.ts` — GET/PUT |
 | `api/ai/enrich/` | Admin product description AI | `route.ts` — uses `gemini-cache.ts` |
 | `api/products/`, `coupons/`, `upload/` | CRUD + image upload signing | See [`architecture.md`](./architecture.md) for flow |
 | `sitemap.ts`, `layout.tsx`, `not-found.tsx`, `globals.css` | Root-level page glue | — |
@@ -80,6 +82,7 @@ All business logic. No JSX in here.
 | `ai-config.ts` | `getAiConfig`, `saveAiConfig`, `AiConfig` type | Read/write `data/ai-config.json` |
 | `ai-products.ts` | `buildChatContextWithProducts`, `buildEnrichContext` | Score products against a Thai query (bidirectional matching), build context strings |
 | `ai-knowledge.ts` | `getRelevantKnowledge` | Trigger-based knowledge injection (e.g., "แต้ม" → reads `data/knowledge/points.txt`) |
+| `holidays.ts` | `getHolidays`, `saveHolidays`, `getActiveHoliday`, `getUpcomingHoliday`, `isHolidayClosed` | วันหยุดนักขัตฤกษ์ — ข้อมูลจาก `holidays.json`, ใช้ทั้ง AI pipeline + frontend buttons |
 | `chat-logger.ts` | `logChat` (no-op), `getChatLogs` | **Disabled** to save Vercel Blob ops |
 | `catalogs.ts` | `CATALOGS` | Catalog PDF list |
 | `structured-data.ts` | `localBusinessSchema` | JSON-LD for SEO (LocalBusiness schema injected on home) |
@@ -96,6 +99,7 @@ JSON data files. In dev these are read/written directly. In production they live
 | `ai-config.json` | `AiConfig` | System instruction + product rules. Edited via admin panel |
 | `promotions.json` | `Promotion[]` | Marketing promos shown on home |
 | `reviews.json` | Google reviews snapshot | Used by `GoogleReviewStrip` |
+| `holidays.json` | `Holiday[]` | วันหยุดนักขัตฤกษ์ (id, name, closedFrom/To, reopenDate, greeting, active) |
 | `chat-logs.json` | `ChatLog[]` | Logger disabled, file kept for shape |
 | `knowledge/points.txt` | plain text | Loyalty program info injected into chat when triggered |
 
@@ -114,7 +118,7 @@ Plus the homepage banner (`banner-mobile.webp`), favicons, and `robots.txt`.
 
 ## Other top-levels
 
-- `web/hooks/useBusinessHours.ts` — opens/closed status (used by `ChatWidget`)
+- `web/hooks/useBusinessHours.ts` — opens/closed status + holiday awareness (used by `ChatWidget`, `FloatingOrderButton`, `ContactLink`). Fetches `/api/holidays/active` on mount, returns `{ isOpen, isMobile, holiday, isHoliday }`
 - `web/types/promotion.ts` — shared promotion type
 - `web/middleware.ts` — auth gate for admin routes + AI-config protection from managers
 - `web/next.config.ts` — image domains, version exposure, asset cache headers

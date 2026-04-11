@@ -64,12 +64,33 @@ If you DO revert, do it incrementally and test each product creation. Bring back
 
 **Long-term**: investigate root cause via Vercel runtime logs / log drain. Prime suspect is the URL decode / `getProductBySlug` interaction with Node 24 + Thai character handling, but local repro (Node 22) does not show the issue.
 
+## "AI ตอบวันหยุดผิด / ไม่ตอบเรื่องวันหยุด"
+
+**Status**: Fixed in v1.5.18 — dual pipeline architecture
+
+**How it works** (v1.5.18+): AI chat มี 2 pipeline แยกกัน:
+- **Pipeline A (Holiday)**: keyword detect → พบคำเกี่ยวกับวันหยุด → ใช้ prompt สั้นเฉพาะวันหยุด (ไม่มีสินค้ามาปน)
+- **Pipeline B (Product)**: ไม่พบ keyword → ใช้ prompt สินค้าปกติ (ไม่มีวันหยุดมาปน)
+
+**Where to look if holiday response is wrong:**
+1. **ข้อมูลวันหยุด**: `web/data/holidays.json` (production: Redis `data:holidays.json`) — ตรวจ closedFrom, closedTo, reopenDate ถูกไหม
+2. **Keyword list**: `web/app/api/ai/chat/route.ts` → `HOLIDAY_KEYWORDS` array — ตรวจว่ามีคำที่ลูกค้าใช้ไหม
+3. **Holiday prompt**: `HOLIDAY_TEMPLATE` ใน route.ts — prompt ที่ Gemini ใช้ตอบเรื่องวันหยุด
+4. **Admin UI**: `/admin/ai-logs` → accordion "วันหยุดนักขัตฤกษ์" — ตรวจว่า active หรือไม่
+
+**Testing protocol**: เมื่อแก้ข้อมูลวันหยุดหรือ AI prompt ต้องทดสอบอย่างน้อย 5 คำถาม ผ่าน ChatWidget จริง (ไม่ใช่ curl เพราะ encoding ต่างกัน):
+1. ถามตรง ("สงกรานต์หยุดไหม")
+2. ถามเวลา ("ร้านเปิดกี่โมง")
+3. ถามวันที่ ("หยุดวันไหนถึงวันไหน")
+4. ถามสินค้าระหว่างหยุด ("13 เมษา สั่งได้ไหม")
+5. ถามสินค้าทั่วไป ("มีสว่านไหม" — ต้องไม่พูดเรื่องวันหยุด)
+
 ## "AI gives a wrong / off-brand answer"
 
 **Where to look first:**
 
-1. **Runtime config**: `web/data/ai-config.json` (production: Upstash Redis key `data:ai-config.json`). Edited via `/admin/settings`. The `instructions` field is the bulk of the system prompt
-2. **Prompt template**: `web/app/api/ai/chat/route.ts` — see how `instructions` is composed with store config, time-aware contact rules, product context, knowledge snippets
+1. **Runtime config**: `web/data/ai-config.json` (production: Upstash Redis key `data:ai-config.json`). Edited via `/admin/ai-logs` → accordion "คำแนะนำ AI". The `instructions` field is the bulk of the system prompt
+2. **Prompt template**: `web/app/api/ai/chat/route.ts` — Pipeline B (product) composes `instructions` with store config, contact rules, product context, knowledge snippets
 3. **Product context**: `web/lib/ai-products.ts` → `buildChatContextWithProducts()` scores products against the user message. If the AI mentions wrong products, the scoring heuristic is the culprit
 4. **Knowledge injection**: `web/lib/ai-knowledge.ts` decides when to inject knowledge files (e.g., `data/knowledge/points.txt` when message mentions แต้ม)
 

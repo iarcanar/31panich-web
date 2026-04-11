@@ -28,17 +28,34 @@ $EDITOR web/data/ai-config.json
 
 ## Layer 2 — Template (in code)
 
-The template lives in `web/app/api/ai/chat/route.ts`. It composes the runtime instructions with:
+The chat route (`web/app/api/ai/chat/route.ts`) uses a **dual pipeline** architecture (v1.5.18+):
 
-- Store config (`web/lib/store-config.ts`) — phone, hours, address
-- Time-aware contact rules (uses `useBusinessHours` logic to know if shop is open)
-- Product context from `buildChatContextWithProducts()` (`web/lib/ai-products.ts`)
-- Knowledge snippets from `getRelevantKnowledge()` (`web/lib/ai-knowledge.ts`)
+### Pipeline A — Holiday (keyword-triggered)
+- **When**: message contains keywords like "หยุด", "เปิด", "ปิด", "สงกรานต์", "กี่โมง"
+- **Prompt**: `HOLIDAY_TEMPLATE` — short, only holiday data + store hours, no products
+- **Data**: reads from `web/lib/holidays.ts` → `holidays.json`
+- **Fallback**: if no holiday data in backend → fixed text response (ไม่เรียก Gemini)
+
+### Pipeline B — Product (default)
+- **When**: no holiday keyword detected
+- **Prompt**: `SYSTEM_TEMPLATE` — full product context + knowledge + contact rules
+- **Data**: `ai-config.json` + `ai-products.ts` + `ai-knowledge.ts`
 
 You only need to touch the template if you want to:
 - Change how product context is formatted
-- Add a new dynamic placeholder (e.g., insert today's date)
+- Add a new dynamic placeholder
 - Change the conversation rules / search behavior (`[SEARCH:keyword]` tag handling)
+- Add/edit holiday keywords (`HOLIDAY_KEYWORDS` array)
+
+## Layer 3 — Holiday data (admin panel)
+
+Holiday info is auto-injected into AI Pipeline A when active. Managed via admin panel:
+
+1. `/admin/ai-logs` → accordion "วันหยุดนักขัตฤกษ์"
+2. เพิ่ม/แก้ไข/ลบวันหยุด → กด "บันทึก"
+3. ข้อมูลจะถูกใช้ทั้ง AI chat (Pipeline A) และ frontend buttons (ซ่อนปุ่มโทร/LINE)
+
+Data: `web/data/holidays.json` (Redis: `data:holidays.json`)
 
 ## Knowledge files
 
@@ -52,10 +69,14 @@ Trigger-based knowledge injection: `web/data/knowledge/points.txt` is read into 
 
 - `web/data/ai-config.json` — runtime config (Redis in production)
 - `web/lib/ai-config.ts` — `getAiConfig`, `saveAiConfig`
-- `web/app/api/ai/chat/route.ts` — system prompt template + chat handler
+- `web/app/api/ai/chat/route.ts` — dual pipeline handler (HOLIDAY_TEMPLATE + SYSTEM_TEMPLATE)
 - `web/app/api/admin/ai-config/route.ts` — GET/PUT API (admin-only, blocked for managers in middleware)
 - `web/lib/ai-knowledge.ts` — trigger-based knowledge injection
 - `web/data/knowledge/*.txt` — knowledge snippets
+- `web/data/holidays.json` — วันหยุดนักขัตฤกษ์ (auto-injected into Pipeline A)
+- `web/lib/holidays.ts` — holiday data access + active/upcoming check
+- `web/app/api/admin/holidays/route.ts` — Holiday CRUD API
+- `web/app/api/holidays/active/route.ts` — public active holiday check (ISR 5min)
 
 ## Things that go wrong
 

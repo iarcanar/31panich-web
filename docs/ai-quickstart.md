@@ -34,7 +34,8 @@ python verify.py          # ONLY when touching env vars / auth
 | You want to… | Look at |
 |---|---|
 | Change the AI's personality / rules | `web/data/ai-config.json` (admin panel UI: `/admin/settings`) |
-| Change the AI chat system prompt template | `web/app/api/ai/chat/route.ts` |
+| Change the AI chat system prompt template | `web/app/api/ai/chat/route.ts` (มี 2 pipeline: วันหยุด / สินค้า) |
+| จัดการวันหยุดนักขัตฤกษ์ (AI + ปุ่ม) | Admin: `/admin/ai-logs` → accordion "วันหยุด" · Data: `web/data/holidays.json` · Logic: `web/lib/holidays.ts` |
 | Edit the 15 product categories | `web/lib/categories.ts` (single source of truth) |
 | Change shop contact info (phone, LINE, hours) | `web/lib/store-config.ts` |
 | Change a JSON data file (products, coupons, promotions) | `web/data/*.json` — but in production these live in Upstash Redis (see `lib/blob-store.ts`) |

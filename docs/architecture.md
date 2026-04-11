@@ -90,13 +90,27 @@ sequenceDiagram
   P-->>API: Top 5 matches + category summary
   API->>K: getRelevantKnowledge(message)
   K-->>API: Knowledge snippets (e.g., points.txt if message mentions แต้ม)
-  API->>API: Compose system instruction (template + context + knowledge)
-  API->>G: generateContent(systemInstruction, history)
-  Note over API,G: Chat is NOT cached — contents grow each turn
-  G-->>API: Response text
+  API->>API: Keyword detection (หยุด/เปิด/ปิด/สงกรานต์/กี่โมง...)
+  alt Holiday keyword detected + มีข้อมูลวันหยุด
+    API->>API: Pipeline A — holiday-only prompt (short, no products)
+    API->>G: generateContent(holidayPrompt, history)
+    G-->>API: Holiday response (วันหยุด + คำอวยพร)
+  else Holiday keyword + ไม่มีข้อมูล
+    API-->>C: Fixed text "แจ้งผ่าน social media" (ไม่เรียก Gemini)
+  else No holiday keyword
+    API->>P: buildChatContextWithProducts(message)
+    P-->>API: Top 5 matches
+    API->>K: getRelevantKnowledge(message)
+    K-->>API: Knowledge snippets
+    API->>API: Pipeline B — product prompt (full)
+    API->>G: generateContent(systemInstruction, history)
+    G-->>API: Product response
+  end
   API->>S: addToHistory(sessionId, response)
   API-->>C: { answer }
 ```
+
+**Dual pipeline design** (v1.5.18+): AI chat uses keyword detection to route questions to separate pipelines. Holiday questions get a short focused prompt with only holiday data (no products to confuse Gemini). Product questions get the full product prompt with no holiday info mixed in. This prevents cross-contamination where Gemini answers holiday questions with product info or vice versa.
 
 **Why chat is not cached**: `gemini-cache.ts` exists but is opt-in. Chat contents grow with every turn (history is included), so cache hits would be near zero. Use it for `enrich` and other deterministic flows instead.
 
