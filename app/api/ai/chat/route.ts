@@ -123,23 +123,37 @@ export async function POST(request: NextRequest) {
     const upcomingHoliday = !activeHoliday ? await getUpcomingHoliday() : null
     const effectiveOpen = activeHoliday ? false : storeOpen
 
-    // Build time-aware rules
-    const storeStatus = activeHoliday
-      ? `ปิดวันหยุด${activeHoliday.name} (หยุด ${activeHoliday.closedFrom} ถึง ${activeHoliday.closedTo}) — เปิดทำการ${activeHoliday.reopenDayName}ที่ ${activeHoliday.reopenDate} เวลา ${HOURS_TEXT}`
-      : effectiveOpen
-        ? `เปิดอยู่ (ในเวลาทำการ ${HOURS_TEXT})`
-        : `ปิดแล้ว (นอกเวลาทำการ — เปิดใหม่พรุ่งนี้ ${HOURS_TEXT})`
-
-    // Holiday info for prompt — format dates as Thai for clarity
+    // Format ISO date → "12 เมษายน"
     function fmtThai(iso: string) {
       return new Date(iso + "T00:00:00+07:00").toLocaleDateString("th-TH", { day: "numeric", month: "long" })
     }
 
+    // Build time-aware rules
+    const storeStatus = activeHoliday
+      ? `ปิดวันหยุด${activeHoliday.name} — เปิดทำการ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)} เวลา ${HOURS_TEXT}`
+      : effectiveOpen
+        ? `เปิดอยู่ (ในเวลาทำการ ${HOURS_TEXT})`
+        : `ปิดแล้ว (นอกเวลาทำการ — เปิดใหม่พรุ่งนี้ ${HOURS_TEXT})`
+
     let holidayInfo = ""
     if (activeHoliday) {
-      holidayInfo = `★ วันหยุด (สำคัญ): ตอนนี้ร้านหยุด${activeHoliday.name} ตั้งแต่ ${fmtThai(activeHoliday.closedFrom)} ถึง ${fmtThai(activeHoliday.closedTo)} จะเปิดทำการอีกครั้ง${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)} เวลา ${HOURS_TEXT}\n- เมื่อลูกค้าถามเรื่องวันหยุด หรือเปิดปิดร้าน หรือสงกรานต์ → ต้องบอกว่าร้านหยุด${activeHoliday.name} พร้อมคำอวยพร: "${activeHoliday.greeting}"\n- เมื่อต้องส่งต่อพนักงาน → แนะนำติดต่อหลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)}`
+      holidayInfo = [
+        `★★★ ข้อมูลวันหยุด (ห้ามตอบผิดจากนี้เด็ดขาด):`,
+        `- ร้านหยุด${activeHoliday.name}`,
+        `- วันหยุด: ${fmtThai(activeHoliday.closedFrom)} ถึง ${fmtThai(activeHoliday.closedTo)} (รวม 5 วัน)`,
+        `- วันเปิดทำการ: ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)} เวลา ${HOURS_TEXT}`,
+        `- คำอวยพร: "${activeHoliday.greeting}"`,
+        `- เมื่อลูกค้าถามเรื่องวันหยุด/เปิดปิด/สงกรานต์ → ตอบตามข้อมูลข้างต้นเท่านั้น ห้ามเปลี่ยนวันที่`,
+      ].join("\n")
     } else if (upcomingHoliday) {
-      holidayInfo = `★ วันหยุดใกล้ถึง (สำคัญ): ร้านจะหยุด${upcomingHoliday.name} ตั้งแต่ ${fmtThai(upcomingHoliday.closedFrom)} ถึง ${fmtThai(upcomingHoliday.closedTo)} จะเปิดทำการอีกครั้ง${upcomingHoliday.reopenDayName}ที่ ${fmtThai(upcomingHoliday.reopenDate)}\n- เมื่อลูกค้าถามเรื่องวันหยุด หรือสงกรานต์ หรือเปิดปิดร้าน → ต้องแจ้งล่วงหน้าว่าร้านจะหยุด${upcomingHoliday.name} บอกวันที่ชัดเจน พร้อมคำอวยพร: "${upcomingHoliday.greeting}"`
+      holidayInfo = [
+        `★★★ วันหยุดใกล้ถึง (ห้ามตอบผิดจากนี้เด็ดขาด):`,
+        `- ร้านจะหยุด${upcomingHoliday.name}`,
+        `- วันหยุด: ${fmtThai(upcomingHoliday.closedFrom)} ถึง ${fmtThai(upcomingHoliday.closedTo)}`,
+        `- วันเปิดทำการ: ${upcomingHoliday.reopenDayName}ที่ ${fmtThai(upcomingHoliday.reopenDate)} เวลา ${HOURS_TEXT}`,
+        `- คำอวยพร: "${upcomingHoliday.greeting}"`,
+        `- เมื่อลูกค้าถามเรื่องวันหยุด/สงกรานต์/เปิดปิด → แจ้งวันที่ตามข้างต้นเท่านั้น ห้ามเปลี่ยนวันที่`,
+      ].join("\n")
     } else {
       holidayInfo = "ไม่มีวันหยุดเทศกาลในช่วงนี้\n- ถ้าลูกค้าถามเรื่องวันหยุด → ตอบว่า \"เราจะแจ้งให้ทราบผ่านช่องทางโซเชียลมีเดียก่อนถึงวันหยุดนั้นครับ\""
     }
