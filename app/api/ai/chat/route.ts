@@ -6,6 +6,7 @@ import { logChat } from "@/lib/chat-logger"
 import { getAiConfig } from "@/lib/ai-config"
 import { getRelevantKnowledge } from "@/lib/ai-knowledge"
 import { PHONE, LINE_ID, HOURS_TEXT } from "@/lib/store-config"
+import { getActiveHoliday, getUpcomingHoliday } from "@/lib/holidays"
 
 /** Check if current Bangkok time is within business hours (07:30-17:30) */
 function isStoreOpen(): boolean {
@@ -22,7 +23,9 @@ const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผ
 
 เวลาปัจจุบัน: {NOW}
 สถานะร้าน: {STORE_STATUS}
-- ใช้เวลานี้ตอบเรื่องเปิด/ปิดร้าน เฉพาะเมื่อลูกค้าถามเท่านั้น
+{HOLIDAY_INFO}
+- เมื่อลูกค้าถามเรื่องเปิด/ปิดร้าน วันหยุด สงกรานต์ ปีใหม่ หรือเทศกาล → ต้องตอบตามข้อมูล "สถานะร้าน" และ "วันหยุด" ด้านบนเสมอ ห้ามตอบว่า "เปิดทุกวัน" ถ้ามีข้อมูลวันหยุดอยู่
+- ห้ามพูดถึงวันหยุดเทศกาลเอง จนกว่าลูกค้าจะถามก่อน
 
 {CONTACT_RULES}
 
@@ -115,28 +118,50 @@ export async function POST(request: NextRequest) {
     const storeOpen = isStoreOpen()
     const { instructions } = await getAiConfig()
 
+    // Holiday check
+    const activeHoliday = await getActiveHoliday()
+    const upcomingHoliday = !activeHoliday ? await getUpcomingHoliday() : null
+    const effectiveOpen = activeHoliday ? false : storeOpen
+
     // Build time-aware rules
-    const storeStatus = storeOpen
-      ? `เปิดอยู่ (ในเวลาทำการ ${HOURS_TEXT})`
-      : `ปิดแล้ว (นอกเวลาทำการ — เปิดใหม่พรุ่งนี้ ${HOURS_TEXT})`
+    const storeStatus = activeHoliday
+      ? `ปิดวันหยุด${activeHoliday.name} (หยุด ${activeHoliday.closedFrom} ถึง ${activeHoliday.closedTo}) — เปิดทำการ${activeHoliday.reopenDayName}ที่ ${activeHoliday.reopenDate} เวลา ${HOURS_TEXT}`
+      : effectiveOpen
+        ? `เปิดอยู่ (ในเวลาทำการ ${HOURS_TEXT})`
+        : `ปิดแล้ว (นอกเวลาทำการ — เปิดใหม่พรุ่งนี้ ${HOURS_TEXT})`
 
-    const contactRules = storeOpen
+    // Holiday info for prompt — format dates as Thai for clarity
+    function fmtThai(iso: string) {
+      return new Date(iso + "T00:00:00+07:00").toLocaleDateString("th-TH", { day: "numeric", month: "long" })
+    }
+
+    let holidayInfo = ""
+    if (activeHoliday) {
+      holidayInfo = `★ วันหยุด (สำคัญ): ตอนนี้ร้านหยุด${activeHoliday.name} ตั้งแต่ ${fmtThai(activeHoliday.closedFrom)} ถึง ${fmtThai(activeHoliday.closedTo)} จะเปิดทำการอีกครั้ง${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)} เวลา ${HOURS_TEXT}\n- เมื่อลูกค้าถามเรื่องวันหยุด หรือเปิดปิดร้าน หรือสงกรานต์ → ต้องบอกว่าร้านหยุด${activeHoliday.name} พร้อมคำอวยพร: "${activeHoliday.greeting}"\n- เมื่อต้องส่งต่อพนักงาน → แนะนำติดต่อหลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${fmtThai(activeHoliday.reopenDate)}`
+    } else if (upcomingHoliday) {
+      holidayInfo = `★ วันหยุดใกล้ถึง (สำคัญ): ร้านจะหยุด${upcomingHoliday.name} ตั้งแต่ ${fmtThai(upcomingHoliday.closedFrom)} ถึง ${fmtThai(upcomingHoliday.closedTo)} จะเปิดทำการอีกครั้ง${upcomingHoliday.reopenDayName}ที่ ${fmtThai(upcomingHoliday.reopenDate)}\n- เมื่อลูกค้าถามเรื่องวันหยุด หรือสงกรานต์ หรือเปิดปิดร้าน → ต้องแจ้งล่วงหน้าว่าร้านจะหยุด${upcomingHoliday.name} บอกวันที่ชัดเจน พร้อมคำอวยพร: "${upcomingHoliday.greeting}"`
+    } else {
+      holidayInfo = "ไม่มีวันหยุดเทศกาลในช่วงนี้\n- ถ้าลูกค้าถามเรื่องวันหยุด → ตอบว่า \"เราจะแจ้งให้ทราบผ่านช่องทางโซเชียลมีเดียก่อนถึงวันหยุดนั้นครับ\""
+    }
+
+    const contactRules = effectiveOpen
       ? `ช่องทางติดต่อ:\n- เขียนแค่ "LINE ${LINE_ID}" หรือ "โทร ${PHONE}" ห้ามใส่ URL ระบบแปลงเป็นลิงก์กดได้เอง`
-      : `ช่องทางติดต่อ (นอกเวลาทำการ):\n- ตอบคำถามทั่วไปได้ตามปกติ ไม่ต้องพูดถึงเรื่องเวลาเปิด/ปิด ถ้าลูกค้าไม่ได้ถาม\n- เฉพาะเมื่อต้องส่งต่อพนักงาน (สินค้าไม่มีในระบบ ต้องสอบถามเพิ่ม) → ห้ามแนะนำ LINE ${LINE_ID} หรือโทร ${PHONE} เพราะไม่มีคนตอบ ให้แนะนำมาสอบถามอีกครั้งในเวลาทำการแทน`
+      : `ช่องทางติดต่อ (${activeHoliday ? "วันหยุด" : "นอกเวลาทำการ"}):\n- ตอบคำถามทั่วไปได้ตามปกติ ไม่ต้องพูดถึงเรื่องเวลาเปิด/ปิด ถ้าลูกค้าไม่ได้ถาม\n- เฉพาะเมื่อต้องส่งต่อพนักงาน (สินค้าไม่มีในระบบ ต้องสอบถามเพิ่ม) → ห้ามแนะนำ LINE ${LINE_ID} หรือโทร ${PHONE} เพราะไม่มีคนตอบ ให้แนะนำมาสอบถามอีกครั้ง${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${activeHoliday.reopenDate}` : "ในเวลาทำการ"}แทน`
 
-    const fallbackNoProduct = storeOpen
+    const fallbackNoProduct = effectiveOpen
       ? `บอกตรงๆ ว่าอาจไม่มีในระบบ แนะนำสอบถาม LINE ${LINE_ID}`
-      : `บอกว่าสินค้าประเภทนี้ยังไม่มีข้อมูลในระบบ สอบถามเพิ่มเติมได้ในเวลาทำการ ${HOURS_TEXT} ครับ`
+      : `บอกว่าสินค้าประเภทนี้ยังไม่มีข้อมูลในระบบ สอบถามเพิ่มเติมได้${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${activeHoliday.reopenDate}` : `ในเวลาทำการ ${HOURS_TEXT}`} ครับ`
 
-    const fallbackOfflineProduct = storeOpen
+    const fallbackOfflineProduct = effectiveOpen
       ? `แนะนำลูกค้าติดต่อ LINE ${LINE_ID} หรือเข้ามาที่หน้าร้านโดยตรง`
-      : `สินค้าตัวนี้มีที่หน้าร้าน สอบถามรายละเอียดเพิ่มได้ในเวลาทำการ ${HOURS_TEXT} ครับ`
+      : `สินค้าตัวนี้มีที่หน้าร้าน สอบถามรายละเอียดเพิ่มได้${activeHoliday ? `หลังวันหยุด ${activeHoliday.reopenDayName}ที่ ${activeHoliday.reopenDate}` : `ในเวลาทำการ ${HOURS_TEXT}`} ครับ`
 
     const systemInstruction = SYSTEM_TEMPLATE
       .replace("{INSTRUCTIONS}", instructions)
       .replace("{PRODUCTS}", productContext + knowledge)
       .replace("{NOW}", now)
       .replace("{STORE_STATUS}", storeStatus)
+      .replace("{HOLIDAY_INFO}", holidayInfo)
       .replace("{CONTACT_RULES}", contactRules)
       .replace(/\{FALLBACK_NO_PRODUCT\}/g, fallbackNoProduct)
       .replace(/\{FALLBACK_OFFLINE_PRODUCT\}/g, fallbackOfflineProduct)

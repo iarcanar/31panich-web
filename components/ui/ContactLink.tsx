@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function ContactLink({ type, children, className = "", onClick }: Props) {
-  const { isOpen } = useBusinessHours()
+  const { isOpen, holiday, isHoliday } = useBusinessHours()
   const [showClosed, setShowClosed] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
@@ -30,6 +30,10 @@ export default function ContactLink({ type, children, className = "", onClick }:
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [])
 
+  const closedText = isHoliday && holiday
+    ? `หยุด${holiday.name} · เปิด${holiday.reopenDayName}`
+    : `ปิดทำการ · เปิด ${HOURS_TEXT}`
+
   return (
     <a
       href={type === "phone" ? `tel:${PHONE_RAW}` : LINE_URL}
@@ -44,7 +48,7 @@ export default function ContactLink({ type, children, className = "", onClick }:
           <svg className="w-3 h-3 inline mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          ปิดทำการ · เปิด {HOURS_TEXT}
+          {closedText}
         </span>
       )}
     </a>

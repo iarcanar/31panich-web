@@ -53,8 +53,8 @@ export default function AdminDashboard() {
     },
     {
       href: "/admin/ai-logs",
-      label: "AI Logs",
-      desc: "ดูประวัติการใช้งาน AI chat",
+      label: "AI Back-end",
+      desc: "จัดการ AI, วันหยุด, ดูประวัติสนทนา",
       adminOnly: true,
       icon: (
         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

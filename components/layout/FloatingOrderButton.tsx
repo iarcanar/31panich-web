@@ -6,7 +6,7 @@ import { useBusinessHours } from "@/hooks/useBusinessHours"
 import { PHONE_RAW, PHONE, LINE_URL, HOURS_TEXT } from "@/lib/store-config"
 
 export default function FloatingOrderButton() {
-  const { isOpen, isMobile } = useBusinessHours()
+  const { isOpen, isMobile, holiday, isHoliday } = useBusinessHours()
   const [showPhone, setShowPhone] = useState(false)
   const [showLine, setShowLine] = useState(false)
   const phoneRef = useRef<HTMLDivElement>(null)
@@ -39,10 +39,15 @@ export default function FloatingOrderButton() {
     }
   }
 
-  // Outside hours: show only LINE button
+  // Closed label text
+  const closedLabel = isHoliday && holiday
+    ? `หยุด${holiday.name} · เปิด${holiday.reopenDayName} ${holiday.reopenDate.slice(8)}/${holiday.reopenDate.slice(5, 7)}`
+    : `นอกเวลาทำการ · เปิด ${HOURS_TEXT}`
+
+  // Outside hours or holiday: show only LINE button + closed label
   if (!isOpen) {
     return (
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
         {showLine && !isMobile && (
           <div ref={lineRef} className="bg-[#14141f] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 p-5 w-64 animate-[fadeUp_0.2s_ease-out]">
             <div className="flex items-center gap-2 mb-3">
@@ -64,6 +69,14 @@ export default function FloatingOrderButton() {
             </a>
           </div>
         )}
+
+        {/* Closed label */}
+        <div className="flex items-center gap-1.5 bg-[#14141f]/90 backdrop-blur-sm border border-amber-500/20 rounded-full px-3 py-1.5 shadow-lg">
+          <svg className="w-3 h-3 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-amber-400 text-[10px] font-medium whitespace-nowrap">{closedLabel}</span>
+        </div>
 
         <button
           onClick={handleLineClick}
