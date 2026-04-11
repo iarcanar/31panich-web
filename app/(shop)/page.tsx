@@ -10,8 +10,8 @@ import { getActivePromotions } from "@/lib/promotions"
 import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
 import PromotionCouponsStrip from "@/components/home/PromotionCouponsStrip"
 import { localBusinessSchema } from "@/lib/structured-data"
-import { PHONE } from "@/lib/store-config"
 import BannerShimmer from "@/components/home/BannerShimmer"
+import HeroContactButton from "@/components/home/HeroContactButton"
 
 export default function HomePage() {
   const promotions = getActivePromotions()
@@ -43,7 +43,7 @@ export default function HomePage() {
             <h1 className="text-white font-bold text-xl drop-shadow-lg">ร้านสามหนึ่งพานิช ลพบุรี</h1>
             <p className="text-gray-300 text-xs mt-1">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
             <div className="mt-3">
-              <a href={`tel:${PHONE.replace(/-/g, "")}`} className="inline-block border border-white/30 hover:border-cyan-400 hover:text-cyan-400 text-white text-xs font-medium px-4 py-2 rounded-full transition">โทรสั่งเลย</a>
+              <HeroContactButton className="inline-block border border-white/30 hover:border-cyan-400 hover:text-cyan-400 text-white text-xs font-medium px-4 py-2 rounded-full transition" />
             </div>
           </div>
         </div>
@@ -71,7 +71,7 @@ export default function HomePage() {
             <h1 className="text-white font-bold text-4xl drop-shadow-lg">ร้านสามหนึ่งพานิช ลพบุรี</h1>
             <p className="text-gray-300 text-base mt-2">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
             <div className="mt-5">
-              <a href={`tel:${PHONE.replace(/-/g, "")}`} className="inline-block border border-white/30 hover:border-cyan-400 hover:text-cyan-400 text-white text-sm font-medium px-6 py-2.5 rounded-full transition">โทรสั่งเลย</a>
+              <HeroContactButton className="inline-block border border-white/30 hover:border-cyan-400 hover:text-cyan-400 text-white text-sm font-medium px-6 py-2.5 rounded-full transition" />
             </div>
           </div>
         </div>
