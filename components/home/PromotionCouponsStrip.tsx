@@ -37,6 +37,12 @@ export default function PromotionCouponsStrip() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(false)
+  const [showAd, setShowAd] = useState(false)
+
+  // Check ad date on client only (avoid hydration mismatch)
+  useEffect(() => {
+    setShowAd(isAdActive(INLINE_AD))
+  }, [])
 
   useEffect(() => {
     fetch("/api/coupons?active=true")
@@ -85,8 +91,6 @@ export default function PromotionCouponsStrip() {
   const [popupOpen, setPopupOpen] = useState(false)
 
   if (coupons.length === 0) return null
-
-  const showAd = isAdActive(INLINE_AD)
 
   return (
     <section className="py-6 md:py-10">
