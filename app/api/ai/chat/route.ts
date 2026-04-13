@@ -39,34 +39,6 @@ function isHolidayRelated(message: string, holidayObj: ActiveHoliday | null): bo
   return allKeywords.some((kw) => normalizedMsg.includes(kw.normalize("NFC")))
 }
 
-// ─── Pipeline A: Holiday response (short, focused) ─────
-
-const HOLIDAY_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผู้ช่วยของร้านสามหนึ่งพานิช ร้านวัสดุก่อสร้าง จ.ลพบุรี
-คุณเป็นผู้ชาย ใช้คำลงท้ายว่า "ครับ" เท่านั้น ห้ามใช้ "ค่ะ/คะ/นะคะ"
-
-ข้อมูลสำคัญที่ต้องตอบ:
-{HOLIDAY_FACTS}
-
-เวลาปัจจุบัน: {NOW}
-เวลาทำการปกติ: {HOURS}
-
-ลูกค้ากำลังถามเรื่องวันหยุดหรือเวลาเปิดปิด ให้ตอบข้อมูลวันหยุดข้างต้นทันที
-ตอบสั้นๆ เป็นกันเอง ใส่คำอวยพรท้ายข้อความ ห้ามเปลี่ยนวันที่เด็ดขาด`
-
-function buildHolidayPrompt(now: string, holidayObj: ActiveHoliday, isActive: boolean): string {
-  const facts = [
-    `ร้าน${isActive ? "หยุด" : "จะหยุด"}${holidayObj.name}`,
-    `วันหยุด: ${fmtThai(holidayObj.closedFrom)} ถึง ${fmtThai(holidayObj.closedTo)}`,
-    `เปิดทำการ: ${holidayObj.reopenDayName}ที่ ${fmtThai(holidayObj.reopenDate)} เวลา ${HOURS_TEXT}`,
-    `คำอวยพร: "${holidayObj.greeting}"`,
-  ].join("\n")
-
-  return HOLIDAY_TEMPLATE
-    .replace("{NOW}", now)
-    .replace("{HOURS}", HOURS_TEXT)
-    .replace("{HOLIDAY_FACTS}", facts)
-}
-
 // ─── Pipeline B: Normal product response ────────────────
 
 const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผู้ช่วยของร้านสามหนึ่งพานิช ร้านวัสดุก่อสร้างและอุปกรณ์ช่างครบวงจร จ.ลพบุรี
@@ -176,13 +148,17 @@ export async function POST(request: NextRequest) {
     let searchKeyword: string | undefined
 
     if (holidayDetected && holidayObj) {
-      // ══ Pipeline A: Holiday (มีข้อมูลวันหยุด) ══
-      const holidayPrompt = buildHolidayPrompt(now, holidayObj, !!activeHoliday)
-      const contents = [
-        ...session.history,
-        { role: "user" as const, parts: [{ text: message }] },
-      ]
-      reply = await generateText(holidayPrompt, contents, 512)
+      // ══ Pipeline A: Holiday — fixed string, ไม่เรียก Gemini เพื่อป้องกันวันที่ผิด ══
+      const isActive = !!activeHoliday
+      const from = fmtThai(holidayObj.closedFrom)
+      const to = fmtThai(holidayObj.closedTo)
+      const reopen = fmtThai(holidayObj.reopenDate)
+      const reopenDay = holidayObj.reopenDayName
+      reply = [
+        `${isActive ? "ตอนนี้" : "ช่วง"}ร้านสามหนึ่งพานิช${isActive ? "หยุด" : "จะหยุด"}${holidayObj.name} ตั้งแต่วันที่ ${from} ถึง ${to} ครับ`,
+        `จะเปิดทำการอีกครั้งวัน${reopenDay}ที่ ${reopen} เวลา ${HOURS_TEXT} ครับ`,
+        `\n${holidayObj.greeting}`,
+      ].join("\n")
       searchKeyword = undefined
     } else if (holidayDetected && !holidayObj) {
       // ══ Pipeline A2: ถามวันหยุด แต่ไม่มีข้อมูล ══
