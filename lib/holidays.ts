@@ -37,10 +37,11 @@ export async function saveHolidays(holidays: Holiday[]): Promise<void> {
 
 // ─── Thai day name helper ───────────────────────────────
 
-/** Get Thai day name from ISO date string */
+/** Get Thai day name from ISO date string — parse directly to avoid UTC shift on Vercel */
 export function thaiDayName(isoDate: string): string {
-  const d = new Date(isoDate + "T00:00:00+07:00")
-  return THAI_DAYS[d.getDay()] || ""
+  const [y, m, d] = isoDate.split("-").map(Number)
+  const date = new Date(Date.UTC(y, m - 1, d))
+  return THAI_DAYS[date.getUTCDay()] || ""
 }
 
 // ─── Holiday check (server-side) ────────────────────────

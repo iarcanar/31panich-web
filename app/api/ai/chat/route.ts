@@ -17,8 +17,12 @@ function isStoreOpen(): boolean {
   return minutes >= 450 && minutes < 1050
 }
 
+const THAI_MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"]
+
+/** Parse ISO date "YYYY-MM-DD" → Thai text — ไม่ใช้ Date object เพื่อตัด UTC shift บน Vercel */
 function fmtThai(iso: string): string {
-  return new Date(iso + "T00:00:00+07:00").toLocaleDateString("th-TH", { day: "numeric", month: "long" })
+  const [, m, d] = iso.split("-").map(Number)
+  return `${d} ${THAI_MONTHS[m - 1]}`
 }
 
 // ─── Holiday keyword detection ──────────────────────────
