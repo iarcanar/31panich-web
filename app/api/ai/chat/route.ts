@@ -175,7 +175,22 @@ export async function POST(request: NextRequest) {
       searchKeyword = undefined
     } else {
       // ══ Pipeline B: Normal (products + general) ══
-      const { context: productContext } = await buildChatContextWithProducts(message)
+      // Product context — for short follow-ups ("ดูเลย","ขอดูก่อน"), carry over from previous question
+      let { context: productContext } = await buildChatContextWithProducts(message)
+      if (message.length <= 30 && session.history.length >= 2) {
+        const noMatch = productContext.includes("ไม่พบสินค้าที่ตรงกับคำค้น") || productContext.includes("ไม่เกี่ยวกับสินค้า")
+        if (noMatch) {
+          for (let i = session.history.length - 1; i >= 0; i--) {
+            if (session.history[i].role === "user") {
+              const prev = await buildChatContextWithProducts(session.history[i].parts[0]?.text || "")
+              if (!prev.context.includes("ไม่พบสินค้า") && !prev.context.includes("ไม่เกี่ยวกับสินค้า")) {
+                productContext = prev.context
+                break
+              }
+            }
+          }
+        }
+      }
       const knowledge = getRelevantKnowledge(message)
       const { instructions } = await getAiConfig()
       const effectiveOpen = activeHoliday ? false : storeOpen
