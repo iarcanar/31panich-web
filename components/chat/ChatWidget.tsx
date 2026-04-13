@@ -252,7 +252,7 @@ export default function ChatWidget() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 self-start mt-1.5" />
             <div>
               <span className="text-white text-sm font-medium">สามหนึ่ง Ai</span>
-              <p className="text-[9px] text-gray-500 leading-tight">Gemini 3 Flash · AI อาจผิดพลาดได้</p>
+              <p className="text-[9px] text-gray-500 leading-tight">Gemini 2.5 Flash · AI อาจผิดพลาดได้</p>
             </div>
           </div>
           <button

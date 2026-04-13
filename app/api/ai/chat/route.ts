@@ -48,6 +48,19 @@ function isHolidayRelated(message: string, holidayObj: ActiveHoliday | null): bo
   return allKeywords.some((kw) => normalizedMsg.includes(kw.normalize("NFC")))
 }
 
+// ─── Pipeline C: Instant confirmation (skip Gemini) ─────
+
+/** Detect short confirmation messages that should trigger product search */
+const CONFIRM_RE = /^(ไหน|ดูเลย|ดูหน่อย|ดูก่อน|โชว์|เอาเลย|เอาครับ|เอาค่ะ|ได้เลย|ได้เลยครับ|ขอดูหน่อย|ขอดูก่อน|ขอดูเลย|ขอดูครับ|ขอดู|อยากดู|ลองดู|ดูสิ|ดูครับ|ดูค่ะ|ส่งมา|เอา|ได้|ดู|โอเค).{0,10}$/
+
+/** Extract product keyword from Thai user message by stripping filler words */
+function extractProductKeyword(msg: string): string {
+  return msg
+    .replace(/^(อยากได้|ต้องการ|ขอดู|แนะนำ|สนใจ|อยาก|ขอ|หา|ดู|มี)/, "")
+    .replace(/(อะไรบ้าง|รึเปล่า|หรือเปล่า|เท่าไหร่|ให้หน่อย|หน่อยครับ|หน่อยค่ะ|มั้ยครับ|ไหมครับ|หน่อย|มั้ย|มั๊ย|ไหม|บ้าง|ครับ|ค่ะ|คะ|นะ|ด้วย)$/, "")
+    .trim()
+}
+
 // ─── Pipeline B: Normal product response ────────────────
 
 const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผู้ช่วยของร้านสามหนึ่งพานิช ร้านวัสดุก่อสร้างและอุปกรณ์ช่างครบวงจร จ.ลพบุรี
@@ -153,10 +166,29 @@ export async function POST(request: NextRequest) {
     // ── Step 1: Keyword detection → route to pipeline ──
     const holidayDetected = isHolidayRelated(message, holidayObj)
 
-    let reply: string
+    let reply = ""
     let searchKeyword: string | undefined
 
-    if (holidayDetected && holidayObj) {
+    // ══ Pipeline C: Instant confirmation — skip Gemini for speed + correct keyword ══
+    if (!holidayDetected && message.length <= 30 && session.history.length >= 2 && CONFIRM_RE.test(message.trim())) {
+      for (let i = session.history.length - 1; i >= 0; i--) {
+        if (session.history[i].role === "user") {
+          const prevMsg = session.history[i].parts[0]?.text || ""
+          if (!CONFIRM_RE.test(prevMsg.trim())) {
+            const kw = extractProductKeyword(prevMsg)
+            if (kw.length >= 2) {
+              reply = "ได้เลยครับ ลองดูรายการสินค้าที่หน้าเว็บได้เลยครับ"
+              searchKeyword = kw
+              break
+            }
+          }
+        }
+      }
+    }
+
+    if (reply) {
+      // Pipeline C handled — skip to saving
+    } else if (holidayDetected && holidayObj) {
       // ══ Pipeline A: Holiday — fixed string, ไม่เรียก Gemini เพื่อป้องกันวันที่ผิด ══
       const isActive = !!activeHoliday
       const from = fmtThai(holidayObj.closedFrom)

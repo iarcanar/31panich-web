@@ -1,6 +1,6 @@
-import { GoogleGenAI, ThinkingLevel } from "@google/genai"
+import { GoogleGenAI } from "@google/genai"
 
-const MODEL_NAME = "gemini-3-flash-preview"
+const MODEL_NAME = "gemini-2.5-flash"
 
 let client: GoogleGenAI | null = null
 
@@ -27,8 +27,6 @@ export async function generateText(
       temperature: 0.2,
       topP: 0.8,
       maxOutputTokens,
-      // Gemini 3 Flash: thinking enabled — self-checks before answering
-      thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM },
     },
   })
 
@@ -57,7 +55,6 @@ export async function generateTextWithSearch(
       topP: 0.8,
       maxOutputTokens,
       tools: [{ googleSearch: {} }],
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
     },
   })
   return response.text ?? ""
