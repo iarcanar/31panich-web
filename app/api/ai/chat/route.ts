@@ -50,8 +50,15 @@ function isHolidayRelated(message: string, holidayObj: ActiveHoliday | null): bo
 
 // ─── Pipeline C: Instant confirmation (skip Gemini) ─────
 
-/** Detect short confirmation messages that should trigger product search */
-const CONFIRM_RE = /^(ไหน|ดูเลย|ดูหน่อย|ดูก่อน|โชว์|เอาเลย|เอาครับ|เอาค่ะ|ได้เลย|ได้เลยครับ|ขอดูหน่อย|ขอดูก่อน|ขอดูเลย|ขอดูครับ|ขอดู|อยากดู|ลองดู|ดูสิ|ดูครับ|ดูค่ะ|ส่งมา|เอา|ได้|ดู|โอเค).{0,10}$/
+/** Strip Thai filler words, then check if the core is a confirmation verb */
+const FILLER_RE = /(ตัวอย่าง|รายการ|สินค้า|หน่อย|ก่อน|ครับ|ค่ะ|คะ|นะ|สิ|เลย|ด้วย|ให้ดู|จ้า|จ้ะ|ไหน|มา|ที่)/g
+const CONFIRM_CORES = /^(ดู|ขอดู|อยากดู|ลองดู|โชว์|เอา|ได้|โอเค|ตกลง|ส่ง|ok|yes|ขอ)$/i
+
+function isConfirmation(msg: string): boolean {
+  if (msg.length > 40) return false
+  const core = msg.replace(FILLER_RE, "").trim()
+  return CONFIRM_CORES.test(core)
+}
 
 /** Extract product keyword from Thai user message by stripping filler words */
 function extractProductKeyword(msg: string): string {
@@ -170,11 +177,12 @@ export async function POST(request: NextRequest) {
     let searchKeyword: string | undefined
 
     // ══ Pipeline C: Instant confirmation — skip Gemini for speed + correct keyword ══
-    if (!holidayDetected && message.length <= 30 && session.history.length >= 2 && CONFIRM_RE.test(message.trim())) {
+    const msgTrimmed = message.trim()
+    if (!holidayDetected && session.history.length >= 2 && isConfirmation(msgTrimmed)) {
       for (let i = session.history.length - 1; i >= 0; i--) {
         if (session.history[i].role === "user") {
           const prevMsg = session.history[i].parts[0]?.text || ""
-          if (!CONFIRM_RE.test(prevMsg.trim())) {
+          if (!isConfirmation(prevMsg.trim())) {
             const kw = extractProductKeyword(prevMsg)
             if (kw.length >= 2) {
               reply = "ได้เลยครับ ลองดูรายการสินค้าที่หน้าเว็บได้เลยครับ"
