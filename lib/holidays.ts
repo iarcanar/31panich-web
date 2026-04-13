@@ -77,9 +77,9 @@ export async function getUpcomingHoliday(): Promise<ActiveHoliday | null> {
   const today = todayBangkok()
   const holidays = await getHolidays()
 
-  // 3 days from now
-  const soon = new Date(today + "T00:00:00+07:00")
-  soon.setDate(soon.getDate() + 3)
+  // 3 days from now — use UTC to avoid timezone shift on Vercel
+  const [ty, tm, td] = today.split("-").map(Number)
+  const soon = new Date(Date.UTC(ty, tm - 1, td + 3))
   const soonStr = soon.toISOString().split("T")[0]
 
   for (const h of holidays) {

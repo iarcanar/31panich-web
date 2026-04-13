@@ -32,14 +32,15 @@ const THAI_DAYS = ["อาทิตย์", "จันทร์", "อังค�
 
 function dayName(iso: string): string {
   if (!iso) return ""
-  const d = new Date(iso + "T00:00:00+07:00")
-  return THAI_DAYS[d.getDay()] || ""
+  const [y, m, d] = iso.split("-").map(Number)
+  return THAI_DAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] || ""
 }
 
 function formatThaiDate(iso: string): string {
   if (!iso) return ""
-  const d = new Date(iso + "T00:00:00+07:00")
-  return d.toLocaleDateString("th-TH", { day: "numeric", month: "long" })
+  const [, m, d] = iso.split("-").map(Number)
+  const MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"]
+  return `${d} ${MONTHS[m - 1]}`
 }
 
 const EMPTY_HOLIDAY: Holiday = {

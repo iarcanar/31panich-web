@@ -315,8 +315,8 @@ export default function AdminCouponsPage() {
       stackWithPoints: form.stackWithPoints,
       allowRepeatClaim: form.allowRepeatClaim,
       testMode: form.testMode,
-      startDate: new Date(form.startDate).toISOString(),
-      endDate: new Date(form.endDate + "T23:59:59").toISOString(),
+      startDate: new Date(form.startDate + "T00:00:00+07:00").toISOString(),
+      endDate: new Date(form.endDate + "T23:59:59+07:00").toISOString(),
     }
 
     if (editingId) {
