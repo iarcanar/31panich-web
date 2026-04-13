@@ -4,16 +4,10 @@ import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useAuth } from "../layout"
 
-interface ChatLogEntry {
-  q: string
-  a: string
-  t: string
-}
-
 interface IpChatLog {
   totalChats: number
+  firstSeen: string
   lastActive: string
-  recent: ChatLogEntry[]
 }
 
 type ChatLogs = Record<string, IpChatLog>
@@ -57,7 +51,7 @@ export default function AiLogsPage() {
   const { isAdmin } = useAuth()
   const [logs, setLogs] = useState<ChatLogs>({})
   const [loading, setLoading] = useState(true)
-  const [expandedIp, setExpandedIp] = useState<string | null>(null)
+  // expandedIp removed — stats-only mode (no conversation content stored)
 
   // Prompt editor state
   const [instructions, setInstructions] = useState("")
@@ -547,7 +541,7 @@ export default function AiLogsPage() {
           )}
         </div>
 
-        {/* IP List */}
+        {/* IP List — stats only (no conversation content) */}
         {loading && ips.length === 0 ? (
           <div className="text-center text-[#64748b] py-12">กำลังโหลด...</div>
         ) : ips.length === 0 ? (
@@ -555,49 +549,22 @@ export default function AiLogsPage() {
         ) : (
           <div className="bg-[#14141f] border border-[#2a2a3a] rounded-xl overflow-hidden">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_80px_120px_40px] sm:grid-cols-[1fr_100px_140px_40px] px-4 py-2.5 border-b border-[#2a2a3a] text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <div className="grid grid-cols-[1fr_60px_100px_100px] sm:grid-cols-[1fr_80px_130px_130px] px-4 py-2.5 border-b border-[#2a2a3a] text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
               <span>IP Address</span>
               <span className="text-center">แชท</span>
+              <span className="text-center">เริ่มใช้</span>
               <span className="text-center">ล่าสุด</span>
-              <span />
             </div>
 
             {ips.map(([ip, data]) => (
-              <div key={ip} className="border-b border-[#2a2a3a]/50 last:border-b-0">
-                {/* Row */}
-                <button
-                  onClick={() => setExpandedIp(expandedIp === ip ? null : ip)}
-                  className="w-full grid grid-cols-[1fr_80px_120px_40px] sm:grid-cols-[1fr_100px_140px_40px] px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
-                >
-                  <span className="text-sm font-mono text-[#f1f5f9] truncate">{ip}</span>
-                  <span className="text-sm text-center text-purple-300">{data.totalChats}</span>
-                  <span className="text-[11px] text-center text-[#94a3b8] font-mono">{formatTime(data.lastActive)}</span>
-                  <span className="text-[#64748b] flex justify-center">
-                    <svg className={`w-4 h-4 transition-transform ${expandedIp === ip ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </span>
-                </button>
-
-                {/* Expanded detail */}
-                {expandedIp === ip && (
-                  <div className="bg-[#1e1e2e] px-4 py-3 space-y-2">
-                    <p className="text-[10px] text-[#64748b] mb-2">
-                      แสดง {data.recent.length} รายการล่าสุด จากทั้งหมด {data.totalChats} สนทนา
-                    </p>
-                    {data.recent.map((entry, i) => (
-                      <div key={i} className="flex gap-3 text-[12px] leading-relaxed py-1.5 border-b border-[#2a2a3a]/30 last:border-0">
-                        <span className="text-[10px] font-mono text-[#64748b] shrink-0 w-24 pt-0.5">
-                          {formatTime(entry.t)}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-purple-300 truncate">Q: {entry.q}</p>
-                          <p className="text-[#94a3b8] truncate">A: {entry.a}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div
+                key={ip}
+                className="grid grid-cols-[1fr_60px_100px_100px] sm:grid-cols-[1fr_80px_130px_130px] px-4 py-3 border-b border-[#2a2a3a]/50 last:border-b-0 hover:bg-white/[0.02] transition-colors"
+              >
+                <span className="text-sm font-mono text-[#f1f5f9] truncate">{ip}</span>
+                <span className="text-sm text-center text-purple-300">{data.totalChats}</span>
+                <span className="text-[11px] text-center text-[#64748b] font-mono">{data.firstSeen ? formatTime(data.firstSeen) : "-"}</span>
+                <span className="text-[11px] text-center text-[#94a3b8] font-mono">{formatTime(data.lastActive)}</span>
               </div>
             ))}
           </div>

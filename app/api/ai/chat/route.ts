@@ -276,9 +276,10 @@ export async function POST(request: NextRequest) {
     addToHistory(sessionId, "model", reply)
 
     // Log
-    const forwarded = request.headers.get("x-forwarded-for")
-    const ip = forwarded ? forwarded.split(",")[0].trim() : "localhost"
-    try { await logChat(ip, message, reply) } catch { /* never break chat */ }
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim()
+      || request.headers.get("x-real-ip")
+      || "unknown"
+    try { await logChat(ip) } catch { /* never break chat */ }
 
     return NextResponse.json({
       sessionId, reply, isNew,
