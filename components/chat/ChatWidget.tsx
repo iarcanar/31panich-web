@@ -249,8 +249,11 @@ export default function ChatWidget() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#2a2a3a]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-white text-sm font-medium">สามหนึ่ง Ai</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 self-start mt-1.5" />
+            <div>
+              <span className="text-white text-sm font-medium">สามหนึ่ง Ai</span>
+              <p className="text-[9px] text-gray-500 leading-tight">Gemini 3 Flash · AI อาจผิดพลาดได้</p>
+            </div>
           </div>
           <button
             onClick={() => setPanelOpen(false)}
