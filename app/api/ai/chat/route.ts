@@ -25,6 +25,11 @@ function fmtThai(iso: string): string {
   return `${d} ${THAI_MONTHS[m - 1]}`
 }
 
+/** Normalize greeting — force male polite particles (AI persona is male) */
+function toMalePolite(text: string): string {
+  return text.replace(/นะคะ/g, "นะครับ").replace(/ค่ะ/g, "ครับ").replace(/คะ/g, "ครับ")
+}
+
 // ─── Holiday keyword detection ──────────────────────────
 
 const HOLIDAY_KEYWORDS = [
@@ -161,7 +166,7 @@ export async function POST(request: NextRequest) {
       reply = [
         `${isActive ? "ตอนนี้" : "ช่วง"}ร้านสามหนึ่งพานิช${isActive ? "หยุด" : "จะหยุด"}${holidayObj.name} ตั้งแต่วันที่ ${from} ถึง ${to} ครับ`,
         `จะเปิดทำการอีกครั้งวัน${reopenDay}ที่ ${reopen} เวลา ${HOURS_TEXT} ครับ`,
-        `\n${holidayObj.greeting}`,
+        `\n${toMalePolite(holidayObj.greeting)}`,
       ].join("\n")
       searchKeyword = undefined
     } else if (holidayDetected && !holidayObj) {

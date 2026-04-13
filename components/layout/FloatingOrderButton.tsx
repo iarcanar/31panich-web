@@ -5,6 +5,12 @@ import Image from "next/image"
 import { useBusinessHours } from "@/hooks/useBusinessHours"
 import { PHONE_RAW, PHONE, LINE_URL, HOURS_TEXT } from "@/lib/store-config"
 
+const MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]
+function fmtShort(iso: string) {
+  const [, m, d] = iso.split("-").map(Number)
+  return `${d} ${MONTHS_SHORT[m - 1]}`
+}
+
 export default function FloatingOrderButton() {
   const { isOpen, isMobile, holiday, isHoliday } = useBusinessHours()
   const [showPhone, setShowPhone] = useState(false)
@@ -41,7 +47,7 @@ export default function FloatingOrderButton() {
 
   // Closed label text
   const closedLabel = isHoliday && holiday
-    ? `หยุด${holiday.name} · เปิด${holiday.reopenDayName} ${holiday.reopenDate.slice(8)}/${holiday.reopenDate.slice(5, 7)}`
+    ? `หยุดสงกรานต์ · เปิด ${fmtShort(holiday.reopenDate)}`
     : `นอกเวลาทำการ · เปิด ${HOURS_TEXT}`
 
   // Outside hours or holiday: show only LINE button + closed label
