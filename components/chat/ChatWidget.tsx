@@ -5,12 +5,7 @@ import { useRouter } from "next/navigation"
 import { useBusinessHours } from "@/hooks/useBusinessHours"
 import { PHONE_RAW, LINE_URL } from "@/lib/store-config"
 import ChatMessage from "./ChatMessage"
-
-const MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]
-function fmtShort(iso: string) {
-  const [, m, d] = iso.split("-").map(Number)
-  return `${d} ${MONTHS_SHORT[m - 1]}`
-}
+import { fmtShort, holidayShortName } from "@/lib/date-utils"
 
 interface Message {
   role: "user" | "assistant"
@@ -298,7 +293,7 @@ export default function ChatWidget() {
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {isHoliday && holiday ? `หยุดสงกรานต์ · เปิด ${fmtShort(holiday.reopenDate)}` : "นอกเวลาทำการ"}
+                {isHoliday && holiday ? `หยุด${holidayShortName(holiday.name)} · เปิด ${fmtShort(holiday.reopenDate)}` : "นอกเวลาทำการ"}
               </div>
             </>
           )}

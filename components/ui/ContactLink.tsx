@@ -2,6 +2,7 @@
 
 import { useBusinessHours } from "@/hooks/useBusinessHours"
 import { PHONE_RAW, LINE_URL, HOURS_TEXT } from "@/lib/store-config"
+import { fmtShort, holidayShortName } from "@/lib/date-utils"
 
 interface Props {
   type: "phone" | "line"
@@ -10,17 +11,11 @@ interface Props {
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void
 }
 
-const MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]
-function fmtShort(iso: string) {
-  const [, m, d] = iso.split("-").map(Number)
-  return `${d} ${MONTHS_SHORT[m - 1]}`
-}
-
 export default function ContactLink({ type, children, className = "", onClick }: Props) {
   const { isOpen, holiday, isHoliday } = useBusinessHours()
 
   const closedText = isHoliday && holiday
-    ? `หยุดสงกรานต์ · เปิด ${fmtShort(holiday.reopenDate)}`
+    ? `หยุด${holidayShortName(holiday.name)} · เปิด ${fmtShort(holiday.reopenDate)}`
     : `นอกเวลาทำการ · เปิด ${HOURS_TEXT}`
 
   // ปิดทำการ → แสดง label แทนปุ่ม

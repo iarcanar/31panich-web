@@ -52,6 +52,9 @@ function AdminBar({ showDevTools, onToggle }: { showDevTools: boolean; onToggle:
       <div className="flex items-center gap-2 text-purple-300">
         <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
         <span>Admin Mode</span>
+        <span className="text-[10px] text-purple-400/60 font-mono ml-1">
+          v{process.env.NEXT_PUBLIC_APP_VERSION} / admin {process.env.NEXT_PUBLIC_ADMIN_VERSION}
+        </span>
       </div>
       <div className="flex items-center gap-3">
         <button

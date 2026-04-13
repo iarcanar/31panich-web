@@ -4,12 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { useBusinessHours } from "@/hooks/useBusinessHours"
 import { PHONE_RAW, PHONE, LINE_URL, HOURS_TEXT } from "@/lib/store-config"
-
-const MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]
-function fmtShort(iso: string) {
-  const [, m, d] = iso.split("-").map(Number)
-  return `${d} ${MONTHS_SHORT[m - 1]}`
-}
+import { fmtShort, holidayShortName } from "@/lib/date-utils"
 
 export default function FloatingOrderButton() {
   const { isOpen, isMobile, holiday, isHoliday } = useBusinessHours()
@@ -47,7 +42,7 @@ export default function FloatingOrderButton() {
 
   // Closed label text
   const closedLabel = isHoliday && holiday
-    ? `หยุดสงกรานต์ · เปิด ${fmtShort(holiday.reopenDate)}`
+    ? `หยุด${holidayShortName(holiday.name)} · เปิด ${fmtShort(holiday.reopenDate)}`
     : `นอกเวลาทำการ · เปิด ${HOURS_TEXT}`
 
   // Outside hours or holiday: show only LINE button + closed label
