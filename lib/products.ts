@@ -85,7 +85,9 @@ export async function searchProducts(query: string): Promise<Product[]> {
   if (tokens.length === 0 || tokens[0] === "") return []
   return (await readAll())
     .filter((p) => {
-      const hay = `${p.name} ${p.brand} ${p.sku} ${p.description} ${p.category}`.toLowerCase()
+      const catLabel = CATEGORIES.find((c) => c.value === p.category)?.label ?? ""
+      const tags = (p.tags || []).join(" ")
+      const hay = `${p.name} ${p.brand} ${p.sku} ${p.description} ${p.category} ${catLabel} ${tags}`.toLowerCase()
       return tokens.every((t) => hay.includes(t))
     })
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
