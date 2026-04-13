@@ -1,7 +1,7 @@
 {
   "name": "31panich-web",
   "version": "1.7.0",
-  "adminVersion": "1.4.0",
+  "adminVersion": "1.4.1",
   "private": true,
   "scripts": {
     "dev": "rimraf .next && next dev --turbopack",

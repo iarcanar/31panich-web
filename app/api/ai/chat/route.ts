@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
         { role: "user" as const, parts: [{ text: message }] },
       ]
 
-      const rawReply = await generateText(systemInstruction, contents, 2048)
+      const rawReply = await generateText(systemInstruction, contents, 4096)
       const parsed = parseSearchTag(rawReply)
       reply = parsed.cleanReply
       searchKeyword = parsed.searchKeyword
