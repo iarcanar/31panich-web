@@ -217,7 +217,22 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
         </button>
 
         {/* ── Capturable area (screenshot region) ── */}
-        <div ref={captureRef} className="bg-[#13131d]" style={guillocheStyle}>
+        <div ref={captureRef} className="relative bg-[#13131d]" style={guillocheStyle}>
+          {/* Cover image background */}
+          {coupon.image && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={coupon.image}
+                alt=""
+                crossOrigin="anonymous"
+                className="w-full h-full object-cover scale-110 blur-sm"
+                style={{ opacity: 0.13 }}
+              />
+              <div className="absolute inset-0 bg-[#13131d]/55" />
+            </div>
+          )}
+
           {/* Coupon header */}
           <div className={`relative ${accent.bg} px-6 pt-8 pb-5 text-center border-b border-white/5`}>
             <div className={`inline-block text-2xl md:text-3xl font-bold ${accent.text} mb-1`}>
