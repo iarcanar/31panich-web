@@ -84,6 +84,14 @@ export async function getActiveCoupons(): Promise<Coupon[]> {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
+/** คูปองที่ยังไม่ถึงวันเริ่ม — แสดงเป็นตัวอย่างจางๆ บน frontend */
+export async function getUpcomingCoupons(): Promise<Coupon[]> {
+  const now = new Date().toISOString()
+  return (await readAll())
+    .filter((c) => c.isActive && !c.testMode && c.startDate > now)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate)) // เรียงจากใกล้ที่สุดก่อน
+}
+
 export async function getTestCoupons(): Promise<Coupon[]> {
   return (await readAll())
     .filter((c) => c.testMode)

@@ -71,7 +71,7 @@ function formatDate(iso: string): string {
 }
 
 // ─── Component ─────────────────────────────────────────
-export default function CouponCard({ coupon }: { coupon: Coupon }) {
+export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupon; upcoming?: boolean }) {
   const [claimed, setClaimed] = useState(false)
   const [claimInfo, setClaimInfo] = useState<ClaimedInfo | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -82,6 +82,7 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
   const accent = ACCENT[coupon.discountType] || ACCENT.percent
 
   useEffect(() => {
+    if (upcoming) return // ยังไม่ถึงวันรับ ไม่ต้อง fetch count
     const info = getClaimedInfo(coupon.id)
     if (info) {
       setClaimed(true)
@@ -93,14 +94,14 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
       .then((r) => r.json())
       .then((data) => { if (typeof data.count === "number") setLiveClaimCount(data.count) })
       .catch(() => {})
-  }, [coupon.id])
+  }, [coupon.id, upcoming])
 
   // คูปองหมดจากการรับของคนอื่น (ใช้ liveClaimCount แทน server-render data)
   const soldOut = coupon.usageLimit > 0 && liveClaimCount >= coupon.usageLimit
   // รับไปแล้ว (ในเครื่องนี้) และไม่อนุญาตรับซ้ำ
   const alreadyClaimed = claimed && !coupon.allowRepeatClaim
   // สถานะ disabled (แสดงแต่กดไม่ได้)
-  const disabled = soldOut || alreadyClaimed || claiming
+  const disabled = upcoming || soldOut || alreadyClaimed || claiming
 
   async function handleClaim() {
     if (disabled) return
@@ -156,11 +157,21 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
     <>
       <div
         className={`relative bg-[#1a1a28] border border-dashed rounded-xl overflow-hidden
-          ${accent.border} transition-all ${disabled && !claiming ? "opacity-50" : "hover:border-white/25"}`}
+          ${accent.border} transition-all
+          ${upcoming ? "opacity-45 pointer-events-none select-none" : disabled && !claiming ? "opacity-50" : "hover:border-white/25"}`}
         style={guillocheStyle}
       >
+        {/* Upcoming overlay badge */}
+        {upcoming && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <span className="text-white/80 text-sm font-semibold -rotate-12 border border-white/30 px-4 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm tracking-wide">
+              🕐 รับได้ {formatDate(coupon.startDate)}
+            </span>
+          </div>
+        )}
+
         {/* Disabled overlay */}
-        {(soldOut || alreadyClaimed) && !claiming && (
+        {!upcoming && (soldOut || alreadyClaimed) && !claiming && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <span className="text-red-500 text-2xl font-bold -rotate-12 border-2 border-red-500/60 px-4 py-1 rounded-lg bg-black/40 backdrop-blur-sm">
               {soldOut ? "หมดแล้ว" : "รับไปแล้ว"}
@@ -241,16 +252,18 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
             {/* Footer: expiry + CTA */}
             <div className="flex items-center justify-between mt-3 gap-2">
               <span className="text-[11px] text-white/40">
-                หมดเขต {formatDate(coupon.endDate)}
+                {upcoming ? `เริ่ม ${formatDate(coupon.startDate)}` : `หมดเขต ${formatDate(coupon.endDate)}`}
               </span>
-              <button
-                onClick={handleClaim}
-                disabled={disabled}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
-                  ${disabled ? "bg-gray-600 cursor-not-allowed opacity-50" : `${accent.bg} hover:brightness-110 active:scale-95`}`}
-              >
-                {claiming ? "กำลังรับ..." : disabled ? (soldOut ? "หมดแล้ว" : "รับแล้ว") : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
-              </button>
+              {!upcoming && (
+                <button
+                  onClick={handleClaim}
+                  disabled={disabled}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
+                    ${disabled ? "bg-gray-600 cursor-not-allowed opacity-50" : `${accent.bg} hover:brightness-110 active:scale-95`}`}
+                >
+                  {claiming ? "กำลังรับ..." : disabled ? (soldOut ? "หมดแล้ว" : "รับแล้ว") : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}
+                </button>
+              )}
             </div>
           </div>
         </div>

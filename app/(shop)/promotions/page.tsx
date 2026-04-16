@@ -3,7 +3,7 @@ import Image from "next/image"
 import PromoGrid from "@/components/home/PromoGrid"
 import { getActivePromotions } from "@/lib/promotions"
 import ContactLink from "@/components/ui/ContactLink"
-import { getActiveCoupons } from "@/lib/coupons"
+import { getActiveCoupons, getUpcomingCoupons } from "@/lib/coupons"
 import CouponGrid from "@/components/coupon/CouponGrid"
 import { breadcrumbSchema } from "@/lib/structured-data"
 
@@ -26,7 +26,7 @@ const breadcrumb = breadcrumbSchema([
 
 export default async function PromotionsPage() {
   const promotions = getActivePromotions()
-  const coupons = await getActiveCoupons()
+  const [coupons, upcoming] = await Promise.all([getActiveCoupons(), getUpcomingCoupons()])
 
   return (
     <div className="bg-[#0e0e14] min-h-screen">
@@ -53,11 +53,11 @@ export default async function PromotionsPage() {
       <PromoGrid promotions={promotions} />
 
       {/* Coupons Section */}
-      {coupons.length > 0 && (
+      {(coupons.length > 0 || upcoming.length > 0) && (
         <section className="container mx-auto px-4 py-10 md:py-14">
           <h2 className="text-xl md:text-2xl font-bold text-white mb-1">🎟️ คูปองพิเศษ</h2>
           <p className="text-sm text-white/50 mb-6">รับคูปองส่วนลดได้เฉพาะบนเว็บไซต์เท่านั้น — กดรับแล้วนำไปแสดงที่ร้าน</p>
-          <CouponGrid coupons={coupons} />
+          <CouponGrid coupons={coupons} upcoming={upcoming} />
         </section>
       )}
 

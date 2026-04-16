@@ -233,12 +233,42 @@ export default function CouponClaimModal({ coupon, serial, claimedAt, onClose }:
             </div>
           )}
 
-          {/* Coupon header */}
-          <div className={`relative ${accent.bg} px-6 pt-8 pb-5 text-center border-b border-white/5`}>
-            <div className={`inline-block text-2xl md:text-3xl font-bold ${accent.text} mb-1`}>
-              {discountLabel(coupon)}
-            </div>
-            <h2 className="text-base md:text-lg font-medium text-white/90">{coupon.title}</h2>
+          {/* Coupon header: image left + text right */}
+          <div className={`relative ${accent.bg} border-b border-white/5 flex overflow-hidden`}>
+            {coupon.image ? (
+              <>
+                {/* Cover image — square, clear */}
+                <div className="relative w-32 md:w-36 shrink-0 self-stretch min-h-[120px]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={coupon.image}
+                    alt=""
+                    crossOrigin="anonymous"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  {/* Accent stripe (left edge) */}
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${accent.stripe}`} />
+                  {/* Right-side fade into header bg */}
+                  <div className="absolute inset-y-0 right-0 w-10 pointer-events-none"
+                    style={{ background: `linear-gradient(to right, transparent, rgba(var(--header-bg, 30,30,45),0.7))` }} />
+                </div>
+                {/* Text (right side) */}
+                <div className="flex-1 flex flex-col justify-center px-5 py-5">
+                  <div className={`text-2xl md:text-3xl font-bold ${accent.text} mb-1 leading-tight`}>
+                    {discountLabel(coupon)}
+                  </div>
+                  <h2 className="text-sm md:text-base font-medium text-white/90 leading-snug">{coupon.title}</h2>
+                </div>
+              </>
+            ) : (
+              /* No image — centered layout */
+              <div className="flex-1 px-6 pt-8 pb-5 text-center">
+                <div className={`inline-block text-2xl md:text-3xl font-bold ${accent.text} mb-1`}>
+                  {discountLabel(coupon)}
+                </div>
+                <h2 className="text-base md:text-lg font-medium text-white/90">{coupon.title}</h2>
+              </div>
+            )}
           </div>
 
           {/* Serial + timestamp */}
