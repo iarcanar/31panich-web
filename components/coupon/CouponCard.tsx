@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import type { Coupon } from "@/lib/coupons"
+import { getCouponStatus } from "@/lib/coupon-status"
 import CouponClaimModal from "./CouponClaimModal"
 
 // ─── localStorage helpers ──────────────────────────────
@@ -71,7 +72,15 @@ function formatDate(iso: string): string {
 }
 
 // ─── Component ─────────────────────────────────────────
-export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupon; upcoming?: boolean }) {
+const ERROR_MSG: Record<string, string> = {
+  upcoming: "ยังไม่ถึงวันรับคูปอง",
+  expired: "คูปองหมดอายุแล้ว",
+  sold_out: "คูปองหมดแล้ว!",
+  hidden: "คูปองไม่พร้อมใช้งาน",
+  not_found: "ไม่พบคูปองนี้",
+}
+
+export default function CouponCard({ coupon }: { coupon: Coupon }) {
   const [claimed, setClaimed] = useState(false)
   const [claimInfo, setClaimInfo] = useState<ClaimedInfo | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -81,8 +90,14 @@ export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupo
 
   const accent = ACCENT[coupon.discountType] || ACCENT.percent
 
+  // คำนวณสถานะจาก live data
+  const status = getCouponStatus({ ...coupon, claimCount: liveClaimCount })
+  const upcoming = status === "upcoming"
+  const expired = status === "expired"
+  const soldOut = status === "sold_out"
+
   useEffect(() => {
-    if (upcoming) return // ยังไม่ถึงวันรับ ไม่ต้อง fetch count
+    if (upcoming || expired) return // ยังไม่ถึงวันรับ หรือหมดอายุ ไม่ต้อง fetch/check localStorage
     const info = getClaimedInfo(coupon.id)
     if (info) {
       setClaimed(true)
@@ -94,14 +109,12 @@ export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupo
       .then((r) => r.json())
       .then((data) => { if (typeof data.count === "number") setLiveClaimCount(data.count) })
       .catch(() => {})
-  }, [coupon.id, upcoming])
+  }, [coupon.id, upcoming, expired])
 
-  // คูปองหมดจากการรับของคนอื่น (ใช้ liveClaimCount แทน server-render data)
-  const soldOut = coupon.usageLimit > 0 && liveClaimCount >= coupon.usageLimit
   // รับไปแล้ว (ในเครื่องนี้) และไม่อนุญาตรับซ้ำ
   const alreadyClaimed = claimed && !coupon.allowRepeatClaim
   // สถานะ disabled (แสดงแต่กดไม่ได้)
-  const disabled = upcoming || soldOut || alreadyClaimed || claiming
+  const disabled = status !== "active" || alreadyClaimed || claiming
 
   async function handleClaim() {
     if (disabled) return
@@ -109,7 +122,7 @@ export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupo
     setClaimError("")
 
     try {
-      // ① เรียก API ก่อน — server ตรวจ limit + สร้าง serial จริง
+      // ① เรียก API ก่อน — server ตรวจ status + limit + สร้าง serial จริง
       const res = await fetch("/api/coupons/claim-count", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,13 +131,10 @@ export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupo
       const data = await res.json()
 
       if (!res.ok) {
-        // Server ปฏิเสธ
-        if (data.soldOut) {
-          setLiveClaimCount(data.count ?? coupon.usageLimit)
-          setClaimError("คูปองหมดแล้ว!")
-        } else {
-          setClaimError("เกิดข้อผิดพลาด ลองอีกครั้ง")
-        }
+        // Server ปฏิเสธ — แปลง reason → ข้อความไทย
+        const reason = data.error as string
+        setClaimError(ERROR_MSG[reason] || "เกิดข้อผิดพลาด ลองอีกครั้ง")
+        if (typeof data.count === "number") setLiveClaimCount(data.count)
         return
       }
 
@@ -158,7 +168,7 @@ export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupo
       <div
         className={`relative bg-[#1a1a28] border border-dashed rounded-xl overflow-hidden
           ${accent.border} transition-all
-          ${upcoming ? "opacity-45 pointer-events-none select-none" : disabled && !claiming ? "opacity-50" : "hover:border-white/25"}`}
+          ${upcoming || expired ? "opacity-45 pointer-events-none select-none" : disabled && !claiming ? "opacity-50" : "hover:border-white/25"}`}
         style={guillocheStyle}
       >
         {/* Upcoming overlay badge */}
@@ -170,8 +180,17 @@ export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupo
           </div>
         )}
 
-        {/* Disabled overlay */}
-        {!upcoming && (soldOut || alreadyClaimed) && !claiming && (
+        {/* Expired overlay badge */}
+        {expired && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <span className="text-white/60 text-sm font-semibold -rotate-12 border border-white/20 px-4 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm tracking-wide">
+              ⏱️ หมดอายุ
+            </span>
+          </div>
+        )}
+
+        {/* Disabled overlay (sold out / already claimed) */}
+        {!upcoming && !expired && (soldOut || alreadyClaimed) && !claiming && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <span className="text-red-500 text-2xl font-bold -rotate-12 border-2 border-red-500/60 px-4 py-1 rounded-lg bg-black/40 backdrop-blur-sm">
               {soldOut ? "หมดแล้ว" : "รับไปแล้ว"}
@@ -254,7 +273,7 @@ export default function CouponCard({ coupon, upcoming = false }: { coupon: Coupo
               <span className="text-[11px] text-white/40">
                 {upcoming ? `เริ่ม ${formatDate(coupon.startDate)}` : `หมดเขต ${formatDate(coupon.endDate)}`}
               </span>
-              {!upcoming && (
+              {!upcoming && !expired && (
                 <button
                   onClick={handleClaim}
                   disabled={disabled}

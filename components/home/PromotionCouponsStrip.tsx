@@ -10,7 +10,6 @@ const AD_IMAGE = "/promotions/songkran-2569-popup.webp"
 
 export default function PromotionCouponsStrip() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
-  const [upcoming, setUpcoming] = useState<Coupon[]>([])
   const [loading, setLoading] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
@@ -18,14 +17,10 @@ export default function PromotionCouponsStrip() {
   const [popupOpen, setPopupOpen] = useState(false)
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/coupons?active=true").then((r) => r.json()).catch(() => []),
-      fetch("/api/coupons?upcoming=true").then((r) => r.json()).catch(() => []),
-    ])
-      .then(([active, up]) => {
-        if (Array.isArray(active)) setCoupons(active)
-        if (Array.isArray(up)) setUpcoming(up)
-      })
+    fetch("/api/coupons?visible=true")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setCoupons(data) })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
@@ -65,7 +60,7 @@ export default function PromotionCouponsStrip() {
     </section>
   )
 
-  if (coupons.length === 0 && upcoming.length === 0) return null
+  if (coupons.length === 0) return null
 
   return (
     <section className="py-6 md:py-10">
@@ -96,11 +91,6 @@ export default function PromotionCouponsStrip() {
                 {coupons.slice(0, 5).map((c) => (
                   <div key={c.id} className="min-w-[280px] max-w-[320px] flex-shrink-0 snap-start">
                     <CouponCard coupon={c} />
-                  </div>
-                ))}
-                {upcoming.slice(0, 5 - Math.min(coupons.length, 5)).map((c) => (
-                  <div key={c.id} className="min-w-[280px] max-w-[320px] flex-shrink-0 snap-start">
-                    <CouponCard coupon={c} upcoming />
                   </div>
                 ))}
               </div>

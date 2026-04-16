@@ -22,15 +22,23 @@ export async function POST(req: NextRequest) {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 })
 
-    // Atomic: check limit + increment ใน lock เดียว — ป้องกัน race condition
+    // Atomic: validate + check limit + increment ใน lock เดียว — ป้องกัน race condition + bypass
     const result = await atomicClaim(id)
 
     if (!result.ok) {
+      const reason = result.reason || "error"
+      const statusMap: Record<string, number> = {
+        sold_out: 409,
+        upcoming: 403,
+        expired: 410,
+        hidden: 404,
+        not_found: 404,
+      }
       return NextResponse.json({
-        error: result.soldOut ? "sold_out" : "not_found",
+        error: reason,
         count: result.count,
         soldOut: result.soldOut,
-      }, { status: result.soldOut ? 409 : 404 })
+      }, { status: statusMap[reason] ?? 400 })
     }
 
     // บันทึก claim record + ส่ง serial กลับ

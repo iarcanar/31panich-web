@@ -72,6 +72,10 @@ async function generateSerialPrefix(): Promise<string> {
   return crypto.randomUUID().slice(0, 2).toUpperCase()
 }
 
+// ─── Status helper (re-exported for backward compat) ────
+export { getCouponStatus, type CouponStatus } from "./coupon-status"
+import { getCouponStatus, type CouponStatus } from "./coupon-status"
+
 // ─── Read helpers ────────────────────────────────────────
 export async function getCoupons(): Promise<Coupon[]> {
   return (await readAll()).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -80,7 +84,7 @@ export async function getCoupons(): Promise<Coupon[]> {
 export async function getActiveCoupons(): Promise<Coupon[]> {
   const now = new Date().toISOString()
   return (await readAll())
-    .filter((c) => c.isActive && !c.testMode && c.startDate <= now && c.endDate >= now)
+    .filter((c) => getCouponStatus(c, now) === "active")
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
@@ -88,8 +92,27 @@ export async function getActiveCoupons(): Promise<Coupon[]> {
 export async function getUpcomingCoupons(): Promise<Coupon[]> {
   const now = new Date().toISOString()
   return (await readAll())
-    .filter((c) => c.isActive && !c.testMode && c.startDate > now)
-    .sort((a, b) => a.startDate.localeCompare(b.startDate)) // เรียงจากใกล้ที่สุดก่อน
+    .filter((c) => getCouponStatus(c, now) === "upcoming")
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))
+}
+
+/**
+ * คูปองที่ควรแสดงหน้าเว็บทั้งหมด (active + upcoming + expired + sold_out)
+ * — ยกเว้น hidden (isActive=false หรือ testMode=true)
+ * เรียง: active → sold_out → upcoming → expired
+ */
+export async function getVisibleCoupons(): Promise<Coupon[]> {
+  const now = new Date().toISOString()
+  const order: Record<CouponStatus, number> = {
+    active: 0, sold_out: 1, upcoming: 2, expired: 3, hidden: 99,
+  }
+  return (await readAll())
+    .filter((c) => getCouponStatus(c, now) !== "hidden")
+    .sort((a, b) => {
+      const diff = order[getCouponStatus(a, now)] - order[getCouponStatus(b, now)]
+      if (diff !== 0) return diff
+      return b.createdAt.localeCompare(a.createdAt)
+    })
 }
 
 export async function getTestCoupons(): Promise<Coupon[]> {
@@ -194,21 +217,28 @@ export async function decrementClaimCount(id: string): Promise<number> {
 }
 
 /**
- * Atomic claim: check limit + increment in one lock.
- * Returns { ok, count, soldOut } — if limit reached, ok=false and count is NOT incremented.
+ * Atomic claim: validate status + check limit + increment ใน lock เดียว
+ * - ปฏิเสธถ้าสถานะไม่ใช่ "active" (hidden/upcoming/expired/sold_out)
+ * - ป้องกัน race condition + bypass frontend disabled
  */
-export async function atomicClaim(id: string): Promise<{ ok: boolean; count: number; soldOut: boolean }> {
+export async function atomicClaim(id: string): Promise<{ ok: boolean; count: number; soldOut: boolean; reason?: CouponStatus | "not_found" }> {
   return withLock(FILE, async () => {
     const coupons = await readAll()
     const idx = coupons.findIndex((c) => c.id === id)
-    if (idx === -1) return { ok: false, count: 0, soldOut: false }
+    if (idx === -1) return { ok: false, count: 0, soldOut: false, reason: "not_found" }
 
     const c = coupons[idx]
+    const status = getCouponStatus(c)
     const currentCount = c.claimCount || 0
 
-    // Check limit INSIDE the lock
-    if (c.usageLimit > 0 && currentCount >= c.usageLimit) {
-      return { ok: false, count: currentCount, soldOut: true }
+    // ปฏิเสธถ้าสถานะไม่ใช่ active
+    if (status !== "active") {
+      return {
+        ok: false,
+        count: currentCount,
+        soldOut: status === "sold_out",
+        reason: status,
+      }
     }
 
     // Increment

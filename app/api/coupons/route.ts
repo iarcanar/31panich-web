@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
-import { getCoupons, getActiveCoupons, getUpcomingCoupons, getTestCoupons, createCoupon } from "@/lib/coupons"
+import { getCoupons, getActiveCoupons, getUpcomingCoupons, getVisibleCoupons, getTestCoupons, createCoupon } from "@/lib/coupons"
 
 export async function GET(req: NextRequest) {
   try {
+    const visible = req.nextUrl.searchParams.get("visible")
     const active = req.nextUrl.searchParams.get("active")
     const upcoming = req.nextUrl.searchParams.get("upcoming")
     const test = req.nextUrl.searchParams.get("test")
     const coupons = test === "true"
       ? await getTestCoupons()
+      : visible === "true"
+      ? await getVisibleCoupons()
       : upcoming === "true"
       ? await getUpcomingCoupons()
       : active === "true"
