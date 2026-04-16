@@ -166,7 +166,7 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
   return (
     <>
       <div
-        className={`relative bg-[#1a1a28] border border-dashed rounded-xl overflow-hidden
+        className={`relative h-full bg-[#1a1a28] border border-dashed rounded-xl overflow-hidden
           ${accent.border} transition-all
           ${upcoming || expired ? "opacity-45 pointer-events-none select-none" : disabled && !claiming ? "opacity-50" : "hover:border-white/25"}`}
         style={guillocheStyle}

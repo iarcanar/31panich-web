@@ -86,24 +86,28 @@ export default function PromotionCouponsStrip() {
             <div className="relative">
               <div
                 ref={scrollRef}
-                className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 pt-1 pr-2"
+                className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4 pt-1 pr-2"
+                style={{ isolation: "isolate" }}
               >
                 {coupons.slice(0, 5).map((c, i) => (
                   <div
                     key={c.id}
-                    className="relative min-w-[280px] max-w-[320px] flex-shrink-0 snap-start"
+                    className="relative min-w-[280px] max-w-[320px] h-[230px] flex-shrink-0 snap-start rounded-xl"
                     style={{
-                      marginLeft: i > 0 ? "-28px" : 0,
+                      marginLeft: i > 0 ? "-36px" : 0,
                       zIndex: coupons.length - i,
+                      boxShadow: i < coupons.length - 1 && coupons.length > 1
+                        ? "10px 0 14px -4px rgba(0,0,0,0.65)"
+                        : undefined,
                     }}
                   >
                     <CouponCard coupon={c} />
-                    {/* Shadow บนด้านซ้ายของคูปองเก่ากว่า (ส่วนที่ถูกคูปองใหม่กว่าทับ) */}
+                    {/* Shadow gradient บนด้านซ้ายของคูปองเก่ากว่า (เน้นว่าถูกใบใหม่ทับ) */}
                     {i > 0 && (
                       <div
-                        className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none rounded-l-xl"
+                        className="absolute left-0 top-0 bottom-0 w-20 pointer-events-none rounded-l-xl z-[5]"
                         style={{
-                          background: "linear-gradient(to right, rgba(0,0,0,0.55), rgba(0,0,0,0.15) 70%, transparent)",
+                          background: "linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.35) 50%, transparent)",
                         }}
                       />
                     )}
