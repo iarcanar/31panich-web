@@ -86,11 +86,27 @@ export default function PromotionCouponsStrip() {
             <div className="relative">
               <div
                 ref={scrollRef}
-                className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
+                className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 pt-1 pr-2"
               >
-                {coupons.slice(0, 5).map((c) => (
-                  <div key={c.id} className="min-w-[280px] max-w-[320px] flex-shrink-0 snap-start">
+                {coupons.slice(0, 5).map((c, i) => (
+                  <div
+                    key={c.id}
+                    className="relative min-w-[280px] max-w-[320px] flex-shrink-0 snap-start"
+                    style={{
+                      marginLeft: i > 0 ? "-28px" : 0,
+                      zIndex: coupons.length - i,
+                    }}
+                  >
                     <CouponCard coupon={c} />
+                    {/* Shadow บนด้านซ้ายของคูปองเก่ากว่า (ส่วนที่ถูกคูปองใหม่กว่าทับ) */}
+                    {i > 0 && (
+                      <div
+                        className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none rounded-l-xl"
+                        style={{
+                          background: "linear-gradient(to right, rgba(0,0,0,0.55), rgba(0,0,0,0.15) 70%, transparent)",
+                        }}
+                      />
+                    )}
                   </div>
                 ))}
               </div>

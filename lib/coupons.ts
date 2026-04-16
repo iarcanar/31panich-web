@@ -99,20 +99,13 @@ export async function getUpcomingCoupons(): Promise<Coupon[]> {
 /**
  * คูปองที่ควรแสดงหน้าเว็บทั้งหมด (active + upcoming + expired + sold_out)
  * — ยกเว้น hidden (isActive=false หรือ testMode=true)
- * เรียง: active → sold_out → upcoming → expired
+ * เรียงโดย createdAt DESC — คูปองใหม่ล่าสุดซ้ายสุดเสมอ
  */
 export async function getVisibleCoupons(): Promise<Coupon[]> {
   const now = new Date().toISOString()
-  const order: Record<CouponStatus, number> = {
-    active: 0, sold_out: 1, upcoming: 2, expired: 3, hidden: 99,
-  }
   return (await readAll())
     .filter((c) => getCouponStatus(c, now) !== "hidden")
-    .sort((a, b) => {
-      const diff = order[getCouponStatus(a, now)] - order[getCouponStatus(b, now)]
-      if (diff !== 0) return diff
-      return b.createdAt.localeCompare(a.createdAt)
-    })
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
 export async function getTestCoupons(): Promise<Coupon[]> {
