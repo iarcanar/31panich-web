@@ -161,12 +161,52 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
 
   return (
     <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-3 md:p-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-medium text-[#94a3b8]">แนวโน้มการเข้าชม</h3>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <h3 className="text-xs font-medium text-[#94a3b8] shrink-0">แนวโน้มการเข้าชม</h3>
         <div className="flex items-center gap-3 text-[10px] text-[#64748b]">
           <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-cyan-400" />Views</span>
           <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-amber-400" />Visitors</span>
         </div>
+      </div>
+
+      {/* Selected point readout — above chart, never overlaps */}
+      <div className={`flex items-center justify-between gap-3 px-3 h-10 rounded-lg border mb-2 transition-all ${activePoint ? "bg-[#0a0a0f] border-cyan-500/40 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]" : "bg-[#0f0f18] border-[#2a2a3a] border-dashed"}`}>
+        {activePoint ? (
+          <>
+            <div className="flex items-center gap-3 min-w-0 overflow-x-auto scrollbar-hide">
+              <span className="shrink-0 inline-flex items-center gap-1.5 text-[11px] text-white font-medium whitespace-nowrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                {fmtTime(activePoint.key, period)}
+                {activePoint.isToday && <span className="text-[9px] text-amber-400 font-semibold">· วันนี้</span>}
+              </span>
+              <span className="shrink-0 inline-flex items-baseline gap-1 text-xs whitespace-nowrap">
+                <span className="text-cyan-400 font-bold text-sm">{fmtNum(activePoint.views)}</span>
+                <span className="text-[10px] text-[#94a3b8]">views</span>
+              </span>
+              <span className="shrink-0 inline-flex items-baseline gap-1 text-xs whitespace-nowrap">
+                <span className="text-amber-400 font-bold text-sm">{fmtNum(activePoint.visitors)}</span>
+                <span className="text-[10px] text-[#94a3b8]">visitors</span>
+              </span>
+              {activePoint.views > 0 && (
+                <span className="shrink-0 text-[10px] text-[#64748b] whitespace-nowrap">
+                  · {(activePoint.views / Math.max(activePoint.visitors, 1)).toFixed(1)} หน้า/คน
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setPinned(null)}
+              className="shrink-0 w-6 h-6 rounded-md text-[#64748b] hover:text-white hover:bg-white/5 flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="ยกเลิกการเลือก"
+              title="ยกเลิก"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </>
+        ) : (
+          <span className="text-[11px] text-[#64748b] italic">แตะจุดบนกราฟเพื่อดูข้อมูล</span>
+        )}
       </div>
 
       <svg
@@ -254,17 +294,13 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
           </g>
         )}
 
-        {/* Active tooltip */}
+        {/* Active crosshair — vertical guide line only; data shown in strip above */}
         {activePoint && active !== null && (
-          <g>
-            <line x1={x(active)} x2={x(active)} y1={PAD_T} y2={PAD_T + innerH} stroke="#22d3ee" strokeWidth={0.5} strokeDasharray="2 2" opacity={0.5} />
-            <g transform={`translate(${Math.min(x(active) + 8, W - 110)}, ${PAD_T + 4})`}>
-              <rect width="100" height="46" rx="4" fill="#0a0a0f" stroke="#2a2a3a" />
-              <text x="6" y="13" fontSize="9" fill="#94a3b8">{fmtTime(activePoint.key, period)}</text>
-              <text x="6" y="26" fontSize="10" fill="#22d3ee" fontWeight="700">{fmtNum(activePoint.views)} views</text>
-              <text x="6" y="40" fontSize="10" fill="#f59e0b" fontWeight="600">{fmtNum(activePoint.visitors)} visitors</text>
-            </g>
-          </g>
+          <line
+            x1={x(active)} x2={x(active)}
+            y1={PAD_T} y2={PAD_T + innerH}
+            stroke="#22d3ee" strokeWidth={1} strokeDasharray="3 3" opacity={0.7}
+          />
         )}
 
         {/* X-axis labels — show first, mid, today, last */}
@@ -295,9 +331,6 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
         })()}
       </svg>
 
-      <div className="text-[10px] text-[#475569] mt-1 text-center">
-        แตะที่กราฟเพื่อดูตัวเลขแต่ละจุด
-      </div>
     </div>
   )
 }
