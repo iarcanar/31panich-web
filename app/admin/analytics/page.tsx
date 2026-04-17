@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { HOURS_OPEN, HOURS_CLOSE } from "@/lib/store-config"
 
 // ─── Types ────────────────────────────────────────────
 interface TimeseriesItem { key: string; views: number; visitors: number; bounceRate: number }
@@ -145,7 +146,7 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
     return <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-8 text-center text-xs text-[#64748b]">ยังไม่มีข้อมูล</div>
   }
 
-  const W = dims.w, H = dims.h, PAD_L = 40, PAD_R = 14, PAD_T = 16, PAD_B = 28
+  const W = dims.w, H = dims.h, PAD_L = 48, PAD_R = 16, PAD_T = 22, PAD_B = 34
   const innerW = Math.max(W - PAD_L - PAD_R, 100)
   const innerH = Math.max(H - PAD_T - PAD_B, 80)
 
@@ -175,6 +176,45 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
   const active = pinned
   const activePoint = active !== null ? data[active] : null
 
+  // ── Time-based reference markers (24h view only) ────
+  const firstMs = new Date(data[0].key).getTime()
+  const lastMs = new Date(data[data.length - 1].key).getTime()
+  const spanMs = Math.max(lastMs - firstMs, 1)
+  const xAtMs = (ms: number): number => {
+    const ratio = (ms - firstMs) / spanMs
+    return PAD_L + Math.max(0, Math.min(1, ratio)) * innerW
+  }
+  const msInRange = (ms: number) => ms >= firstMs && ms <= lastMs
+
+  // Parse store hours "HH:MM"
+  const [openH, openM] = HOURS_OPEN.split(":").map(Number)
+  const [closeH, closeM] = HOURS_CLOSE.split(":").map(Number)
+
+  // Build reference points for 24h view
+  const refs: { ms: number; label: string; color: string; style: "line" | "band" }[] = []
+  const bands: { startMs: number; endMs: number; label?: string }[] = []
+  if (period === "24h") {
+    const now = new Date()
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    const yestMidnight = todayMidnight - 86400_000
+
+    // Day boundary
+    refs.push({ ms: todayMidnight, label: "วันใหม่", color: "#64748b", style: "line" })
+
+    // Store hours band for today + yesterday (if visible)
+    for (const baseMs of [yestMidnight, todayMidnight]) {
+      const openMs = baseMs + (openH * 60 + openM) * 60_000
+      const closeMs = baseMs + (closeH * 60 + closeM) * 60_000
+      if (closeMs > firstMs && openMs < lastMs) {
+        bands.push({
+          startMs: Math.max(openMs, firstMs),
+          endMs: Math.min(closeMs, lastMs),
+          label: baseMs === todayMidnight ? "เวลาเปิดร้าน" : undefined,
+        })
+      }
+    }
+  }
+
   return (
     <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-3 md:p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
@@ -193,7 +233,9 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
               <span className="shrink-0 inline-flex items-center gap-1.5 text-[11px] text-white font-medium whitespace-nowrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                 {fmtTime(activePoint.key, period)}
-                {activePoint.isToday && <span className="text-[9px] text-amber-400 font-semibold">· วันนี้</span>}
+                {activePoint.isToday && (
+                  <span className="text-[9px] text-amber-400 font-semibold">· {period === "24h" ? "ตอนนี้" : "วันนี้"}</span>
+                )}
               </span>
               <span className="shrink-0 inline-flex items-baseline gap-1 text-xs whitespace-nowrap">
                 <span className="text-cyan-400 font-bold text-sm">{fmtNum(activePoint.views)}</span>
@@ -225,7 +267,7 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
         )}
       </div>
 
-      <div ref={containerRef} className="w-full h-48 md:h-56 relative">
+      <div ref={containerRef} className="w-full h-56 md:h-64 relative">
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
@@ -269,21 +311,51 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
         {gridLines.map((g, i) => (
           <text
             key={i}
-            x={PAD_L - 6} y={PAD_T + innerH * (1 - g) + 3}
-            fontSize="9" fill="#475569" textAnchor="end"
+            x={PAD_L - 8} y={PAD_T + innerH * (1 - g) + 4}
+            fontSize="12" fill="#94a3b8" textAnchor="end"
           >
             {fmtNum(Math.round(niceMax * g))}
           </text>
         ))}
 
-        {/* Today column highlight */}
-        {todayIdx >= 0 && (
+        {/* Today column highlight — only on 7d/30d views */}
+        {period !== "24h" && todayIdx >= 0 && (
           <rect
             x={x(todayIdx) - (innerW / data.length / 2.5)} y={PAD_T}
             width={innerW / data.length / 1.25} height={innerH}
             fill="#f59e0b" opacity={0.06}
           />
         )}
+
+        {/* Store hours bands (24h view) — shaded background for 7:30–17:30 */}
+        {bands.map((b, i) => {
+          const x1 = xAtMs(b.startMs)
+          const x2 = xAtMs(b.endMs)
+          return (
+            <g key={`band-${i}`}>
+              <rect x={x1} y={PAD_T} width={Math.max(x2 - x1, 2)} height={innerH} fill="#10b981" opacity={0.05} />
+              {b.label && (x2 - x1) > 80 && (
+                <text x={(x1 + x2) / 2} y={PAD_T + 12} fontSize="11" fill="#10b981" textAnchor="middle" opacity={0.8} fontWeight="600">
+                  {b.label}
+                </text>
+              )}
+            </g>
+          )
+        })}
+
+        {/* Reference time lines (24h view) — midnight, store open/close */}
+        {refs.map((r, i) => {
+          if (!msInRange(r.ms)) return null
+          const rx = xAtMs(r.ms)
+          return (
+            <g key={`ref-${i}`}>
+              <line x1={rx} x2={rx} y1={PAD_T} y2={PAD_T + innerH} stroke={r.color} strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
+              <text x={rx} y={PAD_T - 6} fontSize="11" fill={r.color} textAnchor="middle" opacity={0.9} fontWeight="600">
+                {r.label}
+              </text>
+            </g>
+          )
+        })}
 
         {/* Views area fill */}
         <path d={viewsArea} fill="url(#viewsGrad)" />
@@ -312,7 +384,7 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
         {/* Peak label (always visible) */}
         {peakIdx >= 0 && data[peakIdx].views > 0 && (
           <g>
-            <text x={x(peakIdx)} y={y(data[peakIdx].views) - 8} fontSize="9" fill="#22d3ee" textAnchor="middle" fontWeight="700">
+            <text x={x(peakIdx)} y={y(data[peakIdx].views) - 10} fontSize="13" fill="#22d3ee" textAnchor="middle" fontWeight="700">
               {fmtNum(data[peakIdx].views)}
             </text>
           </g>
@@ -327,14 +399,41 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
           />
         )}
 
-        {/* X-axis labels — show first, mid, today, last */}
+        {/* X-axis labels — period-aware */}
         {(() => {
-          const ticks: number[] = []
-          ticks.push(0)
-          if (data.length >= 3) ticks.push(Math.floor(data.length / 2))
-          ticks.push(data.length - 1)
-          const uniq = Array.from(new Set(ticks)).sort((a, b) => a - b)
-          return uniq.map((i) => {
+          if (period === "24h") {
+            // For 24h: first, ~1/3, ~2/3, last ("ตอนนี้") — all time HH:MM
+            const ticks = Array.from(new Set([
+              0,
+              Math.floor(data.length / 3),
+              Math.floor((data.length * 2) / 3),
+              data.length - 1,
+            ])).sort((a, b) => a - b)
+            return ticks.map((i) => {
+              const isLast = i === data.length - 1
+              const anchor = i === 0 ? "start" : isLast ? "end" : "middle"
+              return (
+                <text
+                  key={i}
+                  x={x(i)}
+                  y={H - 10}
+                  fontSize="12"
+                  fill={isLast ? "#f59e0b" : "#64748b"}
+                  textAnchor={anchor}
+                  fontWeight={isLast ? "600" : "400"}
+                >
+                  {isLast ? "ตอนนี้" : fmtTime(data[i].key, period)}
+                </text>
+              )
+            })
+          }
+          // 7d/30d: first, mid, last — "วันนี้" for today
+          const ticks = Array.from(new Set([
+            0,
+            data.length >= 3 ? Math.floor(data.length / 2) : -1,
+            data.length - 1,
+          ].filter((i) => i >= 0))).sort((a, b) => a - b)
+          return ticks.map((i) => {
             const label = fmtTime(data[i].key, period)
             const isLast = i === data.length - 1
             const anchor = i === 0 ? "start" : isLast ? "end" : "middle"
@@ -342,8 +441,8 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
               <text
                 key={i}
                 x={x(i)}
-                y={H - 8}
-                fontSize="9"
+                y={H - 10}
+                fontSize="12"
                 fill={data[i].isToday ? "#f59e0b" : "#64748b"}
                 textAnchor={anchor}
                 fontWeight={data[i].isToday ? "600" : "400"}
@@ -810,12 +909,14 @@ export default function AdminAnalyticsPage() {
   const s = data?.summary
   const ts = data?.timeseries || []
 
-  // Build chart points — hourly for 24h, aggregated daily for 7d/30d
+  // Build chart points — hourly for 24h (last point = "now"), daily for 7d/30d
   const chartPoints: ChartPoint[] = useMemo(() => {
     if (!ts.length) return []
     const today = new Date()
     if (period === "24h") {
-      return ts.map((d) => ({ key: d.key, views: d.views, visitors: d.visitors, isToday: isSameDay(d.key, today) }))
+      const mapped = ts.map((d) => ({ key: d.key, views: d.views, visitors: d.visitors, isToday: false }))
+      if (mapped.length > 0) mapped[mapped.length - 1].isToday = true  // marks "ตอนนี้"
+      return mapped
     }
     const dayMap = new Map<string, { views: number; visitors: number; key: string }>()
     for (const d of ts) {
