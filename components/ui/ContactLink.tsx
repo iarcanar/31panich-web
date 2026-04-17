@@ -16,7 +16,7 @@ export default function ContactLink({ type, children, className = "", onClick }:
 
   const closedText = isHoliday && holiday
     ? `หยุด${holidayShortName(holiday.name)} · เปิด ${fmtShort(holiday.reopenDate)}`
-    : `นอกเวลาทำการ · เปิด ${HOURS_TEXT}`
+    : `เปิด ${HOURS_TEXT}`
 
   // ปิดทำการ → แสดง label แทนปุ่ม
   if (!isOpen) {

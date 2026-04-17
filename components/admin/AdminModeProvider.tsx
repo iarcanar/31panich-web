@@ -48,18 +48,22 @@ export default function AdminModeProvider({ children }: { children: React.ReactN
 
 function AdminBar({ showDevTools, onToggle }: { showDevTools: boolean; onToggle: () => void }) {
   return (
-    <div className="bg-purple-950/90 border-b border-purple-400/20 px-4 py-1.5 flex items-center justify-between text-xs backdrop-blur-sm z-[60] relative">
-      <div className="flex items-center gap-2 text-purple-300">
-        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-        <span>Admin Mode</span>
-        <span className="text-[10px] text-purple-400/60 font-mono ml-1">
-          v{process.env.NEXT_PUBLIC_APP_VERSION} / admin {process.env.NEXT_PUBLIC_ADMIN_VERSION}
+    <div className="bg-purple-950/90 border-b border-purple-400/20 px-2.5 md:px-4 py-1.5 flex items-center justify-between gap-2 backdrop-blur-sm z-[60] relative">
+      <div className="flex items-center gap-1.5 md:gap-2 text-purple-300 min-w-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse shrink-0" />
+        <span className="text-[11px] md:text-xs font-medium whitespace-nowrap">
+          Admin<span className="hidden md:inline"> Mode</span>
+        </span>
+        <span className="text-[9px] md:text-[10px] text-purple-400/60 font-mono truncate">
+          v{process.env.NEXT_PUBLIC_APP_VERSION}
+          <span className="hidden sm:inline"> / admin {process.env.NEXT_PUBLIC_ADMIN_VERSION}</span>
+          <span className="sm:hidden">·{process.env.NEXT_PUBLIC_ADMIN_VERSION}</span>
         </span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
         <button
           onClick={onToggle}
-          className={`px-2.5 py-0.5 rounded-full border text-[11px] font-medium transition-colors ${
+          className={`px-2 md:px-2.5 py-0.5 rounded-full border text-[10px] md:text-[11px] font-medium transition-colors whitespace-nowrap ${
             showDevTools
               ? "border-purple-400/40 text-purple-300 hover:bg-purple-400/10"
               : "border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10"
@@ -69,7 +73,7 @@ function AdminBar({ showDevTools, onToggle }: { showDevTools: boolean; onToggle:
         </button>
         <Link
           href="/admin"
-          className="px-2.5 py-0.5 rounded-full border border-white/10 text-gray-400 hover:text-white hover:border-white/20 text-[11px] font-medium transition-colors"
+          className="px-2 md:px-2.5 py-0.5 rounded-full border border-white/10 text-gray-400 hover:text-white hover:border-white/20 text-[10px] md:text-[11px] font-medium transition-colors whitespace-nowrap"
         >
           Dashboard
         </Link>
