@@ -212,14 +212,21 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-48 md:h-56 select-none touch-manipulation"
+        preserveAspectRatio="none"
+        vectorEffect="non-scaling-stroke"
+        className="w-full h-48 md:h-56 select-none touch-manipulation cursor-pointer [&_circle]:[vector-effect:non-scaling-stroke]"
         onPointerDown={(e) => {
           const svg = svgRef.current
           if (!svg) return
-          const rect = svg.getBoundingClientRect()
-          const rel = ((e.clientX - rect.left) / rect.width) * W
-          const relX = rel - PAD_L
-          if (relX < -10 || relX > innerW + 10) return setPinned(null)
+          // Use SVG's native coordinate transform — handles any viewBox/aspect ratio
+          const pt = svg.createSVGPoint()
+          pt.x = e.clientX
+          pt.y = e.clientY
+          const ctm = svg.getScreenCTM()
+          if (!ctm) return
+          const svgPoint = pt.matrixTransform(ctm.inverse())
+          // Clamp into chart area — always pick nearest data point, don't clear on tap
+          const relX = Math.max(0, Math.min(innerW, svgPoint.x - PAD_L))
           const idx = Math.round((relX / innerW) * (data.length - 1))
           setPinned(Math.max(0, Math.min(data.length - 1, idx)))
         }}
