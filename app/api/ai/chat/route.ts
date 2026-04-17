@@ -30,22 +30,39 @@ function toMalePolite(text: string): string {
   return text.replace(/นะคะ/g, "นะครับ").replace(/ค่ะ/g, "ครับ").replace(/คะ/g, "ครับ")
 }
 
-// ─── Holiday keyword detection ──────────────────────────
+// ─── Time/holiday keyword detection ─────────────────────
+// Split into two buckets: words that explicitly reference holidays vs.
+// generic "what time do you open" questions. General-hours questions
+// should NOT drag holiday context into the reply unless a holiday is
+// currently active.
 
-const HOLIDAY_KEYWORDS = [
+const HOLIDAY_SPECIFIC_KEYWORDS = [
   "หยุด", "วันหยุด", "เทศกาล", "ปีใหม่", "หยุดยาว",
+]
+
+const HOURS_GENERAL_KEYWORDS = [
   "กี่โมง", "เปิดกี่", "ปิดกี่", "เปิดวัน", "ปิดวัน",
   "เปิดไหม", "ปิดไหม", "เปิดมั้ย", "ปิดมั้ย",
 ]
 
-function isHolidayRelated(message: string, holidayObj: ActiveHoliday | null): boolean {
-  const allKeywords = [...HOLIDAY_KEYWORDS]
+function containsAny(message: string, keywords: string[]): boolean {
+  const normalized = message.normalize("NFC")
+  return keywords.some((kw) => normalized.includes(kw.normalize("NFC")))
+}
+
+/** True iff the message explicitly talks about holidays (not just opening hours). */
+function isHolidaySpecific(message: string, holidayObj: ActiveHoliday | null): boolean {
+  if (containsAny(message, HOLIDAY_SPECIFIC_KEYWORDS)) return true
   if (holidayObj) {
-    allKeywords.push(holidayObj.name.replace(/\s*\d{4}$/, ""))
+    const nameCore = holidayObj.name.replace(/\s*\d{4}$/, "")
+    if (message.normalize("NFC").includes(nameCore.normalize("NFC"))) return true
   }
-  // Normalize Unicode (NFC) to handle Thai tone mark encoding differences
-  const normalizedMsg = message.normalize("NFC")
-  return allKeywords.some((kw) => normalizedMsg.includes(kw.normalize("NFC")))
+  return false
+}
+
+/** True for generic "กี่โมง / เปิดไหม" style questions. */
+function isHoursGeneral(message: string): boolean {
+  return containsAny(message, HOURS_GENERAL_KEYWORDS)
 }
 
 // ─── Pipeline C: Instant confirmation (skip Gemini) ─────
@@ -171,14 +188,16 @@ export async function POST(request: NextRequest) {
     const holidayObj = activeHoliday || upcomingHoliday
 
     // ── Step 1: Keyword detection → route to pipeline ──
-    const holidayDetected = isHolidayRelated(message, holidayObj)
+    const holidaySpecific = isHolidaySpecific(message, holidayObj)
+    const hoursGeneral = isHoursGeneral(message)
+    const timeRelated = holidaySpecific || hoursGeneral
 
     let reply = ""
     let searchKeyword: string | undefined
 
     // ══ Pipeline C: Instant confirmation — skip Gemini for speed + correct keyword ══
     const msgTrimmed = message.trim()
-    if (!holidayDetected && session.history.length >= 2 && isConfirmation(msgTrimmed)) {
+    if (!timeRelated && session.history.length >= 2 && isConfirmation(msgTrimmed)) {
       for (let i = session.history.length - 1; i >= 0; i--) {
         if (session.history[i].role === "user") {
           const prevMsg = session.history[i].parts[0]?.text || ""
@@ -196,8 +215,8 @@ export async function POST(request: NextRequest) {
 
     if (reply) {
       // Pipeline C handled — skip to saving
-    } else if (holidayDetected && holidayObj) {
-      // ══ Pipeline A: Holiday — fixed string, ไม่เรียก Gemini เพื่อป้องกันวันที่ผิด ══
+    } else if (holidaySpecific && holidayObj) {
+      // ══ Pipeline A: Explicit holiday question + data — fixed string, skip Gemini ══
       const isActive = !!activeHoliday
       const from = fmtThai(holidayObj.closedFrom)
       const to = fmtThai(holidayObj.closedTo)
@@ -209,9 +228,24 @@ export async function POST(request: NextRequest) {
         `\n${toMalePolite(holidayObj.greeting)}`,
       ].join("\n")
       searchKeyword = undefined
-    } else if (holidayDetected && !holidayObj) {
-      // ══ Pipeline A2: ถามวันหยุด แต่ไม่มีข้อมูล ══
-      reply = `ร้านเปิดบริการทุกวัน ${HOURS_TEXT} ครับ\n\nสำหรับวันหยุดเทศกาล ทางร้านจะแจ้งให้ทราบล่วงหน้าผ่านช่องทางโซเชียลมีเดียก่อนถึงวันหยุดนั้นครับ 😊`
+    } else if (hoursGeneral && activeHoliday) {
+      // ══ Pipeline A (variant): Hours question while shop is actually on holiday ══
+      const from = fmtThai(activeHoliday.closedFrom)
+      const to = fmtThai(activeHoliday.closedTo)
+      const reopen = fmtThai(activeHoliday.reopenDate)
+      const reopenDay = activeHoliday.reopenDayName
+      reply = [
+        `ตอนนี้ร้านสามหนึ่งพานิชหยุด${activeHoliday.name} ตั้งแต่วันที่ ${from} ถึง ${to} ครับ`,
+        `จะเปิดทำการอีกครั้งวัน${reopenDay}ที่ ${reopen} เวลา ${HOURS_TEXT} ครับ`,
+      ].join("\n")
+      searchKeyword = undefined
+    } else if (holidaySpecific) {
+      // ══ Pipeline A2a: Asked about holidays but none exist ══
+      reply = `ตอนนี้ไม่มีวันหยุดพิเศษครับ ร้านเปิดบริการทุกวัน ${HOURS_TEXT} ครับ`
+      searchKeyword = undefined
+    } else if (hoursGeneral) {
+      // ══ Pipeline A2b: Plain hours question — answer hours only, don't volunteer holiday talk ══
+      reply = `ร้านเปิดทุกวัน ${HOURS_TEXT} ครับ`
       searchKeyword = undefined
     } else {
       // ══ Pipeline B: Normal (products + general) ══
