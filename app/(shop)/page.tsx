@@ -8,7 +8,7 @@ import RewardsCarousel from "@/components/home/RewardsCarousel"
 import PromoGrid from "@/components/home/PromoGrid"
 import { getActivePromotions } from "@/lib/promotions"
 import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
-import PromotionCouponsStrip from "@/components/home/PromotionCouponsStrip"
+import CouponsReelsRow from "@/components/home/CouponsReelsRow"
 import { localBusinessSchema } from "@/lib/structured-data"
 import BannerShimmer from "@/components/home/BannerShimmer"
 import HeroContactButton from "@/components/home/HeroContactButton"
@@ -86,8 +86,8 @@ export default function HomePage() {
       {/* Google Review Strip — ใต้ banner */}
       <GoogleReviewStrip />
 
-      {/* คูปองพิเศษ — ต่อจาก review strip */}
-      <PromotionCouponsStrip />
+      {/* คูปอง + Facebook Reels — แบ่งโซน 50:50 บน desktop */}
+      <CouponsReelsRow />
 
       {/* สินค้าขายดี */}
       <BestsellerSection />

@@ -209,15 +209,16 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
           />
         </div>
 
-        <div className="flex">
+        <div className="flex h-full">
           {/* Left: coupon image with dissolve effect */}
           {coupon.image && (
-            <div className="relative w-28 md:w-36 shrink-0 self-stretch">
+            <div className="relative w-24 sm:w-28 shrink-0 self-stretch">
               <Image
                 src={coupon.image}
                 alt=""
                 fill
                 className="object-cover"
+                sizes="112px"
               />
               {/* Dissolve: clear top → dark bottom */}
               <div
@@ -234,10 +235,10 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
             <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${accent.bg}`} />
           )}
 
-          <div className={`relative flex-1 pr-4 py-4 ${coupon.image ? "pl-3" : "pl-5"}`}>
+          <div className={`relative flex-1 min-w-0 pr-3 py-3 ${coupon.image ? "pl-2.5" : "pl-4"}`}>
             {/* Top: discount badge */}
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <span className={`inline-block text-lg md:text-xl font-bold ${accent.text}`}>
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <span className={`inline-block text-base md:text-lg font-bold th-text ${accent.text}`}>
                 {discountLabel(coupon)}
               </span>
               <span className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${accent.badge}`}>
@@ -246,38 +247,38 @@ export default function CouponCard({ coupon }: { coupon: Coupon }) {
             </div>
 
             {/* Title */}
-            <h3 className="text-sm md:text-base font-medium text-white/90 mb-1 line-clamp-2">
+            <h3 className="text-sm font-medium text-white/90 mb-1 line-clamp-2 th-text">
               {coupon.title}
             </h3>
 
             {/* Conditions */}
             {coupon.minPurchase > 0 && (
-              <p className="text-xs text-white/50 mb-0.5">ซื้อขั้นต่ำ {coupon.minPurchase.toLocaleString()} บาท</p>
+              <p className="text-[11px] text-white/50 mb-0.5 th-text">ซื้อขั้นต่ำ {coupon.minPurchase.toLocaleString()} บาท</p>
             )}
             {coupon.category && (
-              <p className="text-xs text-white/50 mb-0.5">หมวด: {coupon.category}</p>
+              <p className="text-[11px] text-white/50 mb-0.5 th-text">หมวด: {coupon.category}</p>
             )}
             {coupon.stackWithPoints ? (
-              <p className="text-xs text-amber-400/80 mb-0.5">✦ ใช้ร่วมกับโปรรับแต้มสามหนึ่งได้</p>
+              <p className="text-[11px] text-amber-400/80 mb-0.5 th-text line-clamp-2">✦ ใช้ร่วมกับโปรรับแต้มสามหนึ่งได้</p>
             ) : (
-              <p className="text-xs text-white/35 mb-0.5">ไม่สามารถใช้ร่วมกับโปรรับแต้มสามหนึ่ง</p>
+              <p className="text-[11px] text-white/35 mb-0.5 th-text line-clamp-2">ไม่สามารถใช้ร่วมกับโปรรับแต้มสามหนึ่ง</p>
             )}
 
             {/* Error message */}
             {claimError && (
-              <p className="text-xs text-red-400 mt-1 mb-0.5">{claimError}</p>
+              <p className="text-[11px] text-red-400 mt-1 mb-0.5 th-text">{claimError}</p>
             )}
 
             {/* Footer: expiry + CTA */}
-            <div className="flex items-center justify-between mt-3 gap-2">
-              <span className="text-[11px] text-white/40">
+            <div className="flex items-center justify-between mt-2.5 gap-2">
+              <span className="text-[10px] text-white/40 whitespace-nowrap">
                 {upcoming ? `เริ่ม ${formatDate(coupon.startDate)}` : `หมดเขต ${formatDate(coupon.endDate)}`}
               </span>
               {!upcoming && !expired && (
                 <button
                   onClick={handleClaim}
                   disabled={disabled}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all
+                  className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white whitespace-nowrap transition-all
                     ${disabled ? "bg-gray-600 cursor-not-allowed opacity-50" : `${accent.bg} hover:brightness-110 active:scale-95`}`}
                 >
                   {claiming ? "กำลังรับ..." : disabled ? (soldOut ? "หมดแล้ว" : "รับแล้ว") : claimed && coupon.allowRepeatClaim ? "รับอีกครั้ง" : "รับคูปอง"}

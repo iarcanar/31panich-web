@@ -91,10 +91,10 @@ export function parseSessionToken(token: string): AdminUser | null {
 }
 
 /** ตรวจว่า role มีสิทธิ์ทำ action นี้ไหม */
-export function canPerform(role: UserRole, action: "delete-product" | "delete-coupon" | "ai-config"): boolean {
+export function canPerform(role: UserRole, action: "delete-product" | "delete-coupon" | "ai-config" | "delete-reel"): boolean {
   if (role === "admin") return true
   // manager ทำได้: ลบสินค้า
   if (role === "manager" && action === "delete-product") return true
-  // manager ทำไม่ได้: ลบคูปอง, แก้ AI config
+  // manager ทำไม่ได้: ลบคูปอง, ลบ reel, แก้ AI config
   return false
 }
