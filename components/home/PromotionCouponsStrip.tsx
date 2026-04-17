@@ -79,7 +79,7 @@ export default function PromotionCouponsStrip() {
             {coupons.slice(0, 5).map((c, i) => (
               <div
                 key={c.id}
-                className="relative min-w-[280px] max-w-[320px] h-[230px] flex-shrink-0 snap-start rounded-xl"
+                className="relative min-w-[280px] max-w-[320px] h-[270px] flex-shrink-0 snap-start rounded-xl"
                 style={{
                   marginLeft: i > 0 ? "-36px" : 0,
                   zIndex: coupons.length - i,
