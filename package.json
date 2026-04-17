@@ -1,13 +1,14 @@
 {
   "name": "31panich-web",
   "version": "1.7.9",
-  "adminVersion": "1.4.6",
+  "adminVersion": "1.4.9",
   "private": true,
   "scripts": {
     "dev": "rimraf .next && next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync": "vercel env pull .env.production --environment=production --yes && node scripts/sync-from-redis.mjs && rimraf .env.production"
   },
   "dependencies": {
     "@google/genai": "^1.46.0",

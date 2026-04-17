@@ -116,12 +116,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <AuthContext value={{ user, isAdmin }}>
       <div className="min-h-screen bg-[#0e0e14]">
-        {/* Admin nav bar — mobile-friendly 2-row layout */}
+        {/* Admin nav — mobile: 2 rows (scrollable tabs + utility); desktop: 1 row */}
         <nav className="sticky top-0 z-50 bg-[#13131d] border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-3">
-            {/* Row 1: nav tabs + user */}
-            <div className="flex items-center justify-between h-10">
-              <div className="flex items-center gap-0.5">
+          <div className="max-w-7xl mx-auto">
+            {/* Mobile: 2 rows (3×2 menu grid + utility row). Desktop: 1 row flex. */}
+            {/* Row 1: menu tabs — grid-cols-3 on mobile (exactly 6 items = 2 rows), flex on desktop */}
+            <div className="md:flex md:items-center md:justify-between md:px-3 md:h-10">
+              <div className="grid grid-cols-3 gap-1 p-1.5 md:flex md:items-center md:gap-1 md:p-0">
                 {NAV.map((item) => {
                   const active = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href)
                   const restricted = "adminOnly" in item && item.adminOnly && !isAdmin
@@ -135,12 +136,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       key={item.href}
                       href={restricted ? "#" : item.href}
                       onClick={restricted ? (e) => e.preventDefault() : undefined}
-                      className={`relative px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      className={`relative flex items-center justify-center text-center whitespace-nowrap px-2 py-2 md:px-3 md:py-1.5 rounded-lg text-[11px] md:text-xs font-medium transition-colors ${
                         restricted
-                          ? "text-[#475569] cursor-not-allowed"
+                          ? "text-[#475569] cursor-not-allowed bg-[#0f0f18] md:bg-transparent"
                           : active
-                            ? "bg-white/10 text-white"
-                            : "text-[#94a3b8] hover:text-white hover:bg-white/5"
+                            ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
+                            : "text-[#94a3b8] hover:text-white hover:bg-white/5 bg-[#0f0f18] md:bg-transparent"
                       }`}
                       title={
                         restricted
@@ -153,7 +154,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       {item.label}
                       {showQuotaDot && (
                         <span
-                          className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${
+                          className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${
                             quotaStatus === "critical" ? "bg-red-500" : "bg-amber-500"
                           } animate-pulse`}
                           aria-label={quotaStatus === "critical" ? "critical quota" : "warning quota"}
@@ -162,36 +163,83 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </Link>
                   )
                 })}
+                {/* Desktop only: "หน้าเว็บ" stays in nav row next to tabs */}
                 <a
                   href="/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-2 py-1.5 rounded-md text-[11px] font-medium text-[#64748b] hover:text-white hover:bg-white/5 transition-colors"
+                  className="hidden md:flex items-center justify-center whitespace-nowrap px-3 py-1.5 rounded-lg text-[11px] font-medium text-[#64748b] hover:text-white hover:bg-white/5 transition-colors"
                   title="เปิดหน้าเว็บ (แท็บใหม่)"
                 >
-                  เว็บ ↗
+                  หน้าเว็บ ↗
                 </a>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="hidden sm:inline text-[10px] text-[#475569] font-mono">
+              {/* Desktop-only utility group */}
+              <div className="hidden md:flex items-center gap-1.5">
+                <span className="text-[10px] text-[#475569] font-mono">
                   b {process.env.NEXT_PUBLIC_ADMIN_VERSION}
                 </span>
                 {user && badge && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${badge.color}`}>
+                  <span className={`whitespace-nowrap text-[10px] px-1.5 py-0.5 rounded border font-medium ${badge.color}`}>
                     {badge.label}
                   </span>
                 )}
                 {user && (
-                  <span className="hidden sm:inline text-[10px] text-[#94a3b8]">{user.id}</span>
+                  <span className="text-[10px] text-[#94a3b8]">{user.id}</span>
                 )}
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}
                   className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium text-[#64748b] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer whitespace-nowrap"
                 >
-                  {loggingOut ? "..." : "ออก"}
+                  {loggingOut ? "..." : "ออกจากระบบ"}
                 </button>
               </div>
+            </div>
+            {/* Row 2 (mobile only): หน้าเว็บ link · user identity · logout */}
+            <div className="flex md:hidden items-center justify-between gap-2 h-10 px-2 border-t border-white/5 bg-[#0a0a12]">
+              {/* Left: หน้าเว็บ link */}
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 h-8 px-2.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20 flex items-center gap-1.5 transition-colors text-[11px] font-medium whitespace-nowrap"
+                title="เปิดหน้าเว็บ (แท็บใหม่)"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
+                </svg>
+                หน้าเว็บ ↗
+              </a>
+              {/* Middle: user identity — single row: [role badge] login-id */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
+                {user && badge && (
+                  <span className={`shrink-0 whitespace-nowrap text-[10px] px-1.5 py-0.5 rounded border font-medium ${badge.color}`}>
+                    {badge.label}
+                  </span>
+                )}
+                {user && (
+                  <span className="text-[11px] text-[#94a3b8] truncate" title={`เข้าระบบในชื่อ ${user.id}`}>
+                    {user.id}
+                  </span>
+                )}
+                <span className="hidden xs:inline text-[10px] text-[#475569] font-mono ml-1">
+                  b{process.env.NEXT_PUBLIC_ADMIN_VERSION}
+                </span>
+              </div>
+              {/* Right: logout */}
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="shrink-0 h-8 px-2.5 rounded-md text-[11px] font-medium text-red-400/80 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer whitespace-nowrap border border-red-500/20 flex items-center gap-1"
+                title="ออกจากระบบ"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {loggingOut ? "..." : "ออก"}
+              </button>
             </div>
           </div>
         </nav>

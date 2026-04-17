@@ -159,98 +159,116 @@ function CouponRow({ coupon: c, isAdmin, onEdit, onDelete, onToggle, onToggleTes
         </div>
 
         {/* Right: Info + actions */}
-        <div className="flex-1 p-4">
-          {/* Row 1: tags + action buttons */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${typeInfo.color}`}>
-                  {typeInfo.label}
-                </span>
-                <span className="font-mono text-xs text-amber-400">{c.code}</span>
-                {expired && <span className="text-[10px] text-red-400">หมดอายุ</span>}
-                {notStarted && <span className="text-[10px] text-blue-400">ยังไม่เริ่ม</span>}
-                {limitReached && <span className="text-[10px] text-orange-400">ใช้ครบแล้ว</span>}
-                {c.allowRepeatClaim && <span className="text-[10px] text-sky-400">รับซ้ำได้</span>}
-              </div>
-              <h3 className="text-sm font-medium text-white truncate">{c.title}</h3>
-              <div className="text-[11px] text-[#64748b] mt-1 mb-2">
-                <span>{c.startDate.slice(0, 10)} → {c.endDate.slice(0, 10)}</span>
-                {c.discountType !== "gift" && <span className="ml-3">ลด {c.discountValue}{c.discountType === "percent" ? "%" : " บาท"}</span>}
-                {c.discountType === "gift" && <span className="ml-3">{c.giftDescription}</span>}
-              </div>
-
-              {/* Stats labels */}
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px]">
-                  <span className="text-[#64748b]">รับแล้ว</span>
-                  <span className="font-bold text-white">{c.claimCount ?? 0}</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px]">
-                  <span className="text-[#64748b]">ใช้แล้ว</span>
-                  <span className="font-bold text-white">{c.usageCount}</span>
-                </span>
-                {c.usageLimit > 0 && (
-                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px]">
-                    <span className="text-[#64748b]">จำกัด</span>
-                    <span className="font-bold text-white">{c.usageLimit}</span>
-                  </span>
-                )}
-                {c.usageLimit > 0 && (
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold ${
-                    (c.usageLimit - (c.claimCount ?? 0)) <= 0
-                      ? "bg-red-500/15 border border-red-500/30 text-red-400"
-                      : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
-                  }`}>
-                    <span className="font-normal text-inherit/70">เหลือ</span>
-                    {Math.max(0, c.usageLimit - (c.claimCount ?? 0))}
-                  </span>
-                )}
-                <button onClick={onShowClaims} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[11px] font-medium hover:bg-amber-500/20 cursor-pointer transition-colors">
-                  ดูประวัติ
-                </button>
-              </div>
+        <div className="flex-1 p-3 md:p-4 flex flex-col gap-3 min-w-0">
+          {/* Info block */}
+          <div className="min-w-0 th-text">
+            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+              <span className={`shrink-0 whitespace-nowrap text-[10px] px-2 py-0.5 rounded border font-medium ${typeInfo.color}`}>
+                {typeInfo.label}
+              </span>
+              <span className="shrink-0 font-mono text-xs text-amber-400">{c.code}</span>
+              {expired && <span className="shrink-0 whitespace-nowrap text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400">หมดอายุ</span>}
+              {notStarted && <span className="shrink-0 whitespace-nowrap text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400">ยังไม่เริ่ม</span>}
+              {limitReached && <span className="shrink-0 whitespace-nowrap text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400">ใช้ครบ</span>}
+              {c.allowRepeatClaim && <span className="shrink-0 whitespace-nowrap text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400">รับซ้ำได้</span>}
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button onClick={() => setTestClaim(true)} className="h-8 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] hover:text-white flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium" title="ดูตัวอย่าง modal (ไม่นับ)">
-                ดูตัวอย่าง
-              </button>
-              <a href="/admin/test-claim" target="_blank" rel="noopener noreferrer" className="h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium no-underline" title="ทดสอบรับจริง (นับจริง + revert ได้)">
-                ทดสอบจริง ↗
-              </a>
-              <button onClick={onShowClaims} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-amber-400 flex items-center justify-center transition-colors cursor-pointer" title="ประวัติการรับ">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </button>
-              <button onClick={onToggleTest} className={`h-8 rounded-lg flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium ${c.testMode ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" : "bg-[#1e1e2e] text-[#64748b] border border-[#2a2a3a]"}`} title={c.testMode ? "ปิดหน้าทดสอบ" : "แสดงที่หน้าทดสอบ"}>
-                <div className={`relative w-7 h-3.5 rounded-full transition-colors ${c.testMode ? "bg-cyan-500" : "bg-[#475569]"}`}>
-                  <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-all ${c.testMode ? "left-[14px]" : "left-0.5"}`} />
-                </div>
-                ทดสอบ
-              </button>
-              <button onClick={onToggle} className={`h-8 rounded-lg flex items-center gap-1.5 px-2.5 transition-colors cursor-pointer text-[11px] font-medium ${c.isActive ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-[#1e1e2e] text-[#64748b] border border-[#2a2a3a]"}`} title={c.isActive ? "กดเพื่อซ่อนจาก frontend" : "กดเพื่อแสดงบน frontend"}>
-                <div className={`relative w-7 h-3.5 rounded-full transition-colors ${c.isActive ? "bg-emerald-500" : "bg-[#475569]"}`}>
-                  <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-all ${c.isActive ? "left-[14px]" : "left-0.5"}`} />
-                </div>
-                แสดง
-              </button>
-              <button onClick={onEdit} className="h-8 rounded-lg bg-[#1e1e2e] text-[#94a3b8] hover:text-white flex items-center gap-1.5 px-3 transition-colors cursor-pointer text-[11px] font-medium" title="แก้ไข">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-                แก้ไข
-              </button>
-              {isAdmin && (
-                <button onClick={onDelete} className="w-8 h-8 rounded-lg bg-[#1e1e2e] text-[#64748b] hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer" title="ลบ">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+            <h3 className="text-sm font-medium text-white line-clamp-2">{c.title}</h3>
+            <div className="text-[11px] text-[#94a3b8] mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+              <span className="whitespace-nowrap">{cardFormatDate(c.startDate)} → {cardFormatDate(c.endDate)}</span>
+              {c.discountType !== "gift" && <span className="whitespace-nowrap">ลด {c.discountValue}{c.discountType === "percent" ? "%" : " บาท"}</span>}
+              {c.discountType === "gift" && <span className="whitespace-nowrap">{c.giftDescription}</span>}
+            </div>
+
+            {/* Stats labels */}
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px] whitespace-nowrap">
+                <span className="text-[#64748b]">รับแล้ว</span>
+                <span className="font-bold text-white">{c.claimCount ?? 0}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px] whitespace-nowrap">
+                <span className="text-[#64748b]">ใช้แล้ว</span>
+                <span className="font-bold text-white">{c.usageCount}</span>
+              </span>
+              {c.usageLimit > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#1e1e2e] border border-[#2a2a3a] text-[11px] whitespace-nowrap">
+                  <span className="text-[#64748b]">จำกัด</span>
+                  <span className="font-bold text-white">{c.usageLimit}</span>
+                </span>
+              )}
+              {c.usageLimit > 0 && (
+                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap ${
+                  (c.usageLimit - (c.claimCount ?? 0)) <= 0
+                    ? "bg-red-500/15 border border-red-500/30 text-red-400"
+                    : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                }`}>
+                  <span className="font-normal">เหลือ</span>
+                  {Math.max(0, c.usageLimit - (c.claimCount ?? 0))}
+                </span>
               )}
             </div>
           </div>
 
+          {/* Primary actions: status toggles + edit + delete */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
+            <button
+              onClick={onToggle}
+              role="switch"
+              aria-checked={c.isActive}
+              className={`h-9 rounded-lg flex items-center gap-2 px-3 transition-colors cursor-pointer text-xs font-medium whitespace-nowrap ${c.isActive ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-[#1e1e2e] text-[#94a3b8] border border-[#2a2a3a]"}`}
+              title={c.isActive ? "กำลังแสดงหน้าเว็บ — กดเพื่อซ่อน" : "ซ่อนอยู่ — กดเพื่อแสดง"}
+            >
+              <div className={`relative w-7 h-3.5 rounded-full transition-colors ${c.isActive ? "bg-emerald-500" : "bg-[#475569]"}`}>
+                <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-all ${c.isActive ? "left-[14px]" : "left-0.5"}`} />
+              </div>
+              แสดงจริง
+            </button>
+            <button
+              onClick={onToggleTest}
+              role="switch"
+              aria-checked={c.testMode}
+              className={`h-9 rounded-lg flex items-center gap-2 px-3 transition-colors cursor-pointer text-xs font-medium whitespace-nowrap ${c.testMode ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : "bg-[#1e1e2e] text-[#94a3b8] border border-[#2a2a3a]"}`}
+              title={c.testMode ? "แสดงในหน้าทดสอบ — กดเพื่อปิด" : "ปิดอยู่ — กดเพื่อเปิดในหน้าทดสอบ"}
+            >
+              <div className={`relative w-7 h-3.5 rounded-full transition-colors ${c.testMode ? "bg-cyan-500" : "bg-[#475569]"}`}>
+                <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-all ${c.testMode ? "left-[14px]" : "left-0.5"}`} />
+              </div>
+              โหมดทดสอบ
+            </button>
+            <div className="flex-1 min-w-0" />
+            <button onClick={onEdit} className="h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 flex items-center gap-1.5 px-3 transition-colors cursor-pointer text-xs font-medium whitespace-nowrap" title="แก้ไขคูปอง">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              แก้ไข
+            </button>
+            {isAdmin && (
+              <button onClick={onDelete} className="h-9 w-9 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#64748b] hover:text-red-400 hover:border-red-500/30 flex items-center justify-center transition-colors cursor-pointer" title="ลบคูปอง" aria-label="ลบคูปอง">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Secondary actions: preview + test + history */}
+          <div className="flex flex-wrap gap-1.5">
+            <button onClick={() => setTestClaim(true)} className="h-8 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] hover:text-white flex items-center gap-1.5 px-3 transition-colors cursor-pointer text-[11px] font-medium whitespace-nowrap" title="ดูหน้า modal ที่ลูกค้าจะเห็น (ไม่นับยอด)">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              ดูตัวอย่าง
+            </button>
+            <a href="/admin/test-claim" target="_blank" rel="noopener noreferrer" className="h-8 rounded-lg bg-[#1e1e2e] border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 flex items-center gap-1.5 px-3 transition-colors cursor-pointer text-[11px] font-medium no-underline whitespace-nowrap" title="เปิดหน้าทดสอบรับจริง (นับยอด + revert ได้)">
+              ทดสอบรับจริง ↗
+            </a>
+            <button onClick={onShowClaims} className="h-8 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] hover:text-amber-400 flex items-center gap-1.5 px-3 transition-colors cursor-pointer text-[11px] font-medium whitespace-nowrap" title="ดูรายการคนที่รับคูปองนี้">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              ดูประวัติการรับ
+            </button>
+          </div>
         </div>
       </div>
 
@@ -439,18 +457,18 @@ export default function AdminCouponsPage() {
   // ─── Render ────────────────────────────────────────────
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-white">จัดการคูปอง</h1>
-          <button onClick={fetchCoupons} className="w-8 h-8 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90" title="รีเฟรชข้อมูล">
+    <div className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-8">
+      <div className="flex items-center justify-between gap-2 mb-4 md:mb-6">
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="text-lg md:text-xl font-bold text-white whitespace-nowrap">จัดการคูปอง</h1>
+          <button onClick={fetchCoupons} className="shrink-0 w-9 h-9 rounded-lg bg-[#1e1e2e] border border-[#2a2a3a] text-[#94a3b8] hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90" title="รีเฟรชข้อมูล" aria-label="รีเฟรช">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
         </div>
         {!showForm && (
-          <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer">
+          <button onClick={() => setShowForm(true)} className="shrink-0 h-9 md:h-10 px-3 md:px-4 bg-amber-600 hover:bg-amber-500 text-white text-xs md:text-sm font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap">
             + สร้างคูปอง
           </button>
         )}

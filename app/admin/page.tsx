@@ -79,24 +79,29 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-16">
-      <div className="text-center mb-10">
-        <h1 className="text-2xl font-bold text-white mb-2">
+    <div className="max-w-2xl mx-auto px-3 md:px-4 py-5 md:py-12">
+      <div className="text-center mb-5 md:mb-10">
+        <h1 className="text-lg md:text-2xl font-bold text-white mb-1">
           สวัสดี, {user?.name || "Admin"}
         </h1>
-        <p className="text-sm text-[#64748b]">เลือกหน้าที่ต้องการ</p>
+        <p className="text-xs md:text-sm text-[#64748b]">เลือกหน้าที่ต้องการจัดการ</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
         {LINKS.filter((link) => !link.adminOnly || isAdmin).map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className={`block p-6 rounded-xl border bg-[#13131d] transition-all ${link.color}`}
+            className={`flex items-center gap-3 p-3 rounded-xl border bg-[#13131d] transition-all sm:flex-col sm:items-start sm:gap-3 sm:p-6 ${link.color}`}
           >
-            <div className="text-[#94a3b8] mb-3">{link.icon}</div>
-            <h2 className="text-base font-semibold text-white mb-1">{link.label}</h2>
-            <p className="text-xs text-[#64748b]">{link.desc}</p>
+            <div className="text-[#94a3b8] shrink-0 sm:mb-0">{link.icon}</div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm md:text-base font-semibold text-white leading-tight sm:mb-1">{link.label}</h2>
+              <p className="text-[11px] md:text-xs text-[#64748b] line-clamp-1 sm:line-clamp-none mt-0.5">{link.desc}</p>
+            </div>
+            <svg className="w-4 h-4 text-[#475569] shrink-0 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         ))}
       </div>

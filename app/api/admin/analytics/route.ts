@@ -11,6 +11,52 @@ interface TimeseriesItem {
   bounceRate: number
 }
 
+// In-memory cache: reduce redundant Vercel API calls on repeated refresh.
+// Admin UI refreshes frequently — 60s cache is invisible to user but saves quota.
+const CACHE = new Map<string, { ts: number; data: unknown }>()
+const CACHE_TTL = 60_000
+
+function periodToMs(period: string): number {
+  const ranges: Record<string, number> = {
+    "24h": 24 * 60 * 60 * 1000,
+    "7d": 7 * 24 * 60 * 60 * 1000,
+    "30d": 30 * 24 * 60 * 60 * 1000,
+  }
+  return ranges[period] || ranges["24h"]
+}
+
+async function fetchTimeseries(token: string, from: string, to: string): Promise<TimeseriesItem[]> {
+  const headers: HeadersInit = { Authorization: `Bearer ${token}` }
+  const base = `https://vercel.com/api/web-analytics`
+  const qs = `projectId=${PROJECT_ID}&teamId=${TEAM_ID}&from=${from}&to=${to}&environment=production`
+  const res = await fetch(`${base}/timeseries?${qs}`, { headers, cache: "no-store" })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`${res.status}: ${text.slice(0, 200)}`)
+  }
+  const raw = await res.json()
+  return raw?.data?.groups?.all || []
+}
+
+function summarize(items: TimeseriesItem[]) {
+  const totalViews = items.reduce((s, d) => s + d.total, 0)
+  const totalVisitors = items.reduce((s, d) => s + (d.devices || 0), 0)
+  const nonZero = items.filter((d) => d.total > 0)
+  const avgBounce = nonZero.length > 0
+    ? Math.round(nonZero.reduce((s, d) => s + (d.bounceRate || 0), 0) / nonZero.length)
+    : 0
+  let peak: TimeseriesItem | null = null
+  for (const d of items) if (!peak || d.total > peak.total) peak = d
+  return {
+    totalViews,
+    totalVisitors,
+    avgBounceRate: avgBounce,
+    peakTime: peak?.key || null,
+    peakViews: peak?.total || 0,
+    dataPoints: items.length,
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const user = await getSessionUser()
@@ -23,71 +69,54 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ configured: false, error: "VERCEL_TOKEN not set" })
     }
 
-    const headers: HeadersInit = { Authorization: `Bearer ${token}` }
     const { searchParams } = req.nextUrl
     const period = searchParams.get("period") || "24h"
 
-    // Calculate time range
+    // Serve from cache if fresh
+    const cached = CACHE.get(period)
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      return NextResponse.json(cached.data)
+    }
+
     const now = Date.now()
-    const ranges: Record<string, number> = {
-      "24h": 24 * 60 * 60 * 1000,
-      "7d": 7 * 24 * 60 * 60 * 1000,
-      "30d": 30 * 24 * 60 * 60 * 1000,
-    }
-    const from = new Date(now - (ranges[period] || ranges["24h"])).toISOString()
-    const to = new Date(now).toISOString()
+    const ms = periodToMs(period)
+    const curFrom = new Date(now - ms).toISOString()
+    const curTo = new Date(now).toISOString()
+    const prevFrom = new Date(now - 2 * ms).toISOString()
+    const prevTo = new Date(now - ms).toISOString()
 
-    const base = `https://vercel.com/api/web-analytics`
-    const qs = `projectId=${PROJECT_ID}&teamId=${TEAM_ID}&from=${from}&to=${to}&environment=production`
+    // Fetch current + previous period in parallel
+    const [curItems, prevItems] = await Promise.all([
+      fetchTimeseries(token, curFrom, curTo),
+      fetchTimeseries(token, prevFrom, prevTo).catch(() => [] as TimeseriesItem[]),
+    ])
 
-    // Fetch timeseries (the only available endpoint)
-    const res = await fetch(`${base}/timeseries?${qs}`, { headers, cache: "no-store" })
+    const curSummary = summarize(curItems)
+    const prevSummary = summarize(prevItems)
 
-    if (!res.ok) {
-      const text = await res.text()
-      return NextResponse.json({
-        configured: true,
-        period,
-        error: `${res.status}: ${text.slice(0, 200)}`,
-      })
-    }
-
-    const raw = await res.json()
-    const items: TimeseriesItem[] = raw?.data?.groups?.all || []
-
-    // Compute summary
-    const totalViews = items.reduce((s, d) => s + d.total, 0)
-    const totalVisitors = items.reduce((s, d) => s + (d.devices || 0), 0)
-    const nonZero = items.filter((d) => d.total > 0)
-    const avgBounce = nonZero.length > 0
-      ? Math.round(nonZero.reduce((s, d) => s + (d.bounceRate || 0), 0) / nonZero.length)
-      : 0
-
-    // Find peak hour/day
-    let peak: TimeseriesItem | null = null
-    for (const d of items) {
-      if (!peak || d.total > peak.total) peak = d
-    }
-
-    return NextResponse.json({
+    const payload = {
       configured: true,
       period,
       summary: {
-        totalViews,
-        totalVisitors,
-        avgBounceRate: avgBounce,
-        peakTime: peak?.key || null,
-        peakViews: peak?.total || 0,
-        dataPoints: items.length,
+        ...curSummary,
+        prev: {
+          totalViews: prevSummary.totalViews,
+          totalVisitors: prevSummary.totalVisitors,
+          avgBounceRate: prevSummary.avgBounceRate,
+        },
       },
-      timeseries: items.map((d) => ({
+      timeseries: curItems.map((d) => ({
         key: d.key,
         views: d.total,
         visitors: d.devices || 0,
         bounceRate: d.bounceRate || 0,
       })),
-    })
-  } catch {
-    return NextResponse.json({ error: "internal error" }, { status: 500 })
+    }
+
+    CACHE.set(period, { ts: Date.now(), data: payload })
+    return NextResponse.json(payload)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "internal error"
+    return NextResponse.json({ configured: true, error: msg }, { status: 200 })
   }
 }
