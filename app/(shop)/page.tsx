@@ -26,24 +26,21 @@ export default function HomePage() {
       {/* Hero Banner — Mobile: full-bleed behind header + CTA overlay */}
       <section className="lg:hidden -mt-16 relative w-full aspect-[2/1]">
         <Image
-          src="/banner-mobile-songkran.webp"
-          alt="ร้านสามหนึ่งพานิช สุขสันต์วันสงกรานต์ 2569"
+          src="/banner-mobile.webp"
+          alt="ร้านสามหนึ่งพานิช ลพบุรี — สี วัสดุก่อสร้าง เครื่องมือช่าง"
           fill
           className="object-cover"
           sizes="100vw"
           priority
         />
-        {/* ฟ้าเข้ม blend multiply ทั้งภาพ */}
-        <div className="absolute inset-0 bg-cyan-900/40 mix-blend-multiply" />
         {/* Gradient: ดำล่าง ไล่ขึ้น */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
         <div className="absolute inset-0 flex items-end justify-center pb-5 px-5 pt-16">
           <div className="text-center">
-            <p className="text-cyan-300 text-sm font-medium tracking-widest drop-shadow-lg mb-1">🌊 สุขสันต์วันสงกรานต์ 🌊</p>
             <h1 className="text-white font-bold text-xl drop-shadow-lg">ร้านสามหนึ่งพานิช ลพบุรี</h1>
             <p className="text-gray-300 text-xs mt-1">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
             <div className="mt-3">
-              <HeroContactButton className="inline-block border border-white/30 hover:border-cyan-400 hover:text-cyan-400 text-white text-xs font-medium px-4 py-2 rounded-full transition" />
+              <HeroContactButton className="inline-block border border-white/30 hover:border-white/60 text-white text-xs font-medium px-4 py-2 rounded-full transition" />
             </div>
           </div>
         </div>
@@ -52,8 +49,8 @@ export default function HomePage() {
       {/* Hero Banner — Desktop + CTA overlay */}
       <section className="hidden lg:block w-full relative">
         <Image
-          src="/site2026_R_space_songkran.webp"
-          alt="ร้านสามหนึ่งพานิช สุขสันต์วันสงกรานต์ 2569"
+          src="/site2026_R_space.webp"
+          alt="ร้านสามหนึ่งพานิช ลพบุรี — สี วัสดุก่อสร้าง เครื่องมือช่าง"
           width={1920}
           height={589}
           className="w-full h-auto"
@@ -61,17 +58,15 @@ export default function HomePage() {
         />
         {/* Left gradient — ดำเข้ม ไล่ไปใส เพื่อให้ตัวอักษรเด่น */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/85 via-[#0a0a0f]/40 to-transparent" />
-        {/* Right gradient — ดำเข้ม + ฟ้าเคลือบทับ dissolve */}
+        {/* Right gradient */}
         <div className="absolute inset-0 bg-gradient-to-l from-[#0a0a0f]/70 via-[#0a0a0f]/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-l from-cyan-700/20 via-transparent to-transparent" />
-        {/* Left overlay — สงกรานต์ + ชื่อร้าน + CTA */}
+        {/* Left overlay — ชื่อร้าน + CTA */}
         <div className="absolute inset-0 flex items-center pl-[10%]">
           <div>
-            <p className="text-cyan-300 text-lg xl:text-xl font-medium tracking-[0.25em] drop-shadow-lg mb-2">🌊 สุขสันต์วันสงกรานต์ 🌊</p>
             <h1 className="text-white font-bold text-4xl drop-shadow-lg">ร้านสามหนึ่งพานิช ลพบุรี</h1>
             <p className="text-gray-300 text-base mt-2">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
             <div className="mt-5">
-              <HeroContactButton className="inline-block border border-white/30 hover:border-cyan-400 hover:text-cyan-400 text-white text-sm font-medium px-6 py-2.5 rounded-full transition" />
+              <HeroContactButton className="inline-block border border-white/30 hover:border-white/60 text-white text-sm font-medium px-6 py-2.5 rounded-full transition" />
             </div>
           </div>
         </div>
