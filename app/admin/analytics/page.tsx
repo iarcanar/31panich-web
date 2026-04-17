@@ -623,19 +623,410 @@ function TodaySnapshot({ data }: { data: TimeseriesItem[] }) {
   )
 }
 
-// ─── Guide modal ──────────────────────────────────────
+// ─── Guide modal — step-by-step cards ─────────────────
+interface GuideStep {
+  icon: string
+  title: string
+  subtitle?: string
+  body: React.ReactNode
+}
+
+const GUIDE_STEPS: GuideStep[] = [
+  {
+    icon: "👋",
+    title: "สถิติเว็บไซต์คืออะไร",
+    subtitle: "ก่อนเริ่ม ทำความเข้าใจภาพรวม",
+    body: (
+      <>
+        <p>
+          หน้านี้บอกว่า <b className="text-white">ใครเข้าเว็บเรา เมื่อไหร่ เข้ากี่คน</b>
+          {" "}และ <b className="text-white">มาจากไหน</b> — ใช้ดูว่าการโฆษณาหรือการโพสต์ที่เราทำไป <b>ได้ผลไหม</b>
+        </p>
+        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-cyan-400 mb-1">ข้อมูลมาจากไหน?</div>
+          <p className="text-[#cbd5e1]">
+            จาก <b>Vercel Web Analytics</b> ระบบนับคนเข้าเว็บแบบไม่เก็บข้อมูลส่วนตัว
+            — <b className="text-emerald-400">ไม่มี cookies</b> ปลอดภัยตามกฎหมาย
+          </p>
+        </div>
+        <p className="text-[#64748b] mt-3">ข้อมูลอัปเดตทุก 60 วินาที — คู่มือนี้มี 10 หน้า จะพาไปทีละเรื่อง</p>
+      </>
+    ),
+  },
+  {
+    icon: "📄",
+    title: "Page Views — ยอดเปิดหน้า",
+    subtitle: "หน้าแรก · ตัวเลขสีฟ้า",
+    body: (
+      <>
+        <p>
+          <b className="text-cyan-400">Page Views</b> = <b className="text-white">จำนวนครั้งที่หน้าเว็บถูกเปิด</b>
+        </p>
+        <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-4 mt-3">
+          <div className="text-[#94a3b8] mb-2 font-bold">ตัวอย่าง:</div>
+          <p className="text-[#cbd5e1]">
+            <b>คุณสมศรี</b>เปิดหน้าแรก → ดูหน้าสินค้าสี → กลับมาหน้าแรก → ดูหน้าโปรโมชั่น
+          </p>
+          <p className="mt-2 text-cyan-400"><b>= 4 Views (4 ครั้ง)</b></p>
+        </div>
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-amber-400 mb-1">💡 บอกอะไรเรา?</div>
+          <p className="text-[#cbd5e1]">
+            ยิ่งเยอะ = มีคนสนใจเปิดดูหน้าต่างๆ ในเว็บ ถ้าตัวเลขขึ้นหลังโพสต์หรือยิงโฆษณา = ได้ผล
+          </p>
+        </div>
+      </>
+    ),
+  },
+  {
+    icon: "👥",
+    title: "Visitors — จำนวนคนจริงๆ",
+    subtitle: "ตัวเลขสีเหลือง",
+    body: (
+      <>
+        <p>
+          <b className="text-amber-400">Visitors</b> = <b className="text-white">จำนวนคนที่ไม่ซ้ำกัน</b>
+          {" "}(นับเป็นคนเดียว ไม่ว่าจะเปิดกี่หน้า)
+        </p>
+        <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-4 mt-3">
+          <div className="text-[#94a3b8] mb-2 font-bold">ตัวอย่าง:</div>
+          <p className="text-[#cbd5e1]">
+            คุณสมศรีในตัวอย่างที่แล้วเปิดไป 4 หน้า
+          </p>
+          <p className="mt-2">
+            <span className="text-cyan-400"><b>4 Views</b></span> แต่ <span className="text-amber-400"><b>1 Visitor</b></span>
+          </p>
+        </div>
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-emerald-400 mb-1">🎯 ต่างกันยังไง?</div>
+          <ul className="space-y-1 text-[#cbd5e1] list-disc pl-5 marker:text-emerald-400">
+            <li><b>Views</b> บอก "เปิดหน้ากี่ครั้ง"</li>
+            <li><b>Visitors</b> บอก "มีกี่คนมาจริงๆ" <b className="text-white">(สำคัญกว่า!)</b></li>
+          </ul>
+        </div>
+        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-cyan-400 mb-1">🧮 เคล็ดลับ</div>
+          <p className="text-[#cbd5e1]">
+            เอา <b>Views ÷ Visitors</b> = แต่ละคนเฉลี่ยเปิดกี่หน้า
+            <br />
+            <span className="text-[#94a3b8]">เช่น Views 100 ÷ Visitors 30 ≈ คนละ 3 หน้า — ถ้าได้ 3+ แปลว่าคนสนใจ เปิดดูหลายหน้า</span>
+          </p>
+        </div>
+      </>
+    ),
+  },
+  {
+    icon: "🚪",
+    title: "Bounce Rate — อัตราเด้งออก",
+    subtitle: "ตัวเลขสีเขียว/ส้ม",
+    body: (
+      <>
+        <p>
+          <b className="text-emerald-400">Bounce Rate</b> = <b className="text-white">เปอร์เซ็นต์ของคนที่เข้ามาดูแค่หน้าเดียวแล้วปิดไปเลย</b>
+          {" "}ไม่กดดูหน้าอื่นต่อ
+        </p>
+        <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-4 mt-3">
+          <div className="text-[#94a3b8] mb-2 font-bold">ตัวอย่าง:</div>
+          <p className="text-[#cbd5e1]">
+            มี 100 คนเข้าเว็บ — 60 คนดูหน้าเดียวแล้วออก = Bounce Rate <b className="text-amber-400">60%</b>
+          </p>
+        </div>
+        <div className="mt-4">
+          <div className="font-bold text-white mb-2">ตัวเลขดีไหม?</div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 text-center">
+              <div className="text-emerald-400 font-bold text-base">&lt; 40%</div>
+              <div className="text-[#cbd5e1] text-xs mt-1">ดีมาก</div>
+            </div>
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 text-center">
+              <div className="text-cyan-400 font-bold text-base">40–60%</div>
+              <div className="text-[#cbd5e1] text-xs mt-1">ปกติ</div>
+            </div>
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-center">
+              <div className="text-amber-400 font-bold text-base">60–80%</div>
+              <div className="text-[#cbd5e1] text-xs mt-1">ควรปรับปรุง</div>
+            </div>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center">
+              <div className="text-red-400 font-bold text-base">&gt; 80%</div>
+              <div className="text-[#cbd5e1] text-xs mt-1">แย่</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-red-400 mb-1">⚠ Bounce สูงเกินไป = อะไร?</div>
+          <p className="text-[#cbd5e1]">
+            คนเจอเว็บเรา แต่พออ่านแล้วไม่สนใจ ปิดไปทันที
+            {" "}อาจเป็นเพราะ <b>หน้าโหลดช้า</b>, <b>ข้อมูลไม่ตรงใจ</b>, หรือ <b>ยิงโฆษณาดึงคนผิดกลุ่ม</b>
+          </p>
+        </div>
+      </>
+    ),
+  },
+  {
+    icon: "🏆",
+    title: "Peak — จุดพีคสูงสุด",
+    subtitle: "ช่วงเวลาที่คนเข้ามาเยอะที่สุด",
+    body: (
+      <>
+        <p>
+          <b className="text-white">Peak</b> = <b>ชั่วโมง (หรือวัน) ที่มีคนเข้ามาเยอะที่สุด</b>ในช่วงที่เราดูอยู่
+        </p>
+        <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-4 mt-3">
+          <div className="text-[#94a3b8] mb-2 font-bold">ตัวอย่าง:</div>
+          <p className="text-[#cbd5e1]">
+            ดู 7 วันที่ผ่านมา — peak = <b>46 views</b> ที่ <b className="text-amber-400">16 เม.ย.</b>
+          </p>
+          <p className="text-[#94a3b8] mt-2">แปลว่าวันที่ 16 เป็นวันที่คนเข้าเยอะที่สุด</p>
+        </div>
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-amber-400 mb-1">💰 ใช้ Peak ทำอะไรได้?</div>
+          <ul className="space-y-1 text-[#cbd5e1] list-disc pl-5 marker:text-amber-400">
+            <li><b>เลือกเวลาโพสต์</b> Facebook/LINE ในช่วง peak → คนเห็นเยอะสุด</li>
+            <li><b>ยิงโฆษณา</b>ก่อน peak ~30 นาที → คนกำลังจะออนไลน์</li>
+            <li><b>เตรียมตอบลูกค้า</b>ให้เร็วขึ้นในช่วง peak</li>
+          </ul>
+        </div>
+      </>
+    ),
+  },
+  {
+    icon: "📈",
+    title: "ป้าย ↑% ↓% — เทียบกับครั้งก่อน",
+    subtitle: "ตัวเลขเล็กๆ ข้างตัวเลขหลัก",
+    body: (
+      <>
+        <p>
+          ป้าย <b className="text-emerald-400">↑21%</b> หรือ <b className="text-red-400">↓5%</b>
+          {" "}ที่เห็นข้างตัวเลข = <b className="text-white">เทียบกับช่วงก่อนหน้าที่เท่ากัน</b>
+        </p>
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-3">
+            <div className="text-[#94a3b8] text-xs mb-1">ดู "7 วัน"</div>
+            <div className="text-white">เทียบกับ <b>7 วันก่อนหน้านั้น</b></div>
+          </div>
+          <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-3">
+            <div className="text-[#94a3b8] text-xs mb-1">ดู "24 ชม."</div>
+            <div className="text-white">เทียบกับ <b>24 ชม. ก่อน</b></div>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-4">
+          <span className="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold">↑ = เพิ่มขึ้น (ดี)</span>
+          <span className="px-3 py-1.5 rounded-lg bg-red-500/15 text-red-400 font-bold">↓ = ลดลง (ต้องดู)</span>
+          <span className="px-3 py-1.5 rounded-lg bg-slate-500/15 text-slate-400 font-bold">— = เท่าเดิม</span>
+        </div>
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-amber-400 mb-1">⚠ ยกเว้น Bounce Rate!</div>
+          <p className="text-[#cbd5e1]">
+            Bounce Rate กลับด้าน — <b className="text-emerald-400">ลดลง = ดี</b> (คนอยู่นานขึ้น ไม่เด้งออก)
+          </p>
+        </div>
+      </>
+    ),
+  },
+  {
+    icon: "📊",
+    title: "กราฟแนวโน้มการเข้าชม",
+    subtitle: "กราฟหลักกลางหน้า",
+    body: (
+      <>
+        <p>แสดงจำนวนคนเข้าเว็บตามเวลา — <b className="text-white">ดูได้ว่าช่วงไหนดีไม่ดี</b></p>
+        <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-4 mt-3 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-0.5 bg-cyan-400 shrink-0" />
+            <span className="text-[#cbd5e1]"><b className="text-cyan-400">เส้นทึบฟ้า</b> = Page Views</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-0 shrink-0 border-t-2 border-dashed border-amber-400" />
+            <span className="text-[#cbd5e1]"><b className="text-amber-400">เส้นประเหลือง</b> = Visitors</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-amber-400 shrink-0 ring-2 ring-[#1a1a28]" />
+            <span className="text-[#cbd5e1]">จุด <b className="text-amber-400">สีส้ม</b> = วันนี้ / ตอนนี้</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-4 shrink-0 rounded" style={{ backgroundColor: "rgba(16,185,129,0.15)" }} />
+            <span className="text-[#cbd5e1]">แถบ<b className="text-emerald-400">สีเขียวจางๆ</b> = เวลาเปิดร้าน (7:30–17:30)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-4 shrink-0 flex items-center"><div className="w-full h-full border-l-2 border-dashed border-[#64748b]" /></div>
+            <span className="text-[#cbd5e1]">เส้นประเทา "วันใหม่" = แบ่งวันเก่ากับวันใหม่</span>
+          </div>
+        </div>
+        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-cyan-400 mb-1">💡 ใช้ยังไง?</div>
+          <p className="text-[#cbd5e1]">
+            <b>แตะที่กราฟ</b> เพื่อดูตัวเลขเวลาไหนก็ได้ — ตัวเลขสีฟ้าเด่นบนกราฟคือ peak
+          </p>
+        </div>
+      </>
+    ),
+  },
+  {
+    icon: "🕐",
+    title: "แถบชั่วโมง — คนเข้าเยอะช่วงไหน",
+    subtitle: "กราฟล่างสุด 24 ช่วงเวลา",
+    body: (
+      <>
+        <p>
+          แถบ 24 ช่อง แต่ละช่อง = <b className="text-white">1 ชั่วโมงของวัน</b>
+          {" "}(00:00 – 23:00)
+        </p>
+        <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-4 mt-3">
+          <div className="text-[#94a3b8] mb-2 font-bold">วิธีอ่าน:</div>
+          <ul className="space-y-2 text-[#cbd5e1]">
+            <li className="flex items-start gap-2">
+              <span className="text-cyan-400 font-bold shrink-0">เข้มสุด =</span>
+              <span>ชั่วโมงที่มีคนเข้าเยอะที่สุด</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#64748b] font-bold shrink-0">จางสุด =</span>
+              <span>ชั่วโมงที่แทบไม่มีคนเข้า</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-amber-400 font-bold shrink-0">ขอบส้ม =</span>
+              <span>peak (ชั่วโมงสูงสุด)</span>
+            </li>
+          </ul>
+        </div>
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-emerald-400 mb-1">💰 ใช้วางแผนธุรกิจยังไง?</div>
+          <ul className="space-y-1 text-[#cbd5e1] list-disc pl-5 marker:text-emerald-400">
+            <li>รู้ช่วงเวลาที่คนเข้ามากที่สุด → <b>โพสต์</b> หรือ<b>ยิงโฆษณา</b>ตอนนั้น</li>
+            <li>เช่น peak 14:00–18:00 = คนค้นของใช้บ้านหลังเลิกงาน</li>
+            <li>ถ้า peak นอกเวลาเปิดร้าน → เตรียมแชทบอตรอ หรือตอบทันทีเช้า</li>
+          </ul>
+        </div>
+      </>
+    ),
+  },
+  {
+    icon: "📣",
+    title: "การ์ด \"วันนี้\" — ดูสดตอนนี้",
+    subtitle: "แสดงเฉพาะโหมด 24 ชม.",
+    body: (
+      <>
+        <p>
+          การ์ดสีส้มด้านบน = <b className="text-white">สถิติวันนี้แบบเรียลไทม์</b>
+          {" "}(อัปเดตทุก 60 วินาที)
+        </p>
+        <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-xl p-4 mt-3 space-y-3">
+          <div>
+            <div className="text-amber-400 font-bold">Views วันนี้</div>
+            <p className="text-[#cbd5e1] mt-1">
+              รวมทั้งวัน + เทียบกับ<b>เมื่อวานเวลาเดียวกัน</b>
+              <br />
+              <span className="text-[#94a3b8]">→ ใช้เช็คว่าวันนี้ดีกว่าเมื่อวานไหม</span>
+            </p>
+          </div>
+          <div className="pt-3 border-t border-white/5">
+            <div className="text-white font-bold">ชั่วโมงนี้</div>
+            <p className="text-[#cbd5e1] mt-1">
+              Views ใน<b>ชั่วโมงปัจจุบัน</b>เท่านั้น
+              <br />
+              <span className="text-[#94a3b8]">→ ดูสดว่ามีคนเข้ามาช่วงนี้กี่คน</span>
+            </p>
+          </div>
+          <div className="pt-3 border-t border-white/5">
+            <div className="text-white font-bold">Peak วันนี้</div>
+            <p className="text-[#cbd5e1] mt-1">ชั่วโมงสูงสุดของวันนี้ (เฉพาะวันนี้)</p>
+          </div>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-red-400 mb-1">🚨 ระบบเตือนอัตโนมัติ</div>
+          <p className="text-[#cbd5e1]">
+            ถ้าชั่วโมงไหนมีคน<b>เข้าเยอะผิดปกติ</b> (เทียบกับ 7 วันย้อนหลัง) → แสดง pill สีส้มให้ดู
+          </p>
+          <p className="text-[#94a3b8] mt-2 text-xs">
+            เช่น: <b className="text-amber-400">10:00 — 28 views (ปกติ 5)</b> = อาจเป็นเพราะคุณเพิ่งโพสต์ หรือยิงโฆษณาในช่วงนั้น
+          </p>
+        </div>
+      </>
+    ),
+  },
+  {
+    icon: "🎯",
+    title: "เคล็ดลับใช้งานจริง",
+    subtitle: "จบแล้ว! เช็คลิสต์ก่อนใช้จริง",
+    body: (
+      <>
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+          <div className="font-bold text-amber-400 mb-2">หลังยิงโฆษณา ดู 3 อย่าง:</div>
+          <ol className="space-y-2 text-[#cbd5e1] list-decimal pl-5 marker:text-amber-400">
+            <li><b className="text-white">Views/Visitors ขึ้นไหม?</b> → โฆษณาดึงคนเข้าได้</li>
+            <li><b className="text-white">Bounce Rate สูงขึ้นไหม?</b> → ถ้าสูงขึ้นมาก = โฆษณาดึงคนผิดกลุ่ม</li>
+            <li><b className="text-white">Views ÷ Visitors ลดไหม?</b> → ถ้าลด = คนเข้ามาดูแค่หน้าเดียวแล้วไป</li>
+          </ol>
+        </div>
+        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-cyan-400 mb-2">ค่าปกติของร้านวัสดุก่อสร้าง</div>
+          <ul className="space-y-1 text-[#cbd5e1] list-disc pl-5 marker:text-cyan-400">
+            <li>Views/Visitor: <b>2–4 หน้าต่อคน</b></li>
+            <li>Bounce Rate: <b>40–60%</b></li>
+            <li>Peak: ช่วงเย็น <b>18:00–21:00</b> (หลังเลิกงาน)</li>
+          </ul>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mt-3">
+          <div className="font-bold text-red-400 mb-1">⚠ ระวัง!</div>
+          <p className="text-[#cbd5e1]">
+            วันหยุดยาว / เทศกาล (สงกรานต์, ปีใหม่) อาจทำให้ตัวเลขแปลก
+            {" "}— อย่าตกใจถ้าตัวเลขตกลงในช่วงนั้น ไม่ได้แปลว่าการตลาดล้มเหลวเสมอไป
+          </p>
+        </div>
+      </>
+    ),
+  },
+]
+
+const GUIDE_STORAGE_KEY = "analytics-guide-step"
+
 function GuideModal({ onClose }: { onClose: () => void }) {
+  // Resume where user left off (persisted across close/reopen)
+  const [step, setStep] = useState(() => {
+    if (typeof window === "undefined") return 0
+    try {
+      const saved = window.localStorage.getItem(GUIDE_STORAGE_KEY)
+      const n = saved ? parseInt(saved, 10) : 0
+      return Number.isNaN(n) || n < 0 || n >= GUIDE_STEPS.length ? 0 : n
+    } catch {
+      return 0
+    }
+  })
+  const total = GUIDE_STEPS.length
+  const current = GUIDE_STEPS[step]
+  const isFirst = step === 0
+  const isLast = step === total - 1
+
+  // Persist current step on every change
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    try { window.localStorage.setItem(GUIDE_STORAGE_KEY, String(step)) } catch {}
+  }, [step])
+
+  // "เสร็จแล้ว" → clear progress so next open starts fresh at step 0
+  const handleFinish = () => {
+    try { window.localStorage.removeItem(GUIDE_STORAGE_KEY) } catch {}
+    onClose()
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+      if (e.key === "ArrowRight" && !isLast) setStep((s) => s + 1)
+      if (e.key === "ArrowLeft" && !isFirst) setStep((s) => s - 1)
+    }
     document.addEventListener("keydown", onKey)
-    // Lock body scroll while modal open
     const prev = document.body.style.overflow
     document.body.style.overflow = "hidden"
     return () => {
       document.removeEventListener("keydown", onKey)
       document.body.style.overflow = prev
     }
-  }, [onClose])
+  }, [onClose, isFirst, isLast])
+
+  const bodyRef = useRef<HTMLDivElement>(null)
+  // Scroll body to top on step change
+  useEffect(() => {
+    bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+  }, [step])
 
   return (
     <div
@@ -643,7 +1034,7 @@ function GuideModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="relative bg-[#13131d] border border-[#2a2a3a] w-full md:max-w-2xl md:max-h-[85vh] max-h-[92vh] rounded-t-2xl md:rounded-2xl overflow-hidden flex flex-col"
+        className="relative bg-[#13131d] border border-[#2a2a3a] w-full md:max-w-2xl md:max-h-[88vh] max-h-[94vh] rounded-t-2xl md:rounded-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile drag indicator */}
@@ -651,221 +1042,111 @@ function GuideModal({ onClose }: { onClose: () => void }) {
           <div className="w-10 h-1 bg-white/20 rounded-full" />
         </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-4 md:px-5 py-3 border-b border-white/5 shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-amber-400 text-lg">📖</span>
-            <h2 className="text-sm md:text-base font-bold text-white truncate">คู่มืออ่านค่า Analytics</h2>
+        {/* Header with progress */}
+        <div className="shrink-0 px-4 md:px-6 pt-3 pb-2 border-b border-white/5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-amber-400 text-lg shrink-0">📖</span>
+              <h2 className="text-base font-bold text-white truncate">คู่มืออ่านสถิติ</h2>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-mono text-[#64748b] tabular-nums">
+                {step + 1}<span className="text-[#475569]"> / {total}</span>
+              </span>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-lg text-[#94a3b8] hover:text-white hover:bg-white/5 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="ปิด"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
+          {/* Progress bar */}
+          <div className="mt-2 h-1 bg-white/5 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-amber-500 to-cyan-400 transition-all duration-300 ease-out"
+              style={{ width: `${((step + 1) / total) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Body — one step card at a time */}
+        <div ref={bodyRef} className="overflow-y-auto flex-1 th-text">
+          <div className="px-4 md:px-6 py-5 md:py-6">
+            {/* Step card hero */}
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl shrink-0">
+                {current.icon}
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-lg md:text-xl font-bold text-white leading-tight">{current.title}</h3>
+                {current.subtitle && (
+                  <p className="text-sm text-[#94a3b8] mt-1">{current.subtitle}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Step content */}
+            <div className="text-sm md:text-[15px] leading-relaxed text-[#cbd5e1] space-y-2">
+              {current.body}
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation footer */}
+        <div className="shrink-0 px-4 md:px-6 py-3 border-t border-white/5 bg-[#0f0f18] flex items-center gap-3">
           <button
-            onClick={onClose}
-            className="shrink-0 w-8 h-8 rounded-lg text-[#94a3b8] hover:text-white hover:bg-white/5 flex items-center justify-center transition-colors cursor-pointer"
-            aria-label="ปิด"
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            disabled={isFirst}
+            className="h-11 px-4 rounded-xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 text-[#94a3b8] hover:text-white hover:bg-white/5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
+            ก่อนหน้า
           </button>
-        </div>
 
-        {/* Body (scrollable) */}
-        <div className="overflow-y-auto flex-1 px-4 md:px-5 py-4 space-y-5 th-text text-[13px] leading-relaxed text-[#cbd5e1]">
-          {/* Intro */}
-          <p className="text-xs text-[#94a3b8]">
-            หน้านี้แสดงสถิติผู้เข้าชมเว็บไซต์จาก <span className="text-cyan-400">Vercel Web Analytics</span> —
-            ข้อมูลอัปเดตทุก 60 วินาที ใช้ประเมินผลการตลาด (ยิง ads, โพสต์ Facebook, ทำ SEO)
-          </p>
-
-          {/* Section: KPI */}
-          <section>
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">📊 ตัวเลขหลัก 4 ตัว</h3>
-            <div className="space-y-3">
-              <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                  <span className="font-bold text-cyan-400">Page Views</span>
-                  <span className="text-[11px] text-[#64748b]">= ยอดกดดูหน้า</span>
-                </div>
-                <p className="text-xs text-[#94a3b8]">
-                  นับทุกครั้งที่หน้าเว็บถูกเปิด — คน 1 คนเปิด 5 หน้า = 5 views
-                  <br />
-                  <span className="text-[#64748b]">📈 ตัวชี้วัดปริมาณ traffic โดยรวม</span>
-                </p>
-              </div>
-
-              <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  <span className="font-bold text-amber-400">Visitors</span>
-                  <span className="text-[11px] text-[#64748b]">= จำนวนคน (อุปกรณ์)</span>
-                </div>
-                <p className="text-xs text-[#94a3b8]">
-                  นับเฉพาะอุปกรณ์ที่ไม่ซ้ำ — คน 1 คนเปิดกี่หน้าก็นับ 1
-                  <br />
-                  <span className="text-[#64748b]">👥 ตัวชี้วัด "เข้าถึงกี่คนจริงๆ" — สำคัญกว่า views เพราะสะท้อนฐานลูกค้า</span>
-                </p>
-                <div className="mt-2 text-[11px] text-cyan-400/80 bg-cyan-500/10 rounded px-2 py-1">
-                  💡 <b>Views ÷ Visitors</b> = หน้าที่คนเปิดเฉลี่ย — ถ้า ~3 ขึ้นไป = คนสนใจเว็บ เปิดดูหลายหน้า
-                </div>
-              </div>
-
-              <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span className="font-bold text-emerald-400">Bounce Rate</span>
-                  <span className="text-[11px] text-[#64748b]">= อัตราเด้งออก</span>
-                </div>
-                <p className="text-xs text-[#94a3b8]">
-                  % คนที่เข้ามาแล้วออกเลย ไม่ได้กดดูหน้าอื่น
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">&lt; 40% ดีมาก</span>
-                  <span className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-400">40–60% ปกติ</span>
-                  <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-400">60–80% ควรปรับ</span>
-                  <span className="px-2 py-0.5 rounded bg-red-500/15 text-red-400">&gt; 80% แย่</span>
-                </div>
-                <p className="mt-2 text-[11px] text-[#64748b]">
-                  Bounce สูง = คนเข้ามาไม่เจอสิ่งที่ต้องการ อาจต้องแก้ landing page หรือ ads ไม่ตรงกลุ่ม
-                </p>
-              </div>
-
-              <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-white" />
-                  <span className="font-bold text-white">Peak</span>
-                  <span className="text-[11px] text-[#64748b]">= ยอดสูงสุดต่อชั่วโมง/วัน</span>
-                </div>
-                <p className="text-xs text-[#94a3b8]">
-                  ชั่วโมง (หรือวัน) ที่มีคนเข้าเยอะที่สุดในช่วงที่ดู → ใช้วางแผนเวลาโพสต์ content หรือยิง ads
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Section: Delta */}
-          <section>
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">↑ ป้ายเปอร์เซ็นต์ (Delta)</h3>
-            <p className="text-xs text-[#94a3b8] mb-2">
-              ตัวเลข % ข้างตัวเลขหลัก = เปรียบเทียบช่วงก่อนหน้าที่ยาวเท่ากัน
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <div className="bg-[#1a1a28] rounded-lg p-2">
-                <div className="text-[#64748b] mb-1">ดู "7 วัน"</div>
-                <div className="text-white">เทียบกับ 7 วันก่อนหน้านั้น</div>
-              </div>
-              <div className="bg-[#1a1a28] rounded-lg p-2">
-                <div className="text-[#64748b] mb-1">ดู "24 ชม."</div>
-                <div className="text-white">เทียบกับ 24 ชม. ก่อนหน้า</div>
-              </div>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-              <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">↑ เพิ่มขึ้น (ดี)</span>
-              <span className="px-2 py-0.5 rounded bg-red-500/15 text-red-400">↓ ลดลง (แย่)</span>
-              <span className="px-2 py-0.5 rounded bg-slate-500/15 text-slate-400">— เท่าเดิม</span>
-            </div>
-            <p className="mt-2 text-[11px] text-[#64748b]">
-              ⚠ Bounce Rate กลับด้าน — <span className="text-emerald-400">ลดลง = ดี</span> (คนอยู่นานขึ้น)
-            </p>
-          </section>
-
-          {/* Section: Chart */}
-          <section>
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">📈 กราฟแนวโน้ม</h3>
-            <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-lg p-3 space-y-2 text-xs text-[#94a3b8]">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-0.5 bg-cyan-400 shrink-0" />
-                <span><b className="text-cyan-400">เส้นทึบฟ้า</b> = Page Views (พร้อม area fill)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-0.5 bg-amber-400 shrink-0" style={{ borderTop: "2px dashed #f59e0b", background: "none" }} />
-                <span><b className="text-amber-400">เส้นประเหลือง</b> = Visitors</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-amber-400 shrink-0 ring-2 ring-[#13131d]" />
-                <span>จุด <b className="text-amber-400">amber ใหญ่</b> + คอลัมน์เหลืองจางๆ = <b>วันนี้</b></span>
-              </div>
-              <div className="text-[11px] text-[#64748b] pt-1 border-t border-white/5">
-                💡 <b>แตะที่กราฟ</b> เพื่อดูตัวเลขเวลาไหนก็ได้ — ตัวเลขเหนือจุดสูงสุดเป็น peak
-              </div>
-            </div>
-          </section>
-
-          {/* Section: Heatmap */}
-          <section>
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">🕐 ช่วงเวลาที่มีคนเข้าชม</h3>
-            <p className="text-xs text-[#94a3b8] mb-2">
-              แถบสี 24 ช่วงเวลา — เข้มสุด = ชั่วโมงที่คนเข้าเยอะที่สุด (มีขอบ amber)
-            </p>
-            <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3 text-xs">
-              <div className="text-cyan-400 font-bold mb-1">💰 ใช้วางแผนการตลาด</div>
-              <ul className="space-y-1 text-[#94a3b8] text-[11px] pl-4 list-disc marker:text-cyan-400">
-                <li>ยิง ads 30 นาที <b>ก่อน peak</b> → คนเห็น ads ตอนกำลังจะออนไลน์</li>
-                <li>โพสต์ Facebook/Line ช่วง peak → engagement สูงสุด</li>
-                <li>ถ้า peak = 18:00-20:00 แสดงว่าคนเข้ามาช่วงพักผ่อน → content ควรอ่านง่าย ตัดสินใจซื้อเร็ว</li>
-              </ul>
-            </div>
-          </section>
-
-          {/* Section: Today + Spike */}
-          <section>
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">📣 การ์ด "วันนี้" (โหมด 24 ชม.)</h3>
-            <div className="bg-[#1a1a28] border border-[#2a2a3a] rounded-lg p-3 text-xs text-[#94a3b8] space-y-2">
-              <div><b className="text-white">Views วันนี้</b> + <b className="text-emerald-400">↑% vs เมื่อวาน</b> เวลาเดียวกัน → รู้ทันทีว่า ads วันนี้ "ได้ผล" ไหม</div>
-              <div><b className="text-white">ชั่วโมงนี้</b> = views ในชั่วโมงปัจจุบันเท่านั้น (อัปเดตทุก 60 วินาที)</div>
-              <div className="pt-2 border-t border-white/5">
-                <div className="font-bold text-amber-400 mb-1">🚨 ตรวจจับ spike</div>
-                <p className="text-[11px]">
-                  ถ้าชั่วโมงไหน views <b>สูงกว่าค่าเฉลี่ย 7 วันมาก</b> (เกิน 2 standard deviation และอย่างน้อย 10 views) → แสดงเป็น pill
-                </p>
-                <p className="text-[11px] mt-1 text-[#64748b]">
-                  <b>เช่น:</b> 10:00 วันนี้ 28 views (ปกติ 5) → มี spike อาจเป็นผลจาก ads หรือโพสต์
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Section: Marketing 101 */}
-          <section>
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">💼 การตลาด 101 — อ่านข้อมูลให้เป็น</h3>
-            <div className="space-y-2 text-xs text-[#94a3b8]">
-              <div className="bg-[#1a1a28] rounded-lg p-3">
-                <div className="font-bold text-white mb-1">🎯 ยิง ads แล้วดู 3 อย่าง</div>
-                <ol className="space-y-1 text-[11px] pl-4 list-decimal marker:text-amber-400">
-                  <li><b>Views/Visitors ขึ้นไหม?</b> → ads ดึงคนเข้าได้</li>
-                  <li><b>Bounce rate เปลี่ยนยังไง?</b> → ถ้าสูงขึ้นมาก = ads ดึงคนผิดกลุ่ม (ไม่ตรงเป้า)</li>
-                  <li><b>Views/Visitors ratio</b> → ถ้าลดลง = คนเข้ามาดูหน้าเดียวแล้วไป ต้องแก้ UX</li>
-                </ol>
-              </div>
-              <div className="bg-[#1a1a28] rounded-lg p-3">
-                <div className="font-bold text-white mb-1">📅 เปรียบเทียบถูกช่วง</div>
-                <p className="text-[11px]">
-                  ระวัง! วันหยุดยาว-เทศกาลอาจทำให้ % แปลก — ถ้าสงกรานต์ผ่านมา ตัวเลข 7 วันนี้อาจดูตก แต่ไม่ใช่เพราะ marketing ไม่ดี
-                </p>
-              </div>
-              <div className="bg-[#1a1a28] rounded-lg p-3">
-                <div className="font-bold text-white mb-1">🎣 Benchmark ร้านวัสดุก่อสร้าง</div>
-                <ul className="space-y-1 text-[11px] pl-4 list-disc marker:text-cyan-400">
-                  <li>Views/Visitor เฉลี่ย: 2-4 หน้า (เว็บ B2C retail)</li>
-                  <li>Bounce rate เฉลี่ย: 40-60% ถือว่าปกติ</li>
-                  <li>Peak ช่วงเย็น 18:00-21:00 (หลังเลิกงาน คนค้นของใช้บ้าน)</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* Footer note */}
-          <div className="text-[10px] text-[#475569] text-center pt-2 border-t border-white/5">
-            ข้อมูลจาก Vercel Web Analytics — ไม่เก็บข้อมูลระบุตัวตน (no cookies, GDPR-safe)
+          {/* Step dots (desktop only) */}
+          <div className="hidden md:flex flex-1 items-center justify-center gap-1.5">
+            {GUIDE_STEPS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setStep(i)}
+                className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                  i === step ? "w-6 bg-amber-400" : "w-1.5 bg-white/20 hover:bg-white/40"
+                }`}
+                aria-label={`ไปหน้า ${i + 1}`}
+              />
+            ))}
           </div>
-        </div>
+          <div className="md:hidden flex-1" />
 
-        {/* Close button (bottom) */}
-        <div className="shrink-0 px-4 md:px-5 py-3 border-t border-white/5 bg-[#0f0f18]">
           <button
-            onClick={onClose}
-            className="w-full h-10 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 text-xs font-medium transition-colors cursor-pointer"
+            onClick={() => isLast ? handleFinish() : setStep((s) => Math.min(total - 1, s + 1))}
+            className={`h-11 px-5 rounded-xl text-sm font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              isLast
+                ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30"
+                : "bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30"
+            }`}
           >
-            เข้าใจแล้ว
+            {isLast ? (
+              <>
+                เสร็จแล้ว
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </>
+            ) : (
+              <>
+                อ่านต่อ
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </>
+            )}
           </button>
         </div>
       </div>
