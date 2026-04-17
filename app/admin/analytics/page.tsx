@@ -1239,13 +1239,14 @@ export default function AdminAnalyticsPage() {
           </button>
           <button
             onClick={() => setShowGuide(true)}
-            className="shrink-0 w-9 h-9 rounded-lg bg-[#1e1e2e] border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 flex items-center justify-center transition-colors cursor-pointer active:scale-90"
+            className="shrink-0 h-9 px-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 hover:text-amber-200 flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 text-xs font-medium whitespace-nowrap"
             title="คู่มืออ่านค่า Analytics"
             aria-label="คู่มือ"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
+            คู่มือ
           </button>
         </div>
         <div className="flex gap-0.5 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg p-0.5">
