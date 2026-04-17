@@ -123,15 +123,31 @@ interface ChartPoint { key: string; views: number; visitors: number; isToday?: b
 
 function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
   const [pinned, setPinned] = useState<number | null>(null)
+  const [dims, setDims] = useState({ w: 800, h: 200 })
+  const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+
+  // Match viewBox to actual pixel size → 1:1 render, no letterbox, circles stay round
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const update = () => {
+      const r = el.getBoundingClientRect()
+      if (r.width && r.height) setDims({ w: Math.round(r.width), h: Math.round(r.height) })
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   if (!data?.length) {
     return <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-8 text-center text-xs text-[#64748b]">ยังไม่มีข้อมูล</div>
   }
 
-  const W = 600, H = 200, PAD_L = 36, PAD_R = 12, PAD_T = 14, PAD_B = 24
-  const innerW = W - PAD_L - PAD_R
-  const innerH = H - PAD_T - PAD_B
+  const W = dims.w, H = dims.h, PAD_L = 40, PAD_R = 14, PAD_T = 16, PAD_B = 28
+  const innerW = Math.max(W - PAD_L - PAD_R, 100)
+  const innerH = Math.max(H - PAD_T - PAD_B, 80)
 
   const maxViews = Math.max(...data.map((d) => d.views), 1)
   const maxVisitors = Math.max(...data.map((d) => d.visitors), 1)
@@ -209,12 +225,13 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
         )}
       </div>
 
+      <div ref={containerRef} className="w-full h-48 md:h-56 relative">
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="none"
-        vectorEffect="non-scaling-stroke"
-        className="w-full h-48 md:h-56 select-none touch-manipulation cursor-pointer [&_circle]:[vector-effect:non-scaling-stroke]"
+        width="100%"
+        height="100%"
+        className="select-none touch-manipulation cursor-pointer"
         onPointerDown={(e) => {
           const svg = svgRef.current
           if (!svg) return
@@ -337,6 +354,7 @@ function LineChart({ data, period }: { data: ChartPoint[]; period: string }) {
           })
         })()}
       </svg>
+      </div>
 
     </div>
   )
