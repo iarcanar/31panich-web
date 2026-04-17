@@ -134,7 +134,7 @@ export default function SectionHeader({
       )}
 
       <div className="relative">
-        {/* Optional hero element (e.g. logo image) — scales in with spring */}
+        {/* Optional hero element (e.g. logo image) — scales in with spring, then floats */}
         {hero && (
           <div
             className="flex justify-center mb-2 md:mb-3"
@@ -145,7 +145,11 @@ export default function SectionHeader({
               transitionDelay: "0ms",
             }}
           >
-            {hero}
+            {/* Inner wrapper handles post-reveal floating drift via CSS keyframe.
+                Separate element from outer so reveal scale + float translate/rotate don't collide. */}
+            <div className={revealed ? "token-float" : ""}>
+              {hero}
+            </div>
           </div>
         )}
 
