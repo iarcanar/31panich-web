@@ -147,7 +147,7 @@ function CouponsColumn({ coupons, loading }: { coupons: Coupon[]; loading: boole
 function ReelsColumn({ reels, loading }: { reels: Reel[]; loading: boolean }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIdx, setActiveIdx] = useState(0)
-  const [openReel, setOpenReel] = useState<Reel | null>(null)
+  const [openIdx, setOpenIdx] = useState<number | null>(null)
   const [canRight, setCanRight] = useState(false)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
@@ -240,7 +240,7 @@ function ReelsColumn({ reels, loading }: { reels: Reel[]; loading: boolean }) {
               key={r.id}
               ref={(el) => { cardRefs.current[i] = el }}
               className="relative min-w-[140px] max-w-[160px] aspect-[9/16] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-[#1a1a28] border border-white/10 cursor-pointer group"
-              onClick={() => setOpenReel(r)}
+              onClick={() => setOpenIdx(i)}
             >
               {/* Poster */}
               <Image
@@ -299,8 +299,8 @@ function ReelsColumn({ reels, loading }: { reels: Reel[]; loading: boolean }) {
         )}
       </div>
 
-      {openReel && (
-        <ReelModal reel={openReel} onClose={() => setOpenReel(null)} />
+      {openIdx !== null && (
+        <ReelModal reels={reels} startIndex={openIdx} onClose={() => setOpenIdx(null)} />
       )}
     </>
   )
