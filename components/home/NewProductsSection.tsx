@@ -2,8 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { getNewProducts, getNewPinnedProduct, CATEGORIES } from "@/lib/products"
 import ProductCarousel from "./ProductCarousel"
-import ScrollGlowFrame from "@/components/ui/ScrollGlowFrame"
-import ScrollAccentLine from "@/components/ui/ScrollAccentLine"
+import SectionHeader from "./SectionHeader"
 import DevEditLink from "./DevEditLink"
 
 export default async function NewProductsSection() {
@@ -45,19 +44,14 @@ export default async function NewProductsSection() {
     })
 
   return (
-    <section className="bg-[#0e0e14] py-8 md:py-14">
+    <section className="bg-[#0e0e14] pt-4 pb-8 md:pt-8 md:pb-14 -mt-4 md:-mt-6">
       <div className="container mx-auto px-4">
-        <ScrollGlowFrame offsetTop={-20} color={[255, 30, 30]} glowIntensity={1.5} glowSpread={90} glowAnchor={30}>
-          <div className="py-1.5 md:pt-8 md:pb-4">
-            <h2 className="text-xl md:text-3xl font-bold text-center text-white">
-              สินค้าใหม่
-            </h2>
-            <ScrollAccentLine />
-            <p className="text-gray-400 text-center text-sm mb-10 hidden md:block">
-              สินค้ามาใหม่ล่าสุด พร้อมโปรโมชั่นพิเศษ
-            </p>
-          </div>
-        </ScrollGlowFrame>
+        <SectionHeader
+          title="สินค้าใหม่"
+          subtitle="สินค้ามาใหม่ล่าสุด พร้อมโปรโมชั่นพิเศษ"
+          theme="red"
+          badge="New Arrival"
+        />
 
         {/* Hero card for pinned new product */}
         {hero && (

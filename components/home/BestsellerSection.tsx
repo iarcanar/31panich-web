@@ -2,9 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { getBestsellers, getBestsellerPinnedProduct, CATEGORIES } from "@/lib/products"
 import ProductCarousel from "./ProductCarousel"
-import ScrollGlowFrame from "@/components/ui/ScrollGlowFrame"
-import ScrollAccentLine from "@/components/ui/ScrollAccentLine"
-import { SHAPE_PRESETS } from "@/components/ui/ScrollGlowFrame"
+import SectionHeader from "./SectionHeader"
 import DevEditLink from "./DevEditLink"
 
 export default async function BestsellerSection() {
@@ -39,19 +37,14 @@ export default async function BestsellerSection() {
     : 0
 
   return (
-    <section className="bg-[#0e0e14] py-8 md:py-14">
+    <section className="bg-[#0e0e14] pt-4 pb-8 md:pt-8 md:pb-14 -mt-4 md:-mt-6">
       <div className="container mx-auto px-4">
-        <ScrollGlowFrame offsetTop={-20} color={[147, 51, 234]} glowIntensity={1.5} glowSpread={90} glowAnchor={30} shapes={SHAPE_PRESETS.cosmic}>
-          <div className="py-1.5 md:pt-8 md:pb-4">
-            <h2 className="text-xl md:text-3xl font-bold text-center text-white">
-              สินค้าขายดี
-            </h2>
-            <ScrollAccentLine color={[147, 51, 234]} />
-            <p className="text-gray-400 text-center text-sm mb-10 hidden md:block">
-              สินค้ายอดนิยมที่ลูกค้าเลือกใช้มากที่สุด
-            </p>
-          </div>
-        </ScrollGlowFrame>
+        <SectionHeader
+          title="สินค้าขายดี"
+          subtitle="สินค้ายอดนิยมที่ลูกค้าเลือกใช้มากที่สุด"
+          theme="amber"
+          badge="Bestseller"
+        />
 
         {/* Hero card for pinned product */}
         {hero && (

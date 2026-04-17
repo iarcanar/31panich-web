@@ -3,9 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useRef, useState, useEffect, useCallback } from "react"
-import ScrollGlowFrame from "@/components/ui/ScrollGlowFrame"
-import ScrollAccentLine from "@/components/ui/ScrollAccentLine"
-import { SHAPE_PRESETS } from "@/components/ui/ScrollGlowFrame"
+import SectionHeader from "./SectionHeader"
 
 // ไม่รวม cooker + zootopia เพราะแสดงในโซนโปรโมชั่นแล้ว
 const REWARDS = [
@@ -65,28 +63,36 @@ export default function RewardsCarousel() {
   const dotCount = Math.min(totalCards, 6)
 
   return (
-    <section className="bg-gradient-to-b from-[#0e0e14] via-[#12121f] to-[#0e0e14] py-8 md:py-14">
+    <section className="bg-gradient-to-b from-[#0e0e14] via-[#12121f] to-[#0e0e14] pt-4 pb-8 md:pt-8 md:pb-14 -mt-4 md:-mt-6">
       <div className="container mx-auto px-4">
-        <ScrollGlowFrame offsetTop={-20} color={[217, 158, 40]} glowIntensity={1.5} glowSpread={90} glowAnchor={30} shapes={SHAPE_PRESETS.golden}>
-          <div className="pt-4 pb-2 md:pt-8 md:pb-4">
-        {/* Header */}
-        <div className="flex items-end justify-between mb-2 pr-4 md:pr-8">
-          <div className="flex items-center gap-3">
-            <Image src="/31point.webp" alt="31 Points" width={80} height={80} className="w-[72px] h-[72px] md:w-20 md:h-20 drop-shadow-[0_0_14px_rgba(217,158,40,0.6)]" />
-            <div>
-              <p className="text-amber-400 text-xs font-bold tracking-widest uppercase mb-1">31 POINTS</p>
-              <h2 className="text-xl md:text-3xl font-bold text-white">
-                แลกแต้มสามหนึ่ง
-              </h2>
-              <ScrollAccentLine color={[217, 158, 40]} width={48} />
-            </div>
-          </div>
-          <Link href="/points" className="text-amber-400 text-xs md:text-sm font-semibold hover:text-amber-300 transition whitespace-nowrap">
-            ดูทั้งหมด &rarr;
+        <SectionHeader
+          title="แลกแต้มสามหนึ่ง"
+          subtitle="ใช้แต้มสามหนึ่งเพื่อแลกของรางวัลพิเศษ"
+          theme="purple"
+          badge="31 POINTS"
+          hero={
+            <Image
+              src="/31point.webp"
+              alt="31 Points"
+              width={80}
+              height={80}
+              className="w-14 h-14 md:w-[72px] md:h-[72px] drop-shadow-[0_0_14px_rgba(168,85,247,0.6)]"
+            />
+          }
+        />
+
+        {/* "ดูทั้งหมด" link — below header, centered */}
+        <div className="flex justify-center -mt-1 mb-3 md:mb-5">
+          <Link
+            href="/points"
+            className="text-purple-300 hover:text-purple-200 text-xs font-semibold transition-colors inline-flex items-center gap-1"
+          >
+            ดูของรางวัลทั้งหมด
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
-          </div>
-        </ScrollGlowFrame>
 
         {/* Carousel */}
         <div className="relative group/carousel">

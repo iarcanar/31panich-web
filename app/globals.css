@@ -51,6 +51,18 @@ body {
   80% { transform: translateX(1px) rotate(0.5deg); }
 }
 
+/* Idle ambient pulse for SectionHeader — subtle breathing after reveal */
+@keyframes section-header-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.04); }
+}
+.section-header-pulse {
+  animation: section-header-pulse 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-header-pulse { animation: none; opacity: 0.7; }
+}
+
 /* Shimmer — ใช้ JS-based animation (BannerShimmer component) */
 .banner-shimmer {
   position: relative;
