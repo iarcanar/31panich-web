@@ -60,7 +60,8 @@ Organized by domain, not by component type.
 | `points/` | `HowToCollect` (loyalty program explainer) |
 | `admin/` | `AdminModeProvider`, `AiEnrichButton`, `ImageCropPicker` |
 | `layout/` | `Header`, `Footer`, `FloatingOrderButton` (cross-page chrome) |
-| `ui/` | Generic primitives: `ScrollToTop`, `ContactLink` (**ปุ่มโทร/LINE พร้อม guard เวลาทำการ+วันหยุด** — ทุกปุ่มต้องใช้ component นี้), `SectionHeading`, `ScrollGlowFrame`, `ScrollAccentLine`, `PromoPopup` + `PromoPopupLazy` (popup banner config-driven) |
+| `ui/` | Generic primitives: `ScrollToTop`, `ContactLink` (**ปุ่มโทร/LINE พร้อม guard เวลาทำการ+วันหยุด** — ทุกปุ่มต้องใช้ component นี้), `SectionHeading`, `PromoPopup` + `PromoPopupLazy` (popup banner config-driven) |
+| `home/SectionHeader` | Reveal-on-intersect animated heading for homepage sections (letter stagger + underline + spotlight + idle pulse + optional hero float) — replaces legacy `ScrollGlowFrame` |
 
 ## `web/lib/`
 
