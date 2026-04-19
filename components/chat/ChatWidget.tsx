@@ -400,7 +400,7 @@ export default function ChatWidget() {
       <div
         ref={panelRef}
         style={{ height: panelHeight, bottom: bottomOffset }}
-        className={`fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
+        className={`fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 max-w-[calc(100vw-1.5rem)] md:max-w-none bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
           panelOpen
             ? "opacity-100 pointer-events-auto translate-y-0"
             : "opacity-0 pointer-events-none translate-y-3"
@@ -469,7 +469,9 @@ export default function ChatWidget() {
             <span className={`font-extrabold text-sm leading-none ${ttsEnabled ? "text-emerald-300" : "text-red-300"}`}>
               {ttsEnabled ? "เปิด" : "ปิด"}
             </span>
-            <span className="text-white/70 text-xs leading-none">เสียงพูด</span>
+            {/* Secondary label — hidden on very narrow screens (iPhone SE class)
+                so the button fits without truncation in the chat header row. */}
+            <span className="text-white/70 text-xs leading-none hidden min-[360px]:inline">เสียงพูด</span>
           </button>
         </div>
 
