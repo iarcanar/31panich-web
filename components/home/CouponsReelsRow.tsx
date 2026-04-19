@@ -37,14 +37,14 @@ export default function CouponsReelsRow() {
     <section className="py-6 md:py-10">
       <div className="container mx-auto px-4">
         <div className={isSplit ? "grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8" : ""}>
-          {hasCoupons && (
-            <div className="min-w-0">
-              <CouponsColumn coupons={coupons} loading={loading} />
-            </div>
-          )}
           {hasReels && (
             <div className="min-w-0">
               <ReelsColumn reels={reels} loading={false} />
+            </div>
+          )}
+          {hasCoupons && (
+            <div className="min-w-0">
+              <CouponsColumn coupons={coupons} loading={loading} />
             </div>
           )}
         </div>
