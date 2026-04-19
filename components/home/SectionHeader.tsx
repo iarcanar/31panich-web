@@ -11,6 +11,10 @@ interface Props {
   badge?: string
   icon?: string
   hero?: React.ReactNode  // optional element rendered above badge (e.g. logo image)
+  /** Subdued variant for subpage headers (inside hero banners). Softer glow,
+   *  no idle pulse, no text-shadow, quicker stagger. Keeps the letter reveal
+   *  and underline signature but calms everything else. */
+  subtle?: boolean
 }
 
 const THEMES: Record<Theme, { rgb: string; badgeCls: string }> = {
@@ -51,6 +55,7 @@ export default function SectionHeader({
   badge,
   icon,
   hero,
+  subtle = false,
 }: Props) {
   const [revealed, setRevealed] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -96,10 +101,12 @@ export default function SectionHeader({
     }
   }, [])
 
-  const staggerMs = 32
+  const staggerMs = subtle ? 22 : 32
+  const letterDuration = subtle ? 340 : 420
   const lastLetterDelay = 120 + Math.max(0, letters.length - 1) * staggerMs
   const underlineDelay = lastLetterDelay + 100
   const subtitleDelay = underlineDelay + 150
+  const glowOpacity = subtle ? 0.12 : 0.30
 
   return (
     <div ref={ref} className="relative py-5 md:py-9">
@@ -111,7 +118,7 @@ export default function SectionHeader({
         style={{
           top: "-28px",
           height: "220px",
-          background: `radial-gradient(ellipse 70% 55% at 50% 45%, rgba(${t.rgb}, 0.30), transparent 72%)`,
+          background: `radial-gradient(ellipse 70% 55% at 50% 45%, rgba(${t.rgb}, ${glowOpacity}), transparent 72%)`,
           opacity: revealed ? 1 : 0,
           transform: revealed ? "scale(1)" : "scale(0.82)",
           transition: "opacity 600ms ease-out, transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -120,8 +127,9 @@ export default function SectionHeader({
         }}
       />
 
-      {/* Idle ambient pulse — only after reveal; single GPU layer */}
-      {revealed && (
+      {/* Idle ambient pulse — only after reveal; single GPU layer. Skipped on `subtle`
+          because subpage headers should feel calm after entering. */}
+      {revealed && !subtle && (
         <div
           aria-hidden="true"
           className="pointer-events-none absolute left-0 right-0 section-header-pulse"
@@ -175,7 +183,7 @@ export default function SectionHeader({
           aria-label={title}
           className="relative text-2xl md:text-4xl font-bold text-center text-white flex justify-center items-baseline flex-wrap th-text"
           style={{
-            textShadow: revealed ? `0 0 24px rgba(${t.rgb}, 0.35)` : "none",
+            textShadow: revealed && !subtle ? `0 0 24px rgba(${t.rgb}, 0.35)` : "none",
             transition: "text-shadow 600ms ease-out",
             transitionDelay: `${underlineDelay}ms`,
           }}
@@ -202,7 +210,7 @@ export default function SectionHeader({
               style={{
                 opacity: revealed ? 1 : 0,
                 transform: revealed ? "translateY(0)" : "translateY(16px)",
-                transition: "opacity 420ms ease-out, transform 420ms cubic-bezier(0.22, 1, 0.36, 1)",
+                transition: `opacity ${letterDuration}ms ease-out, transform ${letterDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`,
                 transitionDelay: `${120 + i * staggerMs}ms`,
                 willChange: "opacity, transform",
               }}
@@ -212,28 +220,28 @@ export default function SectionHeader({
           ))}
         </h2>
 
-        {/* Underline — scales from center */}
+        {/* Underline — scales from center. Thinner + no glow on subtle. */}
         <div className="flex justify-center mt-3 md:mt-4">
           <div
-            className="h-[2px] rounded-full"
+            className={subtle ? "h-px rounded-full" : "h-[2px] rounded-full"}
             style={{
-              width: "clamp(80px, 18%, 180px)",
+              width: subtle ? "clamp(60px, 14%, 140px)" : "clamp(80px, 18%, 180px)",
               background: `linear-gradient(90deg, transparent, rgb(${t.rgb}), transparent)`,
               transform: revealed ? "scaleX(1)" : "scaleX(0)",
               transformOrigin: "center",
               transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
               transitionDelay: `${underlineDelay}ms`,
-              boxShadow: revealed ? `0 0 12px rgba(${t.rgb}, 0.6)` : "none",
+              boxShadow: revealed && !subtle ? `0 0 12px rgba(${t.rgb}, 0.6)` : "none",
             }}
           />
         </div>
 
-        {/* Subtitle */}
+        {/* Subtitle — larger on `subtle` (subpages use it as the page's primary tagline) */}
         {subtitle && (
           <p
-            className="text-gray-400 text-center text-xs md:text-sm mt-3 md:mt-4 px-4 th-text"
+            className={`text-gray-300 text-center mt-3 md:mt-4 px-4 th-text ${subtle ? "text-sm md:text-base" : "text-xs md:text-sm"}`}
             style={{
-              opacity: revealed ? 0.7 : 0,
+              opacity: revealed ? (subtle ? 0.9 : 0.7) : 0,
               transform: revealed ? "translateY(0)" : "translateY(8px)",
               transition: "opacity 500ms ease-out, transform 500ms cubic-bezier(0.22, 1, 0.36, 1)",
               transitionDelay: `${subtitleDelay}ms`,

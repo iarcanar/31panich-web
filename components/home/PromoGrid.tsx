@@ -5,6 +5,10 @@ import type { Promotion } from "@/types/promotion"
 
 interface Props {
   promotions: Promotion[]
+  /** Show the built-in SectionHeader above the grid. Default true (homepage).
+   *  Pass false on /promotions page where the page's own hero banner already
+   *  serves as the heading — avoids duplicate titles. */
+  showHeader?: boolean
 }
 
 /**
@@ -14,18 +18,20 @@ interface Props {
  * No CTA buttons (duplicated elsewhere on the page). Videos show a play
  * overlay on the poster instead of embedding an iframe.
  */
-export default function PromoGrid({ promotions }: Props) {
+export default function PromoGrid({ promotions, showHeader = true }: Props) {
   if (promotions.length === 0) return null
 
   return (
     <section className="bg-[#0e0e14] pt-4 pb-8 md:pt-8 md:pb-14 -mt-4 md:-mt-6">
       <div className="container mx-auto px-4 max-w-6xl">
-        <SectionHeader
-          title="โปรโมชั่น"
-          subtitle="ดีลเด็ดล่าสุดจากร้านสามหนึ่ง"
-          theme="cyan"
-          badge="Promotions"
-        />
+        {showHeader && (
+          <SectionHeader
+            title="โปรโมชั่น"
+            subtitle="ดีลเด็ดล่าสุดจากร้านสามหนึ่ง"
+            theme="cyan"
+            badge="Promotions"
+          />
+        )}
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {promotions.map((p) => (

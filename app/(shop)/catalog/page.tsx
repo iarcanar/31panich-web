@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 import Image from "next/image"
 import CatalogSection from "@/components/home/CatalogSection"
+import SectionHeader from "@/components/home/SectionHeader"
 import { breadcrumbSchema } from "@/lib/structured-data"
 
 export const metadata: Metadata = {
@@ -30,13 +31,17 @@ export default function CatalogPage() {
           width={1920}
           height={823}
           priority
-          className="absolute inset-0 w-full h-full object-cover opacity-40"
+          className="absolute inset-0 w-full h-full object-cover opacity-25"
           aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0e0e14]/60 via-[#0e0e14]/40 to-[#0e0e14]" />
-        <div className="relative container mx-auto px-4 pt-28 pb-16 md:py-24 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">แคตตาล็อกสินค้า</h1>
-          <p className="text-gray-300">ดาวน์โหลดแคตตาล็อกจากแบรนด์ชั้นนำที่เราจำหน่าย</p>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0e0e14]/85 via-[#0e0e14]/65 to-[#0e0e14]" />
+        <div className="relative container mx-auto px-4 pt-24 pb-12 md:py-20">
+          <SectionHeader
+            title="แคตตาล็อกสินค้า"
+            subtitle="ดาวน์โหลดแคตตาล็อกจากแบรนด์ชั้นนำที่เราจำหน่าย"
+            theme="cyan"
+            subtle
+          />
         </div>
       </section>
       <CatalogSection />
