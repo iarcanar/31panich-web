@@ -297,6 +297,7 @@ export function cleanForTTS(text: string): string {
     .replace(/`([^`]+)`/g, "$1")                // inline code
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")    // [label](url) → label
     .replace(/\[(?:SEARCH|SUGGEST):[^\]]+\]/gi, "")  // internal action tags (belt-and-suspenders; server already strips)
+    .replace(/\[MAP\]/gi, "")                        // map tag (server already strips)
     .replace(/https?:\/\/\S+/g, "")             // bare URLs
     .replace(/\n+/g, " ")
     .replace(/\s+/g, " ")

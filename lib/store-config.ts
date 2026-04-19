@@ -20,3 +20,6 @@ export const HOURS_CLOSE = "17:30"
 export const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/UBtS39k4m3oe3GFj9?g_st=ac"
 export const GEO = { lat: 14.8851745, lng: 100.6315124 }
 export const ADDRESS = "99/1 หมู่ 7 ถนนพหลโยธิน ต.เขาพระงาม อ.เมือง จ.ลพบุรี 15160"
+/** Short landmark-based description — preferred over full ADDRESS for AI chat replies
+ *  (easier for customers to picture than a postal address). */
+export const STORE_LANDMARK = "ตรงข้ามตลาดเสาธง หน้าค่ายพหลโยธิน (ศูนย์ปืนใหญ่) ลพบุรี"

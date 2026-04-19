@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useBusinessHours } from "@/hooks/useBusinessHours"
-import { PHONE_RAW, LINE_URL } from "@/lib/store-config"
+import { PHONE_RAW, LINE_URL, GOOGLE_MAPS_URL } from "@/lib/store-config"
 import ChatMessage from "./ChatMessage"
 import { fmtShort, holidayShortName } from "@/lib/date-utils"
 
@@ -13,6 +13,9 @@ interface Message {
   /** AI-emitted product suggestion — rendered as a tappable "ดูสินค้า X"
    *  button below the bubble for one-click search without typing a reply. */
   suggestion?: { keyword: string }
+  /** AI flagged this message as location-related — render a Google Maps
+   *  button below the bubble for one-tap directions. */
+  mapLink?: boolean
 }
 
 const SUGGESTIONS = [
@@ -288,6 +291,7 @@ export default function ChatWidget() {
             role: "assistant" as const,
             text: data.reply,
             suggestion: data.suggestion,
+            mapLink: data.mapLink,
           },
         ])
 
@@ -523,6 +527,25 @@ export default function ChatWidget() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
+                </div>
+              )}
+              {msg.mapLink && (
+                <div className="flex justify-start">
+                  <a
+                    href={GOOGLE_MAPS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg shadow-cyan-500/30 active:scale-95 transition-all"
+                    aria-label="เปิด Google Maps เพื่อนำทางไปร้าน"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                    </svg>
+                    นำทางไปร้าน
+                    <svg className="w-3.5 h-3.5 -mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </a>
                 </div>
               )}
             </div>

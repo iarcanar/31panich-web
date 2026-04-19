@@ -5,7 +5,7 @@ import { buildChatContextWithProducts } from "@/lib/ai-products"
 import { logChat } from "@/lib/chat-logger"
 import { getAiConfig } from "@/lib/ai-config"
 import { getRelevantKnowledge } from "@/lib/ai-knowledge"
-import { PHONE, LINE_ID, HOURS_TEXT } from "@/lib/store-config"
+import { PHONE, LINE_ID, HOURS_TEXT, STORE_LANDMARK } from "@/lib/store-config"
 import { getActiveHoliday, getUpcomingHoliday, type ActiveHoliday } from "@/lib/holidays"
 
 // ─── Helpers ────────────────────────────────────────────
@@ -97,6 +97,13 @@ const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผ
 
 {CONTACT_RULES}
 
+พิกัดร้าน (เมื่อลูกค้าถามที่อยู่/ไปยังไง/แผนที่/พิกัด/ร้านอยู่ไหน):
+- บอก landmark คร่าวๆเท่านั้น: "${STORE_LANDMARK}" — ห้ามบอกที่อยู่เต็มแบบเลขที่/หมู่/ตำบล
+- ตามด้วย "กดเพื่อนำทางได้เลยครับ"
+- **ใส่แท็ก [MAP] ท้ายข้อความ** — ระบบจะแสดงเป็นปุ่ม Google Maps ให้อัตโนมัติ
+- ตัวอย่าง: "ร้านอยู่${STORE_LANDMARK}ครับ กดเพื่อนำทางได้เลยครับ [MAP]"
+- ห้ามใส่ URL หรือพิมพ์ว่า "Google Maps" ในข้อความ ระบบจะแสดงปุ่มให้เอง
+
 การค้นหาสินค้า (สำคัญมาก — ทำตามลำดับขั้นตอน):
 ขั้นตอนที่ 1 — ตรวจสอบก่อนตอบ:
 - ดูจากรายการ "สินค้าที่เกี่ยวข้อง" ด้านล่างเท่านั้น ห้ามแต่งชื่อสินค้าขึ้นมาเอง
@@ -157,6 +164,16 @@ function parseSuggestTag(reply: string): { cleanReply: string; suggestKeyword?: 
   return { cleanReply, suggestKeyword: keyword }
 }
 
+/** Location tag — emitted when AI describes the shop's location. Frontend
+ *  renders a Google Maps button below the bubble so the customer can open
+ *  directions with one tap. */
+function parseMapTag(reply: string): { cleanReply: string; mapLink: boolean } {
+  const hasTag = /\[MAP\]/i.test(reply)
+  if (!hasTag) return { cleanReply: reply, mapLink: false }
+  const cleanReply = reply.replace(/\s*\[MAP\]\s*/gi, " ").replace(/\s+/g, " ").trim()
+  return { cleanReply, mapLink: true }
+}
+
 // ─── Main handler ───────────────────────────────────────
 
 export async function POST(request: NextRequest) {
@@ -209,6 +226,7 @@ export async function POST(request: NextRequest) {
     let reply = ""
     let searchKeyword: string | undefined
     let suggestKeyword: string | undefined
+    let mapLink = false
 
     // ══ Pipeline C: Instant confirmation — skip Gemini for speed + correct keyword ══
     const msgTrimmed = message.trim()
@@ -317,9 +335,11 @@ export async function POST(request: NextRequest) {
       const rawReply = await generateText(systemInstruction, contents, 4096)
       const parsed = parseSearchTag(rawReply)
       const suggestParsed = parseSuggestTag(parsed.cleanReply)
-      reply = suggestParsed.cleanReply
+      const mapParsed = parseMapTag(suggestParsed.cleanReply)
+      reply = mapParsed.cleanReply
       searchKeyword = parsed.searchKeyword
       suggestKeyword = suggestParsed.suggestKeyword
+      mapLink = mapParsed.mapLink
     }
 
     // Save to history
@@ -336,6 +356,7 @@ export async function POST(request: NextRequest) {
       sessionId, reply, isNew,
       searchQuery: searchKeyword,
       suggestion: suggestKeyword ? { keyword: suggestKeyword } : undefined,
+      mapLink: mapLink || undefined,
     })
   } catch {
     return NextResponse.json(
