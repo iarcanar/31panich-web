@@ -37,6 +37,11 @@ export default function ReelModal({ reels, startIndex, onClose }: Props) {
   const [progress, setProgress] = useState(0)
   const [needsTapToPlay, setNeedsTapToPlay] = useState(false)
   const [hintVisible, setHintVisible] = useState(n > 1)
+  const [muted, setMuted] = useState(false)
+  const [volume, setVolume] = useState(0.8)
+  const [showVolumePanel, setShowVolumePanel] = useState(false)
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const controlsTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const activeVideoRef = useRef<HTMLVideoElement | null>(null)
   const prevVideoRef = useRef<HTMLVideoElement | null>(null)
@@ -66,22 +71,35 @@ export default function ReelModal({ reels, startIndex, onClose }: Props) {
   useEffect(() => {
     setPaused(false)
     setProgress(0)
-    // Pause adjacents
-    prevVideoRef.current?.pause()
-    nextVideoRef.current?.pause()
+    // Pause adjacents + force-mute them (never should play audio)
+    if (prevVideoRef.current) { prevVideoRef.current.muted = true; prevVideoRef.current.pause() }
+    if (nextVideoRef.current) { nextVideoRef.current.muted = true; nextVideoRef.current.pause() }
 
     const v = activeVideoRef.current
     if (!v) return
+    v.muted = muted
+    v.volume = volume
     try { v.currentTime = 0 } catch {}
     const p = v.play()
     if (p && typeof p.catch === "function") {
       p.then(() => setNeedsTapToPlay(false))
        .catch(() => {
-         // Browser blocked autoplay (rare for muted). Show tap-to-play.
-         setNeedsTapToPlay(true)
+         // Autoplay with sound blocked → fall back to muted
+         v.muted = true
+         setMuted(true)
+         v.play().then(() => setNeedsTapToPlay(false)).catch(() => setNeedsTapToPlay(true))
        })
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx])
+
+  // ─── Sync volume/mute changes to active video ──
+  useEffect(() => {
+    const v = activeVideoRef.current
+    if (!v) return
+    v.muted = muted
+    v.volume = volume
+  }, [muted, volume])
 
   // ─── Keyboard nav ──────────────────────────────
   const navLock = useRef(false)
@@ -149,6 +167,21 @@ export default function ReelModal({ reels, startIndex, onClose }: Props) {
     window.setTimeout(() => setShowPauseIcon(null), 500)
   }
 
+  // ─── Auto-hide controls (X + volume) after inactivity ──
+  const revealControls = useCallback(() => {
+    setControlsVisible(true)
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current)
+    controlsTimerRef.current = setTimeout(() => {
+      setControlsVisible(false)
+      setShowVolumePanel(false)
+    }, 2500)
+  }, [])
+
+  useEffect(() => {
+    revealControls()
+    return () => { if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current) }
+  }, [idx, revealControls])
+
   // ─── Video progress tracking ───────────────────
   useEffect(() => {
     const v = activeVideoRef.current
@@ -202,8 +235,9 @@ export default function ReelModal({ reels, startIndex, onClose }: Props) {
 
     const isTap = Math.abs(dy) < TAP_MAX_MOVE && Math.abs(dx) < TAP_MAX_MOVE && dt < TAP_MAX_DURATION
     if (isTap) {
-      // Tap → toggle play/pause
+      // Tap → show controls + toggle play/pause
       setDragY(0)
+      revealControls()
       togglePlayPause()
       return
     }
@@ -264,17 +298,80 @@ export default function ReelModal({ reels, startIndex, onClose }: Props) {
           </div>
 
           {/* ─── Overlays (fixed, don't move with drag) ───────── */}
-          {/* Top gradient + close + position */}
-          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/70 via-black/30 to-transparent pointer-events-none" />
+          {/* Top gradient + close + volume */}
+          <div className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/70 via-black/30 to-transparent pointer-events-none transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`} />
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white flex items-center justify-center transition-colors cursor-pointer z-20"
+            onPointerDown={(e) => { e.stopPropagation(); revealControls() }}
+            className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300 cursor-pointer z-20 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
             aria-label="ปิด"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+
+          {/* Volume button */}
+          <button
+            onClick={() => { revealControls(); setShowVolumePanel((s) => !s) }}
+            onPointerDown={(e) => { e.stopPropagation(); revealControls() }}
+            className={`absolute top-3 right-16 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300 cursor-pointer z-20 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            aria-label={muted ? "เปิดเสียง" : "ปรับเสียง"}
+          >
+            {muted || volume === 0 ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M23 9l-6 6M17 9l6 6" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.54 8.46a5 5 0 010 7.07" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.07 4.93a10 10 0 010 14.14" />
+              </svg>
+            )}
+          </button>
+
+          {/* Volume panel — vertical slider with mute icon at bottom */}
+          {showVolumePanel && (
+            <div
+              className="absolute top-[68px] right-16 bg-black/75 backdrop-blur-md rounded-2xl px-2.5 py-3 flex flex-col items-center gap-2.5 z-30 shadow-xl border border-white/10"
+              onPointerDown={(e) => { e.stopPropagation(); revealControls() }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="text-white/80 text-[10px] font-semibold leading-none">{Math.round((muted ? 0 : volume) * 100)}</span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={muted ? 0 : Math.round(volume * 100)}
+                onChange={(e) => {
+                  const pct = parseInt(e.target.value, 10)
+                  if (pct === 0) {
+                    setMuted(true)
+                  } else {
+                    setMuted(false)
+                    setVolume(pct / 100)
+                  }
+                  revealControls()
+                }}
+                className="reel-volume-slider"
+                aria-label="ระดับเสียง"
+              />
+              <button
+                onClick={() => { setMuted((m) => !m); revealControls() }}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                aria-label={muted ? "เปิดเสียง" : "ปิดเสียง"}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M23 9l-6 6M17 9l6 6" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Bottom gradient + title + FB button */}
           <div className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
           <div className="absolute bottom-5 left-4 right-4 flex items-end justify-between gap-3 z-20">
@@ -372,6 +469,45 @@ export default function ReelModal({ reels, startIndex, onClose }: Props) {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-4px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        :global(.reel-volume-slider) {
+          -webkit-appearance: slider-vertical;
+          appearance: slider-vertical;
+          writing-mode: vertical-lr;
+          direction: rtl;
+          width: 6px;
+          height: 110px;
+          background: transparent;
+          cursor: pointer;
+        }
+        :global(.reel-volume-slider::-webkit-slider-runnable-track) {
+          width: 4px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 9999px;
+        }
+        :global(.reel-volume-slider::-webkit-slider-thumb) {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid rgba(0,0,0,0.4);
+          margin-left: -5px;
+          cursor: pointer;
+        }
+        :global(.reel-volume-slider::-moz-range-track) {
+          width: 4px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 9999px;
+        }
+        :global(.reel-volume-slider::-moz-range-thumb) {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid rgba(0,0,0,0.4);
+          cursor: pointer;
         }
       `}</style>
     </div>
