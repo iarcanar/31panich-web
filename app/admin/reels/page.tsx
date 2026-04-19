@@ -176,9 +176,9 @@ export default function AdminReelsPage() {
     setVideoReduction(null)
     setError(null)
     try {
-      // Eager transform: portrait 720×1280, auto quality (vc_auto codec), 5s max, no audio, format mp4
-      // Result: stored derivative ~1-5MB regardless of input size (20-40MB source is fine)
-      const eagerTransform = "c_fill,w_720,h_1280,q_auto,du_5,ac_none,f_mp4"
+      // Eager transform: portrait 540×960 (reduced from 720p), eco quality, full length, AAC audio, mp4
+      // Keeps full duration + sound; lower res + aggressive compression balances file size
+      const eagerTransform = "c_fill,w_540,h_960,q_auto:eco,ac_aac,f_mp4"
       const signRes = await fetch("/api/upload/sign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -525,7 +525,7 @@ export default function AdminReelsPage() {
                   <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs text-amber-300 font-medium">
-                        {videoProgress < 100 ? "กำลังอัพโหลด..." : "กำลังย่อไฟล์ (ตัด 5 วิ + ลบเสียง)..."}
+                        {videoProgress < 100 ? "กำลังอัพโหลด..." : "กำลังย่อไฟล์ (540p + เก็บเสียง)..."}
                       </span>
                       <span className="text-[11px] text-amber-300 font-mono">
                         {videoProgress < 100 ? `${videoProgress}%` : "..."}
