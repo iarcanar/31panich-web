@@ -1,6 +1,6 @@
 ---
 title: AI Session Quick Start
-last_reviewed: 2026-04-09
+last_reviewed: 2026-04-19
 audience: ai-session
 ---
 
@@ -34,8 +34,10 @@ python verify.py          # ONLY when touching env vars / auth
 | You want to… | Look at |
 |---|---|
 | Change the AI's personality / rules | `web/data/ai-config.json` (admin panel UI: `/admin/settings`) |
-| Change the AI chat system prompt template | `web/app/api/ai/chat/route.ts` (มี 2 pipeline: วันหยุด / สินค้า) |
+| Change the AI chat system prompt template | `web/app/api/ai/chat/route.ts` (Pipelines A/A2a/A2b/A3/B/C — see [`recipes/edit-ai-prompt.md`](./recipes/edit-ai-prompt.md)) |
 | จัดการวันหยุดนักขัตฤกษ์ (AI + ปุ่ม) | Admin: `/admin/ai-logs` → accordion "วันหยุด" · Data: `web/data/holidays.json` · Logic: `web/lib/holidays.ts` |
+| แก้คำตอบ "ร้านอยู่ไหน" / landmark ร้าน | `STORE_LANDMARK` ใน `web/lib/store-config.ts` — แก้แล้วต้องรัน `node scripts/gen-tts-cache.mjs` เพื่อ regen WAV cache |
+| เพิ่ม/แก้ TTS static cache (เสียงตอบสำเร็จรูป) | `web/lib/tts-cache.ts` (map) + `web/scripts/gen-tts-cache.mjs` (generator) + `web/public/audio/tts/*.wav` (assets) |
 | Edit the 15 product categories | `web/lib/categories.ts` (single source of truth) |
 | Change shop contact info (phone, LINE, hours) | `web/lib/store-config.ts` |
 | Change a JSON data file (products, coupons, promotions) | `web/data/*.json` — but in production these live in Upstash Redis (see `lib/blob-store.ts`) |

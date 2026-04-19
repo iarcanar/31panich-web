@@ -1,6 +1,6 @@
 ---
 title: Performance Checklist
-last_reviewed: 2026-04-09
+last_reviewed: 2026-04-19
 audience: both
 ---
 
@@ -36,6 +36,13 @@ Together these account for the bulk of "static" routes shown in `next build` out
 - **Static assets**: WebP, quality 80, resized before being added to `web/public/`. Use `admin_files/tools/remage.bat` (reMAGE GUI) for batch conversion
 - **Dimensions per type**: see [`/admin_files/IMAGE_SPEC.md`](../../../admin_files/IMAGE_SPEC.md)
 - **`next/image`**: configured in `web/next.config.ts` with `images.remotePatterns` for Cloudinary, Vercel Blob, and a few legacy domains. Static asset cache headers set to 1 year immutable for `webp/png/svg/woff2`
+
+## Audio strategy (chat TTS)
+
+- **On-demand TTS**: `/api/ai/tts` calls Gemini TTS 3.1→2.5 hybrid (`web/lib/tts.ts`). Per-IP rate limit 15 req/min
+- **Static WAV cache** (v2.0.10): FAQ replies (hours / no-holiday / location) pre-generated once, served from `web/public/audio/tts/*.wav` as static files. `ChatWidget` checks `lookupCachedTts()` first and skips the API call entirely. Cached phrases = instant playback + zero Gemini cost
+- **Cache regeneration**: `node scripts/gen-tts-cache.mjs` — reruns whenever a cached reply text, `HOURS_TEXT`, or `STORE_LANDMARK` changes. Commit the updated `.wav` files with the text change in the same commit so production stays consistent
+- **WAV size**: 200–340 KB per file at 24 kHz PCM16 mono — small enough to commit to git. Vercel CDN serves with default long cache headers
 
 ## Font loading
 
@@ -77,3 +84,4 @@ Currently no `@next/bundle-analyzer` configured. If bundle bloat becomes a conce
 - `vercel-status` and `upstash-status` API in-memory cache
 - `generateStaticParams` for all product pages
 - WebP everywhere, 1-year immutable cache headers for static assets
+- Static TTS WAV cache for top-3 FAQ replies (v2.0.10) — instant playback + zero Gemini TTS cost for hours/no-holiday/location questions

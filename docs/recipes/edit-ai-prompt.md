@@ -1,6 +1,6 @@
 ---
 title: Recipe — Edit the AI System Prompt
-last_reviewed: 2026-04-09
+last_reviewed: 2026-04-19
 audience: both
 ---
 
@@ -28,24 +28,50 @@ $EDITOR web/data/ai-config.json
 
 ## Layer 2 — Template (in code)
 
-The chat route (`web/app/api/ai/chat/route.ts`) uses a **dual pipeline** architecture (v1.5.18+):
+The chat route (`web/app/api/ai/chat/route.ts`) uses a **multi-pipeline** architecture. Only Pipeline B calls Gemini; the rest are deterministic (fixed text + optional flag) so they're fast, cheap, and cache-friendly for TTS.
 
-### Pipeline A — Holiday (keyword-triggered)
-- **When**: message contains keywords like "หยุด", "เปิด", "ปิด", "สงกรานต์", "กี่โมง"
-- **Prompt**: `HOLIDAY_TEMPLATE` — short, only holiday data + store hours, no products
-- **Data**: reads from `web/lib/holidays.ts` → `holidays.json`
-- **Fallback**: if no holiday data in backend → fixed text response (ไม่เรียก Gemini)
+### Pipeline A — Holiday-specific + active/upcoming data
+- **When**: `isHolidaySpecific(message)` matches `HOLIDAY_SPECIFIC_KEYWORDS` ("หยุด", "วันหยุด", "เทศกาล", ...) **and** there's an active/upcoming holiday in `holidays.json`
+- **Reply**: fixed composition from holiday data + Thai greeting (no Gemini call)
 
-### Pipeline B — Product (default)
-- **When**: no holiday keyword detected
-- **Prompt**: `SYSTEM_TEMPLATE` — full product context + knowledge + contact rules
+### Pipeline A2a — Holiday-specific, no holiday active
+- **When**: same keyword set, but no active/upcoming holiday
+- **Reply**: `"ตอนนี้ไม่มีวันหยุดพิเศษครับ ร้านเปิดบริการทุกวัน ${HOURS_TEXT} ครับ"` (cached WAV)
+
+### Pipeline A2b — Plain hours question
+- **When**: `HOURS_GENERAL_KEYWORDS` ("กี่โมง", "เปิดไหม", ...) matches and not holiday-specific
+- **Reply**: `"ร้านเปิดทุกวัน ${HOURS_TEXT} ครับ"` (cached WAV)
+
+### Pipeline A3 — Location question (v2.0.10)
+- **When**: `LOCATION_KEYWORDS` ("อยู่ไหน", "แถวไหน", "แผนที่", "นำทาง", "พิกัด", "ไปร้าน", "ไปยังไง", "เดินทาง") matches
+- **Reply**: `"ร้านอยู่${STORE_LANDMARK}ครับ กดเพื่อนำทางได้เลยครับ"` + `mapLink: true` → client renders cyan "นำทางไปร้าน" button (cached WAV)
+- **To change the description**: edit `STORE_LANDMARK` in `web/lib/store-config.ts` **AND** rerun `node scripts/gen-tts-cache.mjs` to regenerate `public/audio/tts/location.wav`
+- **To change which keywords trigger**: edit `LOCATION_KEYWORDS` array in `route.ts`
+
+### Pipeline C — Instant confirmation
+- **When**: short message like "ดู / เอา / โอเค / ได้เลย" and session has a previous product question
+- **Reply**: extract keyword from previous turn → fixed "ดูสินค้าที่หน้าเว็บได้เลยครับ" + `searchQuery` for auto-navigation
+
+### Pipeline B — Everything else (default)
+- **When**: no deterministic pipeline matches
+- **Prompt**: `SYSTEM_TEMPLATE` — full product context + knowledge + contact rules + location/parking script
 - **Data**: `ai-config.json` + `ai-products.ts` + `ai-knowledge.ts`
+- **Tag handling on Gemini output**:
+  - `[SEARCH:keyword]` → `searchQuery` in response (client auto-navigates to `/products?search=`)
+  - `[SUGGEST:keyword]` → `suggestion.keyword` in response (client renders purple button)
+  - `[MAP]` → `mapLink: true` in response (client renders cyan map button)
 
-You only need to touch the template if you want to:
-- Change how product context is formatted
-- Add a new dynamic placeholder
-- Change the conversation rules / search behavior (`[SEARCH:keyword]` tag handling)
-- Add/edit holiday keywords (`HOLIDAY_KEYWORDS` array)
+### When to touch each layer
+
+- **Edit `ai-config.json` via admin panel** → change AI tone/personality in Pipeline B only
+- **Edit `SYSTEM_TEMPLATE` in `route.ts`** → change how product context is built, add new placeholders, edit the parking/location prompt guidance, change tag behavior
+- **Edit `STORE_LANDMARK`** → change Pipeline A3 output (and regen TTS cache)
+- **Edit `LOCATION_KEYWORDS` / `HOURS_GENERAL_KEYWORDS` / `HOLIDAY_SPECIFIC_KEYWORDS`** → change which questions route to which pipeline
+- **Add a new Pipeline A-series (deterministic)** → safer + cheaper than letting Gemini handle a common FAQ. If the new reply is static enough to cache, also add it to `web/lib/tts-cache.ts` and regen the WAV
+
+### TTS cache contract
+
+Any Pipeline A-series reply text that's listed in `CACHED_TTS_REPLIES` in `web/lib/tts-cache.ts` will play a pre-generated WAV from `public/audio/tts/`. When you change that reply text, you **must** rerun `node scripts/gen-tts-cache.mjs` and commit the new `.wav` — otherwise the audio plays the OLD text while the UI shows the NEW text.
 
 ## Layer 3 — Holiday data (admin panel)
 

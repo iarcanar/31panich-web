@@ -1,6 +1,6 @@
 ---
 title: Architecture & Data Flow
-last_reviewed: 2026-04-09
+last_reviewed: 2026-04-19
 audience: both
 ---
 
@@ -85,34 +85,42 @@ sequenceDiagram
 
   C->>API: POST { sessionId, message }
   API->>S: getSession(sessionId) or createSession()
-  API->>P: buildChatContextWithProducts(message)
-  P->>P: Score products (Thai bidirectional matching)
-  P-->>API: Top 5 matches + category summary
-  API->>K: getRelevantKnowledge(message)
-  K-->>API: Knowledge snippets (e.g., points.txt if message mentions แต้ม)
-  API->>API: Keyword detection (หยุด/เปิด/ปิด/สงกรานต์/กี่โมง...)
-  alt Holiday keyword detected + มีข้อมูลวันหยุด
-    API->>API: Pipeline A — holiday-only prompt (short, no products)
-    API->>G: generateContent(holidayPrompt, history)
-    G-->>API: Holiday response (วันหยุด + คำอวยพร)
-  else Holiday keyword + ไม่มีข้อมูล
-    API-->>C: Fixed text "แจ้งผ่าน social media" (ไม่เรียก Gemini)
-  else No holiday keyword
+  API->>API: Keyword detection — route to pipeline
+  alt Pipeline C — instant confirmation ("ดู/เอา/โอเค")
+    API->>API: Extract keyword from previous user turn
+    API-->>C: Fixed reply + searchQuery (no Gemini call)
+  else Pipeline A — holiday-specific with active/upcoming data
+    API->>API: Compose fixed reply from holidays.json
+    API-->>C: Fixed text (no Gemini call)
+  else Pipeline A2a — "มีหยุดมั้ย" + none exist
+    API-->>C: "ตอนนี้ไม่มีวันหยุดพิเศษครับ ร้านเปิด..." (cacheable WAV)
+  else Pipeline A2b — plain "กี่โมง/เปิดมั้ย"
+    API-->>C: "ร้านเปิดทุกวัน 7.30 – 17.30 น. ครับ" (cacheable WAV)
+  else Pipeline A3 — location ("อยู่ไหน/แถวไหน/แผนที่/นำทาง")
+    API-->>C: STORE_LANDMARK reply + mapLink:true (cacheable WAV)
+  else Pipeline B — everything else (products/general)
     API->>P: buildChatContextWithProducts(message)
-    P-->>API: Top 5 matches
+    P-->>API: Top 5 matches + category summary
     API->>K: getRelevantKnowledge(message)
-    K-->>API: Knowledge snippets
-    API->>API: Pipeline B — product prompt (full)
+    K-->>API: Knowledge snippets (e.g., points.txt)
     API->>G: generateContent(systemInstruction, history)
     G-->>API: Product response
+    API->>API: Parse [SEARCH:] / [SUGGEST:] / [MAP] tags
   end
   API->>S: addToHistory(sessionId, response)
-  API-->>C: { answer }
+  API-->>C: { reply, searchQuery?, suggestion?, mapLink? }
 ```
 
-**Dual pipeline design** (v1.5.18+): AI chat uses keyword detection to route questions to separate pipelines. Holiday questions get a short focused prompt with only holiday data (no products to confuse Gemini). Product questions get the full product prompt with no holiday info mixed in. This prevents cross-contamination where Gemini answers holiday questions with product info or vice versa.
+**Multi-pipeline design**: AI chat uses keyword detection to route to separate pipelines. A/A2a/A2b/A3 return **deterministic** replies (no Gemini call) so they can be pre-rendered as static WAV audio. Only Pipeline B hits Gemini. This saves API cost on the most common questions (hours, location, confirmation) and avoids cross-contamination (e.g., product pipeline volunteering holiday info).
 
-**Why chat is not cached**: `gemini-cache.ts` exists but is opt-in. Chat contents grow with every turn (history is included), so cache hits would be near zero. Use it for `enrich` and other deterministic flows instead.
+**TTS static cache** (v2.0.10): when a reply from a deterministic pipeline matches `CACHED_TTS_REPLIES` in `web/lib/tts-cache.ts`, the client plays the pre-generated WAV from `public/audio/tts/*.wav` (CDN-served) and skips `/api/ai/tts` entirely — zero Gemini TTS cost, instant playback. Regenerate cache with `node scripts/gen-tts-cache.mjs`.
+
+**Tag rendering in ChatWidget**:
+- `[SEARCH:keyword]` → auto-navigate to `/products?search=...` (panel stays open, user likely continues chat)
+- `[SUGGEST:keyword]` → render purple "ดูสินค้า X" button; click closes panel + navigates
+- `[MAP]` (or Pipeline A3 `mapLink:true`) → render cyan "นำทางไปร้าน" button; opens Google Maps in new tab
+
+**Why chat is not cached** (at the Gemini-response layer): `gemini-cache.ts` exists but is opt-in. Pipeline B chat contents grow with every turn (history included), so cache hits would be near zero. Use it for `enrich` and other deterministic flows instead. TTS cache is different — it caches the *audio* for the deterministic pipeline outputs, where text is known to be byte-identical.
 
 ## Request flow: claim a coupon (atomic)
 

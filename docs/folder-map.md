@@ -1,6 +1,6 @@
 ---
 title: Folder Map
-last_reviewed: 2026-04-09
+last_reviewed: 2026-04-19
 audience: both
 ---
 
@@ -74,7 +74,7 @@ All business logic. No JSX in here.
 | `coupons.ts` | `getCoupons`, `atomicClaim`, `resetClaimCount`, CRUD ops | Coupon CRUD + the atomic claim lock |
 | `coupon-claims.ts` | `addClaim`, `removeAllClaimsForCoupon`, `ClaimRecord` type | Claim record store + serial generation |
 | `categories.ts` | `CATEGORIES` (15 items), `getCategoryLabel` | **Single source of truth** for product categories. Adding one is a recipe — see [`recipes/add-category.md`](./recipes/add-category.md) |
-| `store-config.ts` | `STORE_NAME`, `PHONE`, `LINE_ID`, `LINE_POINTS_URL`, `HOURS_TEXT`, `ADDRESS`, `GEO`, business hours helpers | **Single source of truth** for shop contact info |
+| `store-config.ts` | `STORE_NAME`, `PHONE`, `LINE_ID`, `LINE_POINTS_URL`, `HOURS_TEXT`, `ADDRESS`, `GEO`, `STORE_LANDMARK`, business hours helpers | **Single source of truth** for shop contact info. `STORE_LANDMARK` drives Pipeline A3 chat replies + cached TTS WAV — regen cache after editing (`node scripts/gen-tts-cache.mjs`) |
 | `promotions.ts` | `getActivePromotions` | Filter `promotions.json` by date + return top N |
 | `auth.ts` | `verifyCredentials`, `createSession`, `getSessionUser`, `canPerform`, `UserRole` | Admin auth (HMAC-SHA256 signed cookies, env-based user list) |
 | `gemini.ts` | `getGeminiClient`, `generateText`, `generateTextWithSearch` | Raw Gemini wrapper, no cache |
@@ -85,6 +85,8 @@ All business logic. No JSX in here.
 | `ai-knowledge.ts` | `getRelevantKnowledge` | Trigger-based knowledge injection (e.g., "แต้ม" → reads `data/knowledge/points.txt`) |
 | `holidays.ts` | `getHolidays`, `saveHolidays`, `getActiveHoliday`, `getUpcomingHoliday`, `isHolidayClosed` | วันหยุดนักขัตฤกษ์ — ข้อมูลจาก `holidays.json`, ใช้ทั้ง AI pipeline + frontend buttons |
 | `chat-logger.ts` | `logChat` (no-op), `getChatLogs` | **Disabled** to save Vercel Blob ops |
+| `tts.ts` | `generateSpeech`, `cleanForTTS`, `pcmToWav`, `normalizeThaiTimes`, `normalizeBrandPronunciation`, `TTS_CONFIG` | Gemini TTS wrapper — hybrid 3.1→2.5 fallback, voice Orus, Thai time normalization, brand phonetic overrides |
+| `tts-cache.ts` | `CACHED_TTS_REPLIES`, `lookupCachedTts` | Phrase → static WAV URL map. ChatWidget checks this before calling `/api/ai/tts` so deterministic FAQ replies are served from CDN. Regen WAVs with `node scripts/gen-tts-cache.mjs` |
 | `catalogs.ts` | `CATALOGS` | Catalog PDF list |
 | `structured-data.ts` | `localBusinessSchema` | JSON-LD for SEO (LocalBusiness schema injected on home) |
 
@@ -114,8 +116,16 @@ JSON data files. In dev these are read/written directly. In production they live
 | `points/` | Loyalty reward images |
 | `category-icons/` | One SVG per category (15 files: `tools.svg`, `paint.svg`, etc.) |
 | `catalog/` | PDF product catalogs |
+| `audio/tts/` | Pre-generated TTS WAV files for FAQ replies (`hours-open.wav`, `no-holiday.wav`, `location.wav`). Regen via `node scripts/gen-tts-cache.mjs` after changing any cached phrase |
 
 Plus the homepage banner (`banner-mobile.webp`), favicons, and `robots.txt`.
+
+## `web/scripts/`
+
+| File | Purpose |
+|---|---|
+| `sync-from-redis.mjs` | Pulls production Redis → `data/*.json` for local dev (called by `npm run sync`) |
+| `gen-tts-cache.mjs` | One-shot generator for FAQ TTS WAV cache. Mirrors `cleanForTTS` + `pcmToWav` from `lib/tts.ts` so output matches the live route. Run manually when a cached phrase text changes |
 
 ## Other top-levels
 

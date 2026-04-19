@@ -1,6 +1,6 @@
 ---
 title: Vercel + Upstash + Gemini Quota Strategy
-last_reviewed: 2026-04-09
+last_reviewed: 2026-04-19
 audience: both
 ---
 
@@ -64,6 +64,8 @@ Race-safe without a database. Per-instance lock (Map-based queue) — good enoug
 - **`vercel-status` cached**: 3 Vercel API calls per dashboard load → 1 set per 5 min
 - **`upstash-status` cached**: 2 Redis commands per dashboard load → 1 set per 2 min
 - **Legacy code removed**: `lib/medusa.ts` and `components/home/FeaturedProducts.tsx` were dead code, deleted
+- **AI chat deterministic pipelines** (v2.0.10): Pipelines A/A2a/A2b/A3/C do NOT call Gemini — questions about hours / holidays / location / short confirmations return fixed text in-process. Only Pipeline B (open-ended product/general) hits `generateContent`
+- **TTS static WAV cache** (v2.0.10): the top 3 FAQ replies (hours, no-holiday, location) are pre-generated once with Gemini TTS and served from Vercel CDN as static `.wav` files. ChatWidget checks `lookupCachedTts()` before calling `/api/ai/tts` — cached phrases hit zero Gemini TTS cost. Regen via `node scripts/gen-tts-cache.mjs` after changing any cached phrase
 
 ## ⚠ Quota exception: product detail page is force-dynamic
 

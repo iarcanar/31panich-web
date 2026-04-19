@@ -1,6 +1,6 @@
 ---
 title: Debugging Playbook
-last_reviewed: 2026-04-09
+last_reviewed: 2026-04-19
 audience: both
 ---
 
@@ -66,11 +66,15 @@ If you DO revert, do it incrementally and test each product creation. Bring back
 
 ## "AI ตอบวันหยุดผิด / ไม่ตอบเรื่องวันหยุด"
 
-**Status**: Fixed in v1.5.18 — dual pipeline architecture
+**Status**: Fixed in v1.5.18 — multi-pipeline architecture (expanded in v2.0.10)
 
-**How it works** (v1.5.18+): AI chat มี 2 pipeline แยกกัน:
-- **Pipeline A (Holiday)**: keyword detect → พบคำเกี่ยวกับวันหยุด → ใช้ prompt สั้นเฉพาะวันหยุด (ไม่มีสินค้ามาปน)
-- **Pipeline B (Product)**: ไม่พบ keyword → ใช้ prompt สินค้าปกติ (ไม่มีวันหยุดมาปน)
+**How it works** (current): AI chat มีหลาย pipeline แยกกัน — route โดย keyword detection:
+- **Pipeline A (Holiday-specific + data)**: คำเกี่ยวกับวันหยุด + มีข้อมูล → fixed reply สรุปวันหยุด (ไม่เรียก Gemini)
+- **Pipeline A2a**: "มีวันหยุดมั้ย" แต่ไม่มีวันหยุด → fixed reply "ไม่มีวันหยุดพิเศษ"
+- **Pipeline A2b**: "เปิดกี่โมง/เปิดมั้ย" → fixed reply ชั่วโมงเปิด
+- **Pipeline A3 (v2.0.10)**: "อยู่ไหน/แถวไหน/แผนที่/นำทาง" → fixed reply พร้อม `mapLink:true` (ไม่เรียก Gemini)
+- **Pipeline B (Product/Default)**: ไม่เข้าเงื่อนไขบน → prompt สินค้าเต็ม + Gemini
+- **Pipeline C**: ยืนยันสั้นๆ ("ดู/เอา/โอเค") → extract keyword จาก turn ก่อน + `searchQuery` (ไม่เรียก Gemini)
 
 **Where to look if holiday response is wrong:**
 1. **ข้อมูลวันหยุด**: `web/data/holidays.json` (production: Redis `data:holidays.json`) — ตรวจ closedFrom, closedTo, reopenDate ถูกไหม
@@ -84,6 +88,34 @@ If you DO revert, do it incrementally and test each product creation. Bring back
 3. ถามวันที่ ("หยุดวันไหนถึงวันไหน")
 4. ถามสินค้าระหว่างหยุด ("13 เมษา สั่งได้ไหม")
 5. ถามสินค้าทั่วไป ("มีสว่านไหม" — ต้องไม่พูดเรื่องวันหยุด)
+
+## "AI ตอบที่อยู่แบบเต็ม / ไม่ขึ้นปุ่ม Google Maps / ขึ้นปุ่มผิดที่"
+
+**Status**: Expected behavior from v2.0.10 Pipeline A3
+
+**How it works**: ข้อความที่มี keyword `อยู่ไหน / แถวไหน / แผนที่ / นำทาง / พิกัด / ไปร้าน / ไปยังไง / เดินทาง` จะถูก route เข้า Pipeline A3 เสมอ — ตอบด้วย `STORE_LANDMARK` fixed + `mapLink=true` (ไม่เรียก Gemini) ⇒ ได้ปุ่ม cyan "นำทางไปร้าน" ใต้ bubble
+
+**ถ้าอยากเปลี่ยนข้อความ landmark**:
+1. แก้ `STORE_LANDMARK` ใน `web/lib/store-config.ts`
+2. รัน `cd web/ && node scripts/gen-tts-cache.mjs` เพื่อสร้าง `public/audio/tts/location.wav` ใหม่ (ไม่งั้นเสียงเดิมไม่ตรงกับข้อความใหม่)
+3. commit ทั้งไฟล์ `.ts` + `.wav` ที่ถูก regen พร้อมกัน
+
+**ถ้าอยากเพิ่ม keyword**: แก้ `LOCATION_KEYWORDS` ใน `web/app/api/ai/chat/route.ts`
+
+**ถ้าถามรวมๆ เช่น "ร้านอยู่ไหน มีสินค้า X มั้ย"** → ยังคง hit A3 ก่อน (product part ตกหล่น) เป็น edge case ที่ยอมรับ ถ้าเจอบ่อย ให้พิจารณาเงื่อนไข A3 ให้เข้มกว่านี้
+
+## "TTS เล่นเสียงไม่ตรงกับข้อความที่แสดง"
+
+**Status**: มักเกิดจาก static cache mismatch (v2.0.10+)
+
+**Root cause**: `web/lib/tts-cache.ts` maps ข้อความ reply → ไฟล์ WAV สำเร็จรูปใน `public/audio/tts/`. ถ้าข้อความใน `chat/route.ts` (Pipeline A2a/A2b/A3) หรือค่าคงที่ `HOURS_TEXT`/`STORE_LANDMARK` ถูกแก้ แต่ไฟล์ WAV ไม่ได้ regen → cache key match แต่เสียงคือของเก่า
+
+**Fix:**
+1. ยืนยันว่าข้อความ reply ในโค้ดตรงกับ key ใน `CACHED_TTS_REPLIES` (whitespace สำคัญ — `normalize()` ใน `lookupCachedTts` แค่ collapse ws เท่านั้น)
+2. รัน `cd web/ && node scripts/gen-tts-cache.mjs` เพื่อ regen WAV ทั้งหมด
+3. commit ไฟล์ WAV ใหม่ + push — Vercel CDN serve ไฟล์ใหม่อัตโนมัติ
+
+**ถ้าอยากปิด cache ชั่วคราว**: ลบ entry ใน `CACHED_TTS_REPLIES` → `lookupCachedTts` จะ return undefined → ไป fetch `/api/ai/tts` สด (Gemini charge ปกติ)
 
 ## "AI gives a wrong / off-brand answer"
 
