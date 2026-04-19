@@ -106,6 +106,8 @@ const SYSTEM_TEMPLATE = `คุณเป็น "สามหนึ่ง Ai" ผ
 ขั้นตอนที่ 2 — เสนอให้ดู (ยังไม่ค้นหา):
 - ตอบสบายๆ ว่ามีอะไรบ้าง ยกตัวอย่าง 1-2 ชิ้นจากรายการ
 - ถามว่า "อยากดูที่หน้าเว็บมั้ยครับ?" หรือ "ลองดูตัวอย่างก่อนมั้ยครับ?"
+- **ใส่แท็ก [SUGGEST:คำค้น] ท้ายข้อความ** — ระบบจะแสดงเป็น "ปุ่มกดทันที" ให้ลูกค้าค้นได้เลยโดยไม่ต้องพิมพ์ตอบ
+- คำค้นต้องเป็นชื่อสินค้าหลักที่มีจริงในรายการ เช่น [SUGGEST:สว่าน] [SUGGEST:หลอด LED] [SUGGEST:Makita]
 - ห้ามใส่แท็ก [SEARCH:] ในขั้นตอนนี้
 
 ขั้นตอนที่ 3 — ค้นหาเมื่อลูกค้ายืนยัน:
@@ -141,6 +143,18 @@ function parseSearchTag(reply: string): { cleanReply: string; searchKeyword?: st
   const cleanReply = reply.replace(/\s*\[SEARCH:[^\]]+\]\s*/gi, "").trim()
   if (!keyword || keyword.length < 2) return { cleanReply }
   return { cleanReply, searchKeyword: keyword }
+}
+
+/** Step-2 offer tag — emitted by the AI when suggesting products without
+ *  running a search yet. The frontend renders it as a one-click button so
+ *  the user can confirm instantly instead of typing "ดู/เอา". */
+function parseSuggestTag(reply: string): { cleanReply: string; suggestKeyword?: string } {
+  const match = reply.match(/\[SUGGEST:([^\]]+)\]/i)
+  if (!match) return { cleanReply: reply }
+  const keyword = match[1].trim()
+  const cleanReply = reply.replace(/\s*\[SUGGEST:[^\]]+\]\s*/gi, "").trim()
+  if (!keyword || keyword.length < 2) return { cleanReply }
+  return { cleanReply, suggestKeyword: keyword }
 }
 
 // ─── Main handler ───────────────────────────────────────
@@ -194,6 +208,7 @@ export async function POST(request: NextRequest) {
 
     let reply = ""
     let searchKeyword: string | undefined
+    let suggestKeyword: string | undefined
 
     // ══ Pipeline C: Instant confirmation — skip Gemini for speed + correct keyword ══
     const msgTrimmed = message.trim()
@@ -301,8 +316,10 @@ export async function POST(request: NextRequest) {
 
       const rawReply = await generateText(systemInstruction, contents, 4096)
       const parsed = parseSearchTag(rawReply)
-      reply = parsed.cleanReply
+      const suggestParsed = parseSuggestTag(parsed.cleanReply)
+      reply = suggestParsed.cleanReply
       searchKeyword = parsed.searchKeyword
+      suggestKeyword = suggestParsed.suggestKeyword
     }
 
     // Save to history
@@ -318,6 +335,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       sessionId, reply, isNew,
       searchQuery: searchKeyword,
+      suggestion: suggestKeyword ? { keyword: suggestKeyword } : undefined,
     })
   } catch {
     return NextResponse.json(

@@ -10,6 +10,9 @@ import { fmtShort, holidayShortName } from "@/lib/date-utils"
 interface Message {
   role: "user" | "assistant"
   text: string
+  /** AI-emitted product suggestion — rendered as a tappable "ดูสินค้า X"
+   *  button below the bubble for one-click search without typing a reply. */
+  suggestion?: { keyword: string }
 }
 
 const SUGGESTIONS = [
@@ -21,6 +24,7 @@ const SUGGESTIONS = [
 
 const MIN_HEIGHT = 380
 const DEFAULT_HEIGHT = 480
+const TTS_PREF_KEY = "chat-tts-enabled"
 
 export default function ChatWidget() {
   const router = useRouter()
@@ -40,6 +44,150 @@ export default function ChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+
+  // ── TTS state ──
+  // Global on/off for auto-speaking new AI replies (persisted in localStorage).
+  const [ttsEnabled, setTtsEnabled] = useState(true)
+  // Which message index is currently fetching / playing audio (by message array index).
+  const [ttsLoadingIdx, setTtsLoadingIdx] = useState<number | null>(null)
+  const [ttsPlayingIdx, setTtsPlayingIdx] = useState<number | null>(null)
+  // Cache of generated audio URLs per message index — survives panel close/reopen.
+  const audioCache = useRef<Map<number, string>>(new Map())
+  // Deduplicate concurrent fetches for the same index (prevents double-call from
+  // React strict mode re-invocations or rapid replay clicks during fetch).
+  const inFlightFetches = useRef<Set<number>>(new Set())
+  const currentAudio = useRef<HTMLAudioElement | null>(null)
+  const ttsEnabledRef = useRef(true)
+  ttsEnabledRef.current = ttsEnabled
+  // When the next assistant reply arrives, auto-play this text (cleared after).
+  // Kept as a ref (not state) so it survives strict-mode updater double-invocation
+  // without triggering duplicate TTS calls.
+  const pendingAutoPlayRef = useRef<string | null>(null)
+
+  // Load TTS preference
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const saved = window.localStorage.getItem(TTS_PREF_KEY)
+      if (saved !== null) setTtsEnabled(saved === "true")
+    } catch {}
+  }, [])
+
+  // Persist TTS preference
+  useEffect(() => {
+    try { window.localStorage.setItem(TTS_PREF_KEY, String(ttsEnabled)) } catch {}
+  }, [ttsEnabled])
+
+  // Stop any active audio when panel closes
+  useEffect(() => {
+    if (!panelOpen && currentAudio.current) {
+      currentAudio.current.pause()
+      currentAudio.current = null
+      setTtsPlayingIdx(null)
+    }
+  }, [panelOpen])
+
+  // Free cached blob URLs on unmount
+  useEffect(() => {
+    const cache = audioCache.current
+    return () => {
+      cache.forEach((url) => { try { URL.revokeObjectURL(url) } catch {} })
+      cache.clear()
+    }
+  }, [])
+
+  /** Pre-fetch TTS audio and store in cache. Returns true on success.
+   *  Used when `ttsEnabled` so we can delay rendering the bot message until
+   *  audio is ready — keeps text + voice appearing in sync. */
+  const prefetchTTS = useCallback(async (idx: number, text: string): Promise<boolean> => {
+    if (audioCache.current.has(idx)) return true
+    if (inFlightFetches.current.has(idx)) return false
+    inFlightFetches.current.add(idx)
+    try {
+      const res = await fetch("/api/ai/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) return false
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      audioCache.current.set(idx, url)
+      return true
+    } catch {
+      return false
+    } finally {
+      inFlightFetches.current.delete(idx)
+    }
+  }, [])
+
+  /** Play TTS for the message at the given index. Uses cache when possible.
+   *  Deduplicates concurrent fetches (e.g. double-invocation in strict mode or
+   *  rapid replay clicks) so the API is hit at most once per unique message. */
+  const playTTS = useCallback(async (idx: number, text: string) => {
+    // Stop any currently playing audio
+    if (currentAudio.current) {
+      currentAudio.current.pause()
+      currentAudio.current = null
+    }
+
+    // 1) Cache hit → play immediately
+    const cachedUrl = audioCache.current.get(idx)
+    if (cachedUrl) {
+      const audio = new Audio(cachedUrl)
+      currentAudio.current = audio
+      setTtsPlayingIdx(idx)
+      audio.onended = () => { if (currentAudio.current === audio) { currentAudio.current = null; setTtsPlayingIdx(null) } }
+      audio.onerror = () => setTtsPlayingIdx(null)
+      try { await audio.play() } catch { setTtsPlayingIdx(null) }
+      return
+    }
+
+    // 2) Already fetching for this index → skip duplicate request
+    if (inFlightFetches.current.has(idx)) return
+
+    // 3) Fetch + cache + play
+    inFlightFetches.current.add(idx)
+    setTtsLoadingIdx(idx)
+    try {
+      const res = await fetch("/api/ai/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      audioCache.current.set(idx, url)
+
+      const audio = new Audio(url)
+      currentAudio.current = audio
+      setTtsLoadingIdx(null)
+      setTtsPlayingIdx(idx)
+      audio.onended = () => { if (currentAudio.current === audio) { currentAudio.current = null; setTtsPlayingIdx(null) } }
+      audio.onerror = () => { setTtsPlayingIdx(null) }
+      await audio.play().catch(() => setTtsPlayingIdx(null))
+    } catch {
+      setTtsLoadingIdx(null)
+      // silent fail — don't interrupt chat
+    } finally {
+      inFlightFetches.current.delete(idx)
+    }
+  }, [])
+
+  // Watch for a new assistant message flagged for auto-play. Running this in a
+  // useEffect (rather than in the setMessages updater) avoids double-firing when
+  // React strict mode invokes functional updaters twice in dev.
+  useEffect(() => {
+    const pending = pendingAutoPlayRef.current
+    if (!pending) return
+    const lastIdx = messages.length - 1
+    const last = messages[lastIdx]
+    if (!last || last.role !== "assistant" || last.text !== pending) return
+    pendingAutoPlayRef.current = null
+    if (!ttsEnabledRef.current) return
+    playTTS(lastIdx, last.text)
+  }, [messages, playTTS])
 
   // Keep ref in sync — keyboard handler reads from ref, not state
   panelHeightRef.current = panelHeight
@@ -147,10 +295,27 @@ export default function ChatWidget() {
         setMessages((prev) => [...prev, { role: "assistant", text: data.message }])
       } else if (data.reply) {
         if (data.sessionId) setSessionId(data.sessionId)
-        setMessages((prev) => [...prev, {
-          role: "assistant",
-          text: data.reply,
-        }])
+
+        // The next message's index = current messages array length.
+        // We read it BEFORE any setMessages call so pre-fetch can target it.
+        const nextIdx = messages.length + 1 // +1 because user msg was just pushed
+
+        if (ttsEnabledRef.current) {
+          // TTS ON → fetch audio first, then reveal text+audio together.
+          // User sees loading dots a bit longer but text & voice arrive in sync.
+          pendingAutoPlayRef.current = data.reply
+          await prefetchTTS(nextIdx, data.reply)
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant" as const,
+            text: data.reply,
+            suggestion: data.suggestion,
+          },
+        ])
+
         if (data.searchQuery) {
           router.push(`/products?search=${encodeURIComponent(data.searchQuery)}`)
         }
@@ -237,31 +402,70 @@ export default function ChatWidget() {
             : "opacity-0 pointer-events-none translate-y-3"
         }`}
       >
-        {/* Resize handle */}
+        {/* Resize handle — with small tucked-away close X at top-right corner */}
         <div
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
-          className="flex items-center justify-center h-5 cursor-ns-resize shrink-0 group touch-none"
+          className="flex items-center justify-center h-5 cursor-ns-resize shrink-0 group touch-none relative"
         >
           <div className="w-8 h-1 rounded-full bg-[#2a2a3a] group-hover:bg-purple-400/50 transition-colors" />
+          <button
+            onClick={(e) => { e.stopPropagation(); setPanelOpen(false) }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-gray-600 hover:text-gray-200 hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="ปิดแชท"
+            title="ปิด"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#2a2a3a]">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 self-start mt-1.5" />
-            <div>
-              <span className="text-white text-sm font-medium">สามหนึ่ง Ai</span>
-              <p className="text-[9px] text-gray-500 leading-tight">Gemini 2.5 Flash · AI อาจผิดพลาดได้</p>
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-[#2a2a3a]">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 self-start mt-1.5 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-white text-sm font-medium block">สามหนึ่ง Ai</span>
+              <p className="text-[9px] text-gray-500 leading-tight truncate">Gemini 2.5 Flash · AI อาจผิดพลาดได้</p>
             </div>
           </div>
+
+          {/* Prominent TTS toggle — clear label for all ages */}
           <button
-            onClick={() => setPanelOpen(false)}
-            className="text-gray-500 hover:text-white transition"
+            onClick={() => {
+              if (ttsEnabled && currentAudio.current) {
+                currentAudio.current.pause()
+                currentAudio.current = null
+                setTtsPlayingIdx(null)
+              }
+              setTtsEnabled((v) => !v)
+            }}
+            className={`shrink-0 h-8 pl-2 pr-3 rounded-full flex items-center gap-1.5 border transition-all cursor-pointer active:scale-95 ${
+              ttsEnabled
+                ? "bg-emerald-500/15 border-emerald-400/50 hover:bg-emerald-500/25 hover:border-emerald-400/70"
+                : "bg-white/5 border-white/15 hover:bg-white/10"
+            }`}
+            title={ttsEnabled ? "แตะเพื่อปิดเสียงอ่านอัตโนมัติ" : "แตะเพื่อเปิดเสียงอ่านอัตโนมัติ"}
+            aria-pressed={ttsEnabled}
+            aria-label={ttsEnabled ? "ปิดเสียง AI" : "เปิดเสียง AI"}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            {ttsEnabled ? (
+              <svg className="w-4 h-4 text-emerald-300 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14l-1.42-1.42a8 8 0 000-11.3l1.42-1.42zM15.54 8.46a5 5 0 010 7.07l-1.41-1.41a3 3 0 000-4.24l1.41-1.42z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 text-gray-500 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                <path fillRule="evenodd" d="M16.47 8.47a.75.75 0 011.06 0L19 9.94l1.47-1.47a.75.75 0 111.06 1.06L20.06 11l1.47 1.47a.75.75 0 11-1.06 1.06L19 12.06l-1.47 1.47a.75.75 0 01-1.06-1.06L17.94 11l-1.47-1.47a.75.75 0 010-1.06z" clipRule="evenodd" />
+              </svg>
+            )}
+            <span className={`font-extrabold text-sm leading-none ${ttsEnabled ? "text-emerald-300" : "text-red-300"}`}>
+              {ttsEnabled ? "เปิด" : "ปิด"}
+            </span>
+            <span className="text-white/70 text-xs leading-none">เสียงพูด</span>
           </button>
         </div>
 
@@ -305,7 +509,34 @@ export default function ChatWidget() {
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-3" style={{ scrollbarWidth: "thin" }}>
           {messages.map((msg, i) => (
-            <ChatMessage key={i} role={msg.role} text={msg.text} />
+            <div key={i} className="space-y-1.5">
+              <ChatMessage
+                role={msg.role}
+                text={msg.text}
+                onReplay={msg.role === "assistant" ? () => playTTS(i, msg.text) : undefined}
+                ttsLoading={ttsLoadingIdx === i}
+                ttsPlaying={ttsPlayingIdx === i}
+              />
+              {msg.suggestion && (
+                <div className="flex justify-start">
+                  <button
+                    onClick={() => {
+                      router.push(`/products?search=${encodeURIComponent(msg.suggestion!.keyword)}`)
+                    }}
+                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg shadow-purple-500/30 active:scale-95 transition-all"
+                    aria-label={`ค้นหาสินค้า ${msg.suggestion.keyword}`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.2-5.2M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                    </svg>
+                    ดูสินค้า {msg.suggestion.keyword}
+                    <svg className="w-3.5 h-3.5 -mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
           ))}
 
           {showSuggestions && !loading && (

@@ -5,6 +5,13 @@ import { ReactNode } from "react"
 interface Props {
   role: "user" | "assistant"
   text: string
+  /** Click handler for the bubble-top speaker button. Only rendered for
+   *  assistant messages. Omit to hide the button (e.g. for system errors). */
+  onReplay?: () => void
+  /** Currently fetching TTS audio for this message. */
+  ttsLoading?: boolean
+  /** TTS audio for this message is currently playing. */
+  ttsPlaying?: boolean
 }
 
 import { LINE_URL } from "@/lib/store-config"
@@ -83,8 +90,9 @@ function parseLinks(text: string): ReactNode[] {
   return parts.length > 0 ? parts : [text]
 }
 
-export default function ChatMessage({ role, text }: Props) {
+export default function ChatMessage({ role, text, onReplay, ttsLoading, ttsPlaying }: Props) {
   const isUser = role === "user"
+  const showSpeaker = !isUser && typeof onReplay === "function"
 
   const content = isUser
     ? text
@@ -98,13 +106,39 @@ export default function ChatMessage({ role, text }: Props) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] px-3 py-2 text-sm leading-relaxed ${
+        className={`relative max-w-[85%] px-3 py-2 text-sm leading-relaxed ${
           isUser
             ? "bg-purple-950 border border-purple-400/20 text-white rounded-2xl rounded-br-md"
             : "bg-[#1e1e2e] border border-[#2a2a3a] text-gray-200 rounded-2xl rounded-bl-md"
-        }`}
+        } ${showSpeaker ? "pr-8" : ""}`}
       >
         {content}
+
+        {showSpeaker && (
+          <button
+            type="button"
+            onClick={onReplay}
+            className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+              ttsPlaying
+                ? "bg-purple-500/30 text-purple-200 ring-1 ring-purple-400/60 animate-pulse"
+                : "bg-white/5 hover:bg-purple-500/20 text-gray-500 hover:text-purple-300"
+            }`}
+            title={ttsPlaying ? "กำลังเล่น" : ttsLoading ? "กำลังสร้างเสียง..." : "ฟังเสียง"}
+            aria-label={ttsPlaying ? "กำลังเล่นเสียง" : "อ่านออกเสียงข้อความนี้"}
+          >
+            {ttsLoading ? (
+              <span className="block w-3 h-3 rounded-full border border-gray-500 border-t-transparent animate-spin" />
+            ) : ttsPlaying ? (
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14l-1.42-1.42a8 8 0 000-11.3l1.42-1.42zM15.54 8.46a5 5 0 010 7.07l-1.41-1.41a3 3 0 000-4.24l1.41-1.42z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07l-1.41-1.41a3 3 0 000-4.24l1.41-1.42z" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
     </div>
   )
