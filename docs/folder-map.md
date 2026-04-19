@@ -89,6 +89,8 @@ All business logic. No JSX in here.
 | `tts-cache.ts` | `CACHED_TTS_REPLIES`, `lookupCachedTts` | Phrase → static WAV URL map. ChatWidget checks this before calling `/api/ai/tts` so deterministic FAQ replies are served from CDN. Regen WAVs with `node scripts/gen-tts-cache.mjs` |
 | `catalogs.ts` | `CATALOGS` | Catalog PDF list |
 | `structured-data.ts` | `localBusinessSchema` | JSON-LD for SEO (LocalBusiness schema injected on home) |
+| `reels.ts` | `getReels`, `getActiveReels`, `getReelById`, `createReel`, `updateReel`, `deleteReel`, `reorderReels` | Facebook Reels CRUD — wraps `reels.json` with `withLock`. DB record only — Cloudinary files handled separately by `cloudinary-delete.ts` |
+| `cloudinary-delete.ts` | `destroyCloudinaryAsset(url, resourceType)`, `publicIdFromUrl(url)` | **Hard-deletes Cloudinary assets.** Parses `CLOUDINARY_URL` env → extracts publicId from URL → calls `uploader.destroy({ invalidate: true })`. Used by reel DELETE/PUT routes to prevent orphan storage. Silent on failure (logs only) |
 
 ## `web/data/`
 
