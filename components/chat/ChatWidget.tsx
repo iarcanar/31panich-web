@@ -24,7 +24,11 @@ const SUGGESTIONS = [
 
 const MIN_HEIGHT = 380
 const DEFAULT_HEIGHT = 480
-const TTS_PREF_KEY = "chat-tts-enabled"
+// Bumped suffix to reset any stale preference from prior testing. Ensures
+// EVERY user starts with TTS = ON after this deploy, regardless of what they
+// toggled before. They can turn it off via the toggle; the new choice will
+// persist under this key going forward.
+const TTS_PREF_KEY = "chat-tts-enabled-v2"
 
 export default function ChatWidget() {
   const router = useRouter()
@@ -96,18 +100,25 @@ export default function ChatWidget() {
     }
   }, [])
 
+  // Session id is needed on every TTS call (server binds TTS to an active
+  // chat session). Use a ref so the latest value is always sent without
+  // re-creating callbacks on every re-render.
+  const sessionIdRef = useRef<string | null>(null)
+  sessionIdRef.current = sessionId
+
   /** Pre-fetch TTS audio and store in cache. Returns true on success.
    *  Used when `ttsEnabled` so we can delay rendering the bot message until
    *  audio is ready — keeps text + voice appearing in sync. */
   const prefetchTTS = useCallback(async (idx: number, text: string): Promise<boolean> => {
     if (audioCache.current.has(idx)) return true
     if (inFlightFetches.current.has(idx)) return false
+    if (!sessionIdRef.current) return false  // server rejects without session
     inFlightFetches.current.add(idx)
     try {
       const res = await fetch("/api/ai/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, sessionId: sessionIdRef.current }),
       })
       if (!res.ok) return false
       const blob = await res.blob()
