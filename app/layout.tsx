@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Noto_Sans_Thai, Noto_Sans } from "next/font/google"
+import { Noto_Sans_Thai, Noto_Sans, Prompt } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
@@ -13,6 +13,14 @@ const notoSans = Noto_Sans({
   subsets: ["latin"],
   variable: "--font-latin",
   weight: ["400", "500", "600", "700"],
+})
+
+// Display font for tagline / quoted taglines — ExtraLight (200) only.
+// Prompt contrasts with Noto Sans Thai: geometric, modern, thin.
+const promptDisplay = Prompt({
+  subsets: ["thai", "latin"],
+  variable: "--font-display",
+  weight: ["200"],
 })
 
 export const viewport: Viewport = {
@@ -55,7 +63,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="th" className={`${notoSansThai.variable} ${notoSans.variable}`}>
+    <html lang="th" className={`${notoSansThai.variable} ${notoSans.variable} ${promptDisplay.variable}`}>
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://i.imgur.com" />

@@ -98,9 +98,12 @@ export default function AboutPage() {
             subtle
             hero={<Image src="/logo.webp" alt="31 พานิช" width={80} height={80} />}
           />
-          <p className="text-center mt-5 md:mt-7 text-xl md:text-3xl font-semibold th-text">
+          <p
+            className="text-center mt-6 md:mt-8 text-2xl md:text-4xl th-text tracking-wide"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 200 }}
+          >
             <span className="text-purple-300" aria-hidden="true">&ldquo;</span>
-            <span className="text-white/95 mx-1">วัสดุก่อสร้าง ตกแต่งบ้าน อุปกรณ์ช่าง ครบจบที่เดียว</span>
+            <span className="text-white/95 mx-1.5">วัสดุก่อสร้าง ตกแต่งบ้าน อุปกรณ์ช่าง ครบจบที่เดียว</span>
             <span className="text-purple-300" aria-hidden="true">&rdquo;</span>
           </p>
         </div>
