@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateSpeech, pcmToWav, cleanForTTS } from "@/lib/tts"
-import { getSession } from "@/lib/ai-session"
 
 // ─── Guards ─────────────────────────────────────────────
 // Cap per-request text — most chat replies are well under this.
@@ -44,7 +43,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "TTS not configured" }, { status: 503 })
     }
 
-    // 1) Per-IP rate limit
+    // Per-IP rate limit — enough protection against abuse given this endpoint's
+    // limited damage surface (each call costs a few cents of quota, not real
+    // user data). Session binding was removed because ai-session's in-memory
+    // store is per-serverless-instance and chat/TTS requests can land on
+    // different instances, producing spurious 401s for legitimate users.
     const ip = clientIp(req)
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
@@ -54,15 +57,6 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}))
-
-    // 2) Session binding — TTS must come from an active chat session.
-    //    Stops random external callers from burning quota on this endpoint.
-    const sessionId = typeof body.sessionId === "string" ? body.sessionId : ""
-    if (!sessionId || !getSession(sessionId)) {
-      return NextResponse.json({ error: "invalid session" }, { status: 401 })
-    }
-
-    // 3) Text validation
     const rawText = typeof body.text === "string" ? body.text : ""
     if (!rawText.trim()) {
       return NextResponse.json({ error: "text required" }, { status: 400 })
