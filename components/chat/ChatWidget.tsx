@@ -41,10 +41,7 @@ export default function ChatWidget() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT)
-  const [bottomOffset, setBottomOffset] = useState(24)
   const panelHeightRef = useRef(DEFAULT_HEIGHT)
-  const preKbHeight = useRef(DEFAULT_HEIGHT)
-  const kbOpen = useRef(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -223,37 +220,11 @@ export default function ChatWidget() {
     return () => { clearTimeout(timer); document.removeEventListener("mousedown", handleClick) }
   }, [panelOpen])
 
-  // Keyboard open/close — only depends on panelOpen (reads height from ref)
-  useEffect(() => {
-    if (!panelOpen || !window.visualViewport) return
-    function handleResize() {
-      const vv = window.visualViewport!
-      const keyboardHeight = window.innerHeight - vv.height
-      if (keyboardHeight > 100) {
-        if (!kbOpen.current) {
-          preKbHeight.current = panelHeightRef.current
-          kbOpen.current = true
-        }
-        setBottomOffset(keyboardHeight + 8)
-        const maxH = vv.height - 40
-        setPanelHeight((h) => Math.min(h, maxH))
-      } else if (kbOpen.current) {
-        kbOpen.current = false
-        setBottomOffset(24)
-        setPanelHeight(preKbHeight.current)
-      }
-    }
-    window.visualViewport.addEventListener("resize", handleResize)
-    return () => window.visualViewport?.removeEventListener("resize", handleResize)
-  }, [panelOpen])
-
-  // Reset keyboard state when panel closes
-  useEffect(() => {
-    if (!panelOpen) {
-      kbOpen.current = false
-      setBottomOffset(24)
-    }
-  }, [panelOpen])
+  // Keyboard handling is now done entirely via CSS `dvh` (dynamic viewport
+  // height) units on the panel — the browser auto-shrinks the max-height
+  // when the keyboard opens on BOTH iOS and Android (unlike the previous
+  // JS-based math which only worked correctly on iOS). See the panel's
+  // `maxHeight` style + `bottom-6` class below.
 
   // Resize drag handlers
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -396,10 +367,21 @@ export default function ChatWidget() {
         </svg>
       </button>
 
-      {/* ── Chat panel (always in DOM — CSS visibility toggle) ── */}
+      {/* ── Chat panel (always in DOM — CSS visibility toggle) ──
+           Positioning:
+             - bottom: safe-area + 24px from visible viewport bottom
+             - height: user-draggable (state) but clamped by max-height
+             - max-height: 100dvh - 3rem (dvh = dynamic viewport, shrinks
+               automatically when the keyboard opens on iOS AND Android —
+               replaces the old JS-based visualViewport math that only
+               worked on iOS) */}
       <div
         ref={panelRef}
-        style={{ height: panelHeight, bottom: bottomOffset }}
+        style={{
+          height: panelHeight,
+          maxHeight: "calc(100dvh - 3rem)",
+          bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))",
+        }}
         className={`fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 max-w-[calc(100vw-1.5rem)] md:max-w-none bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
           panelOpen
             ? "opacity-100 pointer-events-auto translate-y-0"
