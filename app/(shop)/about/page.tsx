@@ -94,12 +94,15 @@ export default function AboutPage() {
         <div className="relative container mx-auto px-4 pt-32 pb-20 md:py-28 min-h-[280px]">
           <SectionHeader
             title="เกี่ยวกับสามหนึ่ง"
-            subtitle="ร้านค้าฮาร์ดแวร์ครบวงจรที่คุณไว้วางใจ"
             theme="purple"
             subtle
             hero={<Image src="/logo.webp" alt="31 พานิช" width={80} height={80} />}
           />
-          <p className="text-gray-400 text-center mt-1">วัสดุก่อสร้าง ตกแต่งบ้าน อุปกรณ์ช่าง ครบจบที่เดียว</p>
+          <p className="text-center mt-5 md:mt-7 text-xl md:text-3xl font-semibold th-text">
+            <span className="text-purple-300" aria-hidden="true">&ldquo;</span>
+            <span className="text-white/95 mx-1">วัสดุก่อสร้าง ตกแต่งบ้าน อุปกรณ์ช่าง ครบจบที่เดียว</span>
+            <span className="text-purple-300" aria-hidden="true">&rdquo;</span>
+          </p>
         </div>
       </section>
 
