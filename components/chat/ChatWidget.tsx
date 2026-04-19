@@ -6,6 +6,7 @@ import { useBusinessHours } from "@/hooks/useBusinessHours"
 import { PHONE_RAW, LINE_URL, GOOGLE_MAPS_URL } from "@/lib/store-config"
 import ChatMessage from "./ChatMessage"
 import { fmtShort, holidayShortName } from "@/lib/date-utils"
+import { lookupCachedTts } from "@/lib/tts-cache"
 
 interface Message {
   role: "user" | "assistant"
@@ -108,6 +109,12 @@ export default function ChatWidget() {
   const prefetchTTS = useCallback(async (idx: number, text: string): Promise<boolean> => {
     if (audioCache.current.has(idx)) return true
     if (inFlightFetches.current.has(idx)) return false
+    // ── Static cache hit — use pre-generated WAV from CDN, skip the API ──
+    const staticUrl = lookupCachedTts(text)
+    if (staticUrl) {
+      audioCache.current.set(idx, staticUrl)
+      return true
+    }
     inFlightFetches.current.add(idx)
     try {
       const res = await fetch("/api/ai/tts", {
@@ -152,7 +159,20 @@ export default function ChatWidget() {
     // 2) Already fetching for this index → skip duplicate request
     if (inFlightFetches.current.has(idx)) return
 
-    // 3) Fetch + cache + play
+    // 3) Static cache check — play pre-generated WAV without hitting the API
+    const staticUrl = lookupCachedTts(text)
+    if (staticUrl) {
+      audioCache.current.set(idx, staticUrl)
+      const audio = new Audio(staticUrl)
+      currentAudio.current = audio
+      setTtsPlayingIdx(idx)
+      audio.onended = () => { if (currentAudio.current === audio) { currentAudio.current = null; setTtsPlayingIdx(null) } }
+      audio.onerror = () => setTtsPlayingIdx(null)
+      try { await audio.play() } catch { setTtsPlayingIdx(null) }
+      return
+    }
+
+    // 4) Fetch + cache + play
     inFlightFetches.current.add(idx)
     setTtsLoadingIdx(idx)
     try {

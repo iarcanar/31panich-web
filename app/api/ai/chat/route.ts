@@ -45,6 +45,12 @@ const HOURS_GENERAL_KEYWORDS = [
   "เปิดไหม", "ปิดไหม", "เปิดมั้ย", "ปิดมั้ย",
 ]
 
+const LOCATION_KEYWORDS = [
+  "อยู่ไหน", "อยู่ที่ไหน", "อยู่ตรงไหน", "แถวไหน",
+  "ที่อยู่ร้าน", "พิกัดร้าน", "แผนที่", "พิกัด",
+  "นำทาง", "ไปร้าน", "ไปยังไง", "เดินทาง",
+]
+
 function containsAny(message: string, keywords: string[]): boolean {
   const normalized = message.normalize("NFC")
   return keywords.some((kw) => normalized.includes(kw.normalize("NFC")))
@@ -63,6 +69,12 @@ function isHolidaySpecific(message: string, holidayObj: ActiveHoliday | null): b
 /** True for generic "กี่โมง / เปิดไหม" style questions. */
 function isHoursGeneral(message: string): boolean {
   return containsAny(message, HOURS_GENERAL_KEYWORDS)
+}
+
+/** True when the message is primarily asking where the shop is. Handled by
+ *  Pipeline A3 — deterministic reply text so TTS can serve a cached WAV. */
+function isLocationQuery(message: string): boolean {
+  return containsAny(message, LOCATION_KEYWORDS)
 }
 
 // ─── Pipeline C: Instant confirmation (skip Gemini) ─────
@@ -283,6 +295,12 @@ export async function POST(request: NextRequest) {
     } else if (hoursGeneral) {
       // ══ Pipeline A2b: Plain hours question — answer hours only, don't volunteer holiday talk ══
       reply = `ร้านเปิดทุกวัน ${HOURS_TEXT} ครับ`
+      searchKeyword = undefined
+    } else if (isLocationQuery(message)) {
+      // ══ Pipeline A3: Location question — deterministic reply + map button
+      //     (cacheable TTS: text matches a pre-generated WAV on the CDN) ══
+      reply = `ร้านอยู่${STORE_LANDMARK}ครับ กดเพื่อนำทางได้เลยครับ`
+      mapLink = true
       searchKeyword = undefined
     } else {
       // ══ Pipeline B: Normal (products + general) ══
