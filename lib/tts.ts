@@ -254,7 +254,14 @@ export function normalizeThaiTimes(text: string): string {
 //   - Order matters: put compound patterns like "Dongcheng(DC)" BEFORE the
 //     standalone ones so they're consumed first.
 const BRAND_PRONUNCIATIONS: Array<[RegExp, string]> = [
-  // "Dongcheng (DC)" or "Dongcheng(DC)" or "Dongcheng DC" — collapse to ดีซี
+  // ─── Shop name — MUST be matched before bare domain/brand patterns ───
+  // Full URL (with optional www.) — spell out TLD the way Thais say it.
+  [/\b(?:www\.)?31panich\.co\.th\b/gi, "สามหนึ่งพานิช ดอทซีโอ ดอท ทีเอช"],
+  // Bare brand slug (no TLD) — e.g. "แบรนด์ 31panich"
+  [/\b31panich\b/gi, "สามหนึ่งพานิช"],
+
+  // ─── Supplier / product brands ───
+  // "Dongcheng (DC)" / "Dongcheng(DC)" / "Dongcheng DC" — collapse to ดีซี
   [/\bdongcheng\s*\(?\s*dc\s*\)?/gi, "ดีซี"],
   [/\bdongcheng\b/gi, "ดีซี"],
   [/\bbeger\b/gi, "เบเย่อ"],
@@ -263,9 +270,9 @@ const BRAND_PRONUNCIATIONS: Array<[RegExp, string]> = [
   [/\bhiet\b/gi, "ไฮเอ็ด"],
   [/\bbewon\b/gi, "บีวัน"],
   // Standalone "DC" — only after the compound form is consumed above.
-  // Guard against false positives like "DC current" by requiring it not be
-  // followed by letters (so "DC motor" won't match but "DC" alone or in a
-  // product listing will).
+  // Guard against false positives like "DC current" / "DCAE" by requiring
+  // it not be followed by letters (so "DC motor" won't match but "DC"
+  // alone or in a product listing will).
   [/\bDC\b(?![a-zA-Z])/g, "ดีซี"],
 ]
 
