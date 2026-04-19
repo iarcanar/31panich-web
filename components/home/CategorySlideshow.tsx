@@ -104,7 +104,7 @@ export default function CategorySlideshow({ slides }: Props) {
             <Link
               key={`m-${slide.category}-${i}`}
               href={`/products/${slide.category}`}
-              className="flex-shrink-0 relative overflow-hidden"
+              className="flex-shrink-0 relative overflow-hidden ring-1 ring-inset ring-white/40"
               style={{ width: "calc(100vw / 4)", height: "clamp(80px, 22vw, 110px)" }}
             >
               {slide.image ? (
@@ -118,19 +118,13 @@ export default function CategorySlideshow({ slides }: Props) {
               ) : (
                 <div className="absolute inset-0 bg-[#1e2035]" />
               )}
-              <div
-                className="absolute inset-0"
-                style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 100%)" }}
-              />
-              <div className="absolute inset-[3px] flex flex-col items-center justify-center gap-1">
-                <span className="bg-black/50 backdrop-blur-sm rounded-md w-full h-full inline-flex flex-col items-center justify-center gap-1 border border-white/10 px-1">
-                  <img
-                    src={`/category-icons/${slide.category}.svg`}
-                    alt=""
-                    className="h-[24px] w-[24px] opacity-90"
-                  />
-                  <span className="text-white/80 text-[9px] font-medium leading-tight text-center line-clamp-1">{slide.label}</span>
-                </span>
+              <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-1 px-1.5">
+                <img
+                  src={`/category-icons/${slide.category}.svg`}
+                  alt=""
+                  className="h-[28px] w-[28px] opacity-95 flex-shrink-0"
+                />
+                <span className="text-white text-[10px] font-semibold leading-tight text-center line-clamp-1">{slide.label}</span>
               </div>
             </Link>
           ))}
@@ -165,7 +159,7 @@ export default function CategorySlideshow({ slides }: Props) {
                   src={slide.image}
                   alt={slide.label}
                   fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="object-cover blur-[3px] scale-110 group-hover:scale-[1.18] group-hover:blur-[2px] transition-all duration-500"
                   sizes="20vw"
                 />
               ) : (
@@ -173,14 +167,14 @@ export default function CategorySlideshow({ slides }: Props) {
               )}
               <div
                 className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-80"
-                style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 100%)" }}
+                style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)" }}
               />
-              <div className="absolute inset-[4px] flex items-center justify-center">
-                <span className="bg-black/60 backdrop-blur-sm text-white font-extrabold text-base tracking-wide rounded-lg w-full h-full inline-flex items-center justify-center gap-2.5 border border-white/10">
+              <div className="absolute inset-0 flex items-center justify-center px-3">
+                <span className="bg-black/65 backdrop-blur-sm text-white font-extrabold text-base tracking-wide rounded-full inline-flex items-center justify-center gap-2.5 border border-white/10 px-6 py-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-105">
                   <img
                     src={`/category-icons/${slide.category}.svg`}
                     alt=""
-                    className="h-[24px] w-[24px]"
+                    className="h-[22px] w-[22px]"
                   />
                   {slide.label}
                 </span>
