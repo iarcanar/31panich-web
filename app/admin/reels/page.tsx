@@ -272,7 +272,7 @@ export default function AdminReelsPage() {
   }
 
   async function handleDelete(r: Reel) {
-    if (!confirm(`ลบ Reel "${r.title}" ออกจากหน้าเว็บ?`)) return
+    if (!confirm(`ลบ Reel "${r.title}"?\n(จะลบไฟล์วิดีโอ + โปสเตอร์ออกจาก Cloudinary ถาวร — กู้คืนไม่ได้)`)) return
     const res = await fetch(`/api/admin/reels/${r.id}`, { method: "DELETE" })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
@@ -341,7 +341,7 @@ export default function AdminReelsPage() {
                   <Image src={r.poster} alt={r.title} fill className="object-cover" sizes="56px" />
                 )}
                 {r.previewMp4 && (
-                  <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500/90 flex items-center justify-center" title="มี preview video">
+                  <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500/90 flex items-center justify-center" title="มีวิดีโอ">
                     <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
@@ -358,7 +358,7 @@ export default function AdminReelsPage() {
                   </span>
                   {r.previewMp4 && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded border bg-red-500/10 text-red-400 border-red-500/30 font-medium">
-                      มี preview
+                      มีวิดีโอ
                     </span>
                   )}
                   <span className="text-[10px] text-[#475569]">ลำดับ {i + 1}</span>
@@ -495,7 +495,7 @@ export default function AdminReelsPage() {
               </div>
 
               <div>
-                <FieldLabel>Preview video (แนวตั้ง) — ไม่บังคับ</FieldLabel>
+                <FieldLabel>วิดีโอ (แนวตั้ง 9:16) — ไม่บังคับ</FieldLabel>
                 {form.previewMp4 ? (
                   <div className="flex items-center gap-3">
                     <video
@@ -540,14 +540,14 @@ export default function AdminReelsPage() {
                     <p className="text-[10px] text-[#94a3b8] mt-1.5">
                       {videoProgress < 100
                         ? "ส่งไฟล์เข้า Cloudinary..."
-                        : "ระบบกำลังแปลง ย่อขนาด ตัด 5 วินาทีแรก และลบเสียง — รอสักครู่"}
+                        : "ระบบกำลังแปลง ย่อขนาด 540p พร้อมเก็บเสียง — รอสักครู่"}
                     </p>
                   </div>
                 ) : (
                   <label className="block rounded-lg border border-dashed border-white/20 hover:border-amber-500/60 text-center py-3 px-3 text-xs cursor-pointer transition-colors bg-[#1a1a28] text-[#94a3b8]">
                     <div className="font-medium">เลือกวิดีโอ (MP4/MOV/WebM ≤95MB)</div>
                     <div className="text-[10px] text-[#64748b] mt-0.5">
-                      ระบบจะย่อ + ตัด 5 วิ + ลบเสียง ให้อัตโนมัติ
+                      ระบบจะย่อเป็น 540p + เก็บเสียง + เต็มความยาว ให้อัตโนมัติ
                     </div>
                     <input
                       ref={videoInputRef}
