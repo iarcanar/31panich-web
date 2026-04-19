@@ -275,12 +275,6 @@ export default function ReelModal({ reels, startIndex, onClose }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          {n > 1 && (
-            <div className="absolute top-5 left-1/2 -translate-x-1/2 text-white/90 text-xs font-semibold bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full z-20 pointer-events-none">
-              {idx + 1} / {n}
-            </div>
-          )}
-
           {/* Bottom gradient + title + FB button */}
           <div className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
           <div className="absolute bottom-5 left-4 right-4 flex items-end justify-between gap-3 z-20">
