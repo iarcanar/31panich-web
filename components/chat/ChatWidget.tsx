@@ -565,12 +565,12 @@ export default function ChatWidget() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="พิมพ์ข้อความ..."
             maxLength={500}
-            className="flex-1 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-purple-400/40"
+            className="flex-1 min-w-0 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg px-3 py-2 text-base md:text-sm text-white placeholder-gray-600 outline-none focus:border-purple-400/40"
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="bg-purple-600 hover:bg-purple-500 disabled:opacity-30 text-white rounded-lg px-3 py-2 transition"
+            className="shrink-0 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 text-white rounded-lg px-3 py-2 transition"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" />
