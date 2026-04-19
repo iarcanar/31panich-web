@@ -509,6 +509,7 @@ export default function ChatWidget() {
                 <div className="flex justify-start">
                   <button
                     onClick={() => {
+                      setPanelOpen(false)
                       router.push(`/products?search=${encodeURIComponent(msg.suggestion!.keyword)}`)
                     }}
                     className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg shadow-purple-500/30 active:scale-95 transition-all"
