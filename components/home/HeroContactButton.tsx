@@ -11,6 +11,7 @@ export default function HeroContactButton({ className = "" }: Props) {
     <ContactLink
       type="phone"
       className={className}
+      showHoursWhenClosed
     >
       โทรสั่งเลย
     </ContactLink>
