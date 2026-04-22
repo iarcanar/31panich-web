@@ -21,6 +21,7 @@ Single source of truth for how this codebase fits together. **AI sessions: start
 - [`recipes/add-product.md`](./recipes/add-product.md) — เพิ่มสินค้าใหม่
 - [`recipes/edit-ai-prompt.md`](./recipes/edit-ai-prompt.md) — แก้ AI system prompt
 - [`recipes/add-category.md`](./recipes/add-category.md) — เพิ่มหมวดสินค้าใหม่
+- [`recipes/add-catalog.md`](./recipes/add-catalog.md) — เพิ่มแคตตาล็อกแบรนด์บนหน้าแรก
 - [`recipes/clear-stale-coupon-claims.md`](./recipes/clear-stale-coupon-claims.md) — ล้าง claim count คูปอง
 
 ## Reference
