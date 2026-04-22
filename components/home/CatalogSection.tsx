@@ -11,7 +11,13 @@ export default function CatalogSection() {
               key={cat.id}
               className="bg-[#1a1a28] rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl group flex flex-col"
             >
-              <div className="aspect-[3/4] relative flex items-center justify-center overflow-hidden">
+              <a
+                href={cat.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`ดูแคตตาล็อก ${cat.brand}`}
+                className="aspect-[3/4] relative flex items-center justify-center overflow-hidden cursor-pointer"
+              >
                 <Image
                   src={cat.image}
                   alt={`${cat.brand} Catalog`}
@@ -19,7 +25,7 @@ export default function CatalogSection() {
                   height={400}
                   className="object-contain w-full h-full p-2 group-hover:scale-105 transition-transform duration-500"
                 />
-              </div>
+              </a>
               <div className="p-3 sm:p-6 text-center flex flex-col flex-1 justify-between">
                 <div>
                   <h3 className="text-white font-bold text-sm sm:text-xl mb-1 sm:mb-2">{cat.brand}</h3>
