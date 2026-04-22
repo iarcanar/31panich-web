@@ -1,6 +1,13 @@
 /** Single source of truth for product catalogs — shared by admin, frontend & product detail */
 export const CATALOGS = [
   {
+    id: "osuka",
+    brand: "Osuka",
+    description: "แคตตาล็อกเครื่องมือช่าง Osuka รวมเครื่องมือและอุปกรณ์ช่างคุณภาพครบทุกประเภท",
+    url: "https://anyflip.com/qjteo/lhvk/",
+    image: "/catalog/osuka.webp",
+  },
+  {
     id: "emtop",
     brand: "Emtop",
     description: "เครื่องมือและอุปกรณ์คุณภาพสูง สำหรับช่างมืออาชีพและผู้ใช้ทั่วไป",
