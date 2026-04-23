@@ -84,16 +84,16 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        {/* Right overlay — จุดเด่นร้าน */}
+        {/* Right overlay — จุดเด่นร้าน (gold sci-fi variant) */}
         <div className="absolute right-[5%] top-1/2 -translate-y-1/2 -translate-x-10 text-center select-none pointer-events-none">
-          <p className="text-[#f5d000] font-semibold text-2xl xl:text-3xl drop-shadow-lg">ศูนย์รับผสมสีทาบ้าน</p>
+          <p className="sci-fi-gold-title font-semibold text-2xl xl:text-3xl">ศูนย์รับผสมสีทาบ้าน</p>
           <div className="flex items-center justify-center gap-3 mt-2">
-            <span className="bg-[#f5d000] text-[#1a1a1a] font-bold text-base xl:text-lg px-4 py-1 rounded-md shadow-lg">Beger</span>
-            <span className="bg-[#f5d000] text-[#1a1a1a] font-bold text-base xl:text-lg px-4 py-1 rounded-md shadow-lg">TOA</span>
+            <span className="sci-fi-gold-badge font-bold text-base xl:text-lg px-4 py-1 rounded-md">Beger</span>
+            <span className="sci-fi-gold-badge font-bold text-base xl:text-lg px-4 py-1 rounded-md">TOA</span>
           </div>
-          <p className="text-white font-normal text-xl xl:text-2xl mt-3 tracking-wide drop-shadow-lg">ก่อสร้าง-ซ่อมแซม</p>
-          <p className="text-white font-normal text-xl xl:text-2xl tracking-wide drop-shadow-lg">ไฟฟ้า/ประปา/สว่าน/ปั๊มน้ำ</p>
-          <p className="mt-3 font-bold text-2xl xl:text-3xl px-8 py-1.5 rounded-lg text-[#3a1366] inline-block banner-shimmer" style={{ background: "linear-gradient(to right, transparent, #22d3ee 10%, #7dd3fc 90%, transparent)" }}><span className="relative z-10">ราคาไม่แพง!</span><BannerShimmer /></p>
+          <p className="sci-fi-gold-line font-normal text-xl xl:text-2xl mt-3 tracking-wide">ก่อสร้าง-ซ่อมแซม</p>
+          <p className="sci-fi-gold-line font-normal text-xl xl:text-2xl tracking-wide">ไฟฟ้า/ประปา/สว่าน/ปั๊มน้ำ</p>
+          <p className="mt-3 font-bold text-2xl xl:text-3xl px-8 py-1.5 rounded-lg text-[#3a1366] inline-block banner-shimmer" style={{ background: "linear-gradient(to right, transparent, #facc15 10%, #fde047 90%, transparent)" }}><span className="relative z-10">ราคาไม่แพง!</span><BannerShimmer /></p>
         </div>
       </section>
 
