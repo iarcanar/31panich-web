@@ -55,6 +55,16 @@ const AMBIENT: SizeConfig = {
   ambientAlpha: 0.04, peakAlphaBoost: 0.7,
 }
 
+interface DriftArea {
+  /** Fractions 0–1. Defines the sub-rectangle where the sphere CENTER can wander.
+   *  Dots still render across the full canvas — only drift is constrained,
+   *  so clusters near the edge taper naturally via gaussian falloff. */
+  top?: number
+  bottom?: number
+  left?: number
+  right?: number
+}
+
 interface Props {
   /** 'large' for hero areas, 'small' for thumbnail grids, 'ambient' for section backdrops. */
   size?: "large" | "small" | "ambient"
@@ -62,9 +72,20 @@ interface Props {
   baseHue?: number
   /** Global animation speed. 1 = calm, 2 = lively. Default 2. */
   timeScale?: number
+  /** Restrict the sphere-center wander to a sub-rectangle of the canvas.
+   *  Default: full area. Dots outside this rect still render (no crop). */
+  driftArea?: DriftArea
+  /** CSS mix-blend-mode for the canvas. Default 'normal'. */
+  blend?: React.CSSProperties["mixBlendMode"]
 }
 
-export default function DriftSphereOverlay({ size = "large", baseHue = 220, timeScale = 2 }: Props) {
+export default function DriftSphereOverlay({
+  size = "large",
+  baseHue = 220,
+  timeScale = 2,
+  driftArea,
+  blend = "normal",
+}: Props) {
   const cfg = size === "small" ? SMALL : size === "ambient" ? AMBIENT : LARGE
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef(0)
@@ -104,10 +125,23 @@ export default function DriftSphereOverlay({ size = "large", baseHue = 220, time
 
       ctx!.clearRect(0, 0, w, h)
 
-      const driftX = 0.35 * (Math.sin(t * 0.13) + 0.6 * Math.sin(t * 0.071 + 1.2))
-      const driftY = 0.30 * (Math.cos(t * 0.17) + 0.6 * Math.sin(t * 0.089 + 2.1))
-      const ox = w * (0.5 + driftX)
-      const oy = h * (0.5 + driftY)
+      const rawDriftX = 0.35 * (Math.sin(t * 0.13) + 0.6 * Math.sin(t * 0.071 + 1.2))
+      const rawDriftY = 0.30 * (Math.cos(t * 0.17) + 0.6 * Math.sin(t * 0.089 + 2.1))
+
+      // Drift constraint: keep the cluster CENTER inside the sub-rect defined
+      // by driftArea (fractions of canvas). Default = full canvas (no change).
+      // Dots beyond this box still render via gaussian falloff → natural taper.
+      const dLeft = driftArea?.left ?? 0
+      const dRight = driftArea?.right ?? 1
+      const dTop = driftArea?.top ?? 0
+      const dBottom = driftArea?.bottom ?? 1
+      const xCenter = (dLeft + dRight) / 2
+      const yCenter = (dTop + dBottom) / 2
+      const xHalf = (dRight - dLeft) / 2
+      const yHalf = (dBottom - dTop) / 2
+      // rawDrift amplitudes: X_MAX ≈ 0.56, Y_MAX ≈ 0.48 (0.35*1.6, 0.30*1.6)
+      const ox = w * (xCenter + (xHalf / 0.5) * rawDriftX)
+      const oy = h * (yCenter + (yHalf / 0.5) * rawDriftY)
 
       const baseR = shortSide * cfg.sphereRadius
       const r = baseR * (1 + 0.18 * Math.sin(t * 0.6))
@@ -135,7 +169,7 @@ export default function DriftSphereOverlay({ size = "large", baseHue = 220, time
     }
     rafRef.current = requestAnimationFrame(draw)
     return () => { cancelAnimationFrame(rafRef.current); observer.disconnect() }
-  }, [cfg, activityRef, baseHue, timeScale])
+  }, [cfg, activityRef, baseHue, timeScale, driftArea])
 
   return (
     <>
@@ -154,7 +188,7 @@ export default function DriftSphereOverlay({ size = "large", baseHue = 220, time
       <div style={{ position: "absolute", inset: 0, isolation: "isolate", pointerEvents: "none" }}>
         <canvas
           ref={canvasRef}
-          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", mixBlendMode: blend }}
           aria-hidden="true"
         />
       </div>

@@ -65,7 +65,13 @@ export default function RewardsCarousel() {
 
   return (
     <section className="relative bg-gradient-to-b from-[#0e0e14] via-[#12121f] to-[#0e0e14] pt-4 pb-8 md:pt-8 md:pb-14 -mt-4 md:-mt-6 overflow-hidden">
-      <DriftSphereOverlay size="ambient" baseHue={275} timeScale={1.5} />
+      <DriftSphereOverlay
+        size="ambient"
+        baseHue={275}
+        timeScale={1.5}
+        driftArea={{ top: 0.08, bottom: 0.45 }}
+        blend="soft-light"
+      />
       <div className="relative z-[1] container mx-auto px-4">
         <SectionHeader
           title="แลกแต้มสามหนึ่ง"
