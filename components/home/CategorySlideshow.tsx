@@ -127,6 +127,7 @@ export default function CategorySlideshow({ slides }: Props) {
                   fill
                   className="object-cover"
                   sizes="25vw"
+                  loading="eager"
                 />
               ) : (
                 <div className="absolute inset-0 bg-[#1e2035]" />
@@ -167,6 +168,7 @@ export default function CategorySlideshow({ slides }: Props) {
                     fill
                     className="object-cover blur-[3px] scale-110 group-hover:scale-[1.18] group-hover:blur-[2px] transition-all duration-500"
                     sizes="20vw"
+                    loading="eager"
                   />
                 ) : (
                   <div className="absolute inset-0 bg-[#1e2035]" />

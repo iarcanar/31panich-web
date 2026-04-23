@@ -217,18 +217,12 @@ export function useDragScroll(
     // This bubbles from <img> children inside the scroll container.
     const onDragStart = (e: Event) => { e.preventDefault() }
 
-    // Suppress the right-click context menu on the carousel surface — casual
-    // deterrent against "Save image as" / "Inspect element" on product media.
-    // Does not block DevTools shortcuts; this is UX polish, not security.
-    const onContextMenu = (e: Event) => { e.preventDefault() }
-
     el.addEventListener("pointerdown", onPointerDown)
     el.addEventListener("pointermove", onPointerMove)
     el.addEventListener("pointerup", onPointerUp)
     el.addEventListener("pointercancel", onPointerUp)
     el.addEventListener("click", onClickCapture, true)
     el.addEventListener("dragstart", onDragStart)
-    el.addEventListener("contextmenu", onContextMenu)
 
     return () => {
       stopMomentum()
@@ -239,7 +233,6 @@ export function useDragScroll(
       el.removeEventListener("pointercancel", onPointerUp)
       el.removeEventListener("click", onClickCapture, true)
       el.removeEventListener("dragstart", onDragStart)
-      el.removeEventListener("contextmenu", onContextMenu)
       document.body.style.cursor = ""
       document.body.style.userSelect = ""
     }
