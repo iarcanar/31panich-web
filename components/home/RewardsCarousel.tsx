@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRef, useState, useEffect, useCallback } from "react"
 import SectionHeader from "./SectionHeader"
+import DriftSphereOverlay from "@/components/ui/DriftSphereOverlay"
 
 // ไม่รวม cooker + zootopia เพราะแสดงในโซนโปรโมชั่นแล้ว
 const REWARDS = [
@@ -63,8 +64,9 @@ export default function RewardsCarousel() {
   const dotCount = Math.min(totalCards, 6)
 
   return (
-    <section className="bg-gradient-to-b from-[#0e0e14] via-[#12121f] to-[#0e0e14] pt-4 pb-8 md:pt-8 md:pb-14 -mt-4 md:-mt-6">
-      <div className="container mx-auto px-4">
+    <section className="relative bg-gradient-to-b from-[#0e0e14] via-[#12121f] to-[#0e0e14] pt-4 pb-8 md:pt-8 md:pb-14 -mt-4 md:-mt-6 overflow-hidden">
+      <DriftSphereOverlay size="ambient" baseHue={275} timeScale={1} />
+      <div className="relative z-[1] container mx-auto px-4">
         <SectionHeader
           title="แลกแต้มสามหนึ่ง"
           subtitle="ใช้แต้มสามหนึ่งเพื่อแลกของรางวัลพิเศษ"
