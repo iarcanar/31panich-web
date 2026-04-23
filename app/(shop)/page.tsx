@@ -24,7 +24,7 @@ export default function HomePage() {
       />
 
       {/* Hero Banner — Mobile: full-bleed behind header + CTA overlay */}
-      <section className="lg:hidden -mt-16 relative w-full aspect-[2/1]">
+      <section className="lg:hidden -mt-16 relative w-full aspect-[3/2]">
         <Image
           src="/banner-mobile.webp"
           alt="ร้านสามหนึ่งพานิช ลพบุรี — สี วัสดุก่อสร้าง เครื่องมือช่าง"
@@ -33,9 +33,11 @@ export default function HomePage() {
           sizes="100vw"
           priority
         />
-        {/* Gradient: ดำล่าง ไล่ขึ้น */}
+        {/* Top dissolve — ดำบน ไล่ลงใส (เบลนด์กับ header + ดันข้อความลงมา) */}
+        <div className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-[#0a0a0f] via-[#0a0a0f]/65 to-transparent" />
+        {/* Bottom gradient — ดำล่าง ไล่ขึ้น (คอนทราสต์กับข้อความ) */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
-        <div className="absolute inset-0 flex items-end justify-center pb-5 px-5 pt-16">
+        <div className="absolute inset-0 flex items-end justify-center pb-6 px-5 pt-28">
           <div className="flex flex-col items-center">
             <div className="sci-fi-frame">
               <span aria-hidden className="sci-fi-corner tl" />
