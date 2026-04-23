@@ -185,12 +185,20 @@ export default function DriftSphereOverlay({
       const r = baseR * (1 + 0.18 * Math.sin(t * 0.6))
       const sigma2 = r * r * 0.5
 
-      const rowSpacing = h / (cfg.rows - 1)
-      const colSpacing = w / (cfg.cols - 1)
+      // Adaptive grid: preserve the configured total dot count but rebalance
+      // rows/cols to match the canvas aspect. Without this, tall-narrow
+      // sections (mobile) produce wide row spacing × tight col spacing →
+      // the cluster elongates into a horizontal stripe instead of a round
+      // blob. Keeps spacing ~uniform on both axes.
+      const targetTotal = cfg.rows * cfg.cols
+      const cols = Math.max(2, Math.round(Math.sqrt(targetTotal * w / h)))
+      const rows = Math.max(2, Math.round(targetTotal / cols))
+      const rowSpacing = h / (rows - 1)
+      const colSpacing = w / (cols - 1)
 
-      for (let row = 0; row < cfg.rows; row++) {
+      for (let row = 0; row < rows; row++) {
         const y = row * rowSpacing
-        for (let col = 0; col < cfg.cols; col++) {
+        for (let col = 0; col < cols; col++) {
           const x = col * colSpacing
           const dx = x - ox, dy = y - oy
           const energy = Math.exp(-(dx * dx + dy * dy) / sigma2)
