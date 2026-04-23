@@ -177,14 +177,14 @@ export default function CategorySlideshow({ slides }: Props) {
                   className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-80"
                   style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)" }}
                 />
-                <div className="absolute inset-0 flex items-center justify-center px-3">
-                  <span className="bg-black/65 backdrop-blur-sm text-white font-extrabold text-base tracking-wide rounded-full inline-flex items-center justify-center gap-2.5 border border-white/10 px-6 py-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-105">
+                <div className="absolute inset-0 flex items-center justify-center px-2">
+                  <span className="max-w-full bg-black/65 backdrop-blur-sm text-white font-extrabold tracking-tight text-sm xl:text-base rounded-full inline-flex items-center justify-center gap-2 border border-white/10 px-4 py-2 shadow-[0_3px_12px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-105">
                     <img
                       src={`/category-icons/${slide.category}.svg`}
                       alt=""
-                      className="h-[22px] w-[22px]"
+                      className="h-[20px] w-[20px] flex-shrink-0"
                     />
-                    {slide.label}
+                    <span className="whitespace-nowrap truncate">{slide.label}</span>
                   </span>
                 </div>
               </Link>

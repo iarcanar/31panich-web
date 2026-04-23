@@ -1,6 +1,6 @@
 ---
 title: Folder Map
-last_reviewed: 2026-04-19
+last_reviewed: 2026-04-23
 audience: both
 ---
 
@@ -60,8 +60,10 @@ Organized by domain, not by component type.
 | `points/` | `HowToCollect` (loyalty program explainer) |
 | `admin/` | `AdminModeProvider`, `AiEnrichButton`, `ImageCropPicker` |
 | `layout/` | `Header`, `Footer`, `FloatingOrderButton` (cross-page chrome) |
-| `ui/` | Generic primitives: `ScrollToTop`, `ContactLink` (**ปุ่มโทร/LINE พร้อม guard เวลาทำการ+วันหยุด** — ทุกปุ่มต้องใช้ component นี้), `SectionHeading`, `PromoPopup` + `PromoPopupLazy` (popup banner config-driven) |
+| `ui/` | Generic primitives: `ScrollToTop`, `ContactLink` (**ปุ่มโทร/LINE พร้อม guard เวลาทำการ+วันหยุด** — ทุกปุ่มต้องใช้ component นี้ รองรับ `openClassName` สำหรับ effect ที่ active เฉพาะตอนเปิด), `SectionHeading`, `PromoPopup` + `PromoPopupLazy` (popup banner config-driven), `DriftSphereOverlay` (canvas dot-cluster bg overlay, 3 sizes + ambient variant, drift-area bounds, blend-mode, reveal delay) |
+| `util/` | `ImageContextGuard` — site-wide `contextmenu` suppression on `<img>` targets only (casual "save image" deterrent, F12/text right-click unaffected). Mounted once in root `layout.tsx` |
 | `home/SectionHeader` | Reveal-on-intersect animated heading for homepage sections (letter stagger + underline + spotlight + idle pulse + optional hero float) — replaces legacy `ScrollGlowFrame` |
+| `home/ProductCarousel`, `RewardsCarousel`, `CategorySlideshow` | All use `useDragScroll` for PC click-hold drag (iOS-style momentum, threshold-rebased, click preserved for `<a>` children). `CategorySlideshow` desktop: rAF scrollLeft auto-scroll (no CSS transform anim) so drag + auto-loop share the same primitive |
 
 ## `web/lib/`
 
@@ -132,6 +134,8 @@ Plus the homepage banner (`banner-mobile.webp`), favicons, and `robots.txt`.
 ## Other top-levels
 
 - `web/hooks/useBusinessHours.ts` — opens/closed status + holiday awareness (used by `ChatWidget`, `FloatingOrderButton`, `ContactLink`). Fetches `/api/holidays/active` on mount, returns `{ isOpen, isMobile, holiday, isHoliday }`
+- `web/hooks/useDragScroll.ts` — iOS-style click-hold drag-scroll for PC (mouse pointers only; touch/pen fall through to native). Takes a `React.RefObject`, returns `{ isDragging, isAnimating, isPressed }`. Handles rebased threshold (no jump on engage), deferred `setPointerCapture` (preserves click on `<a>` children), velocity-sampled momentum with max cap, suppresses native `dragstart` + `contextmenu`. `isPressed` pauses auto-scroll loops (used in `CategorySlideshow` desktop)
+- `web/hooks/useAnimationActivity.ts` — generic rAF-gate hook. Takes a ref, returns a boolean ref that's `false` when tab hidden OR target scrolled offscreen (100px rootMargin). Consume inside rAF loops to skip work without stopping the frame callback. Used by `DriftSphereOverlay`
 - `web/types/promotion.ts` — shared promotion type
 - `web/middleware.ts` — auth gate for admin routes + AI-config protection from managers
 - `web/next.config.ts` — image domains, version exposure, asset cache headers

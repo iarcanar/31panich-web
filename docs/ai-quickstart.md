@@ -1,6 +1,6 @@
 ---
 title: AI Session Quick Start
-last_reviewed: 2026-04-19
+last_reviewed: 2026-04-23
 audience: ai-session
 ---
 
@@ -47,6 +47,9 @@ python verify.py          # ONLY when touching env vars / auth
 | Call Gemini with caching | `web/lib/gemini-cache.ts` (`cachedGenerateText`, `cachedGenerateTextWithSearch`) |
 | Check admin auth in an API route | `web/lib/auth.ts` (`getSessionUser`, then `user.role === "admin"`) |
 | Upload an image | `/api/upload/sign` (returns Cloudinary signature) → client uploads direct to Cloudinary |
+| Add click-hold drag-scroll to a horizontal carousel | `useDragScroll(scrollRef)` in `web/hooks/useDragScroll.ts`. Drop-in: `const { isPressed } = useDragScroll(scrollRef)`. iOS-style momentum, mouse-only (touch stays native), preserves child `<a>` click navigation. If the carousel has its own auto-scroll loop, gate it on `!isPressed` so it pauses at pointerdown |
+| Add animated dot-cluster ambient bg to a section | `<DriftSphereOverlay size="ambient" baseHue={275} .../>` in `web/components/ui/DriftSphereOverlay.tsx`. Parent must be `relative` + `overflow-hidden`. See `RewardsCarousel` for a full integration (purple 275 hue, drift-area bounds, soft-light blend, post-header reveal delay) |
+| Block right-click "Save image as" | Already global via `ImageContextGuard` in root `layout.tsx`. Fires only on `<img>` targets — text/link right-click still works |
 
 ## Hard rules (do not break)
 
