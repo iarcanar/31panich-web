@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRef, useState, useEffect, useCallback } from "react"
 import SectionHeader from "./SectionHeader"
 import DriftSphereOverlay from "@/components/ui/DriftSphereOverlay"
+import { useDragScroll } from "@/hooks/useDragScroll"
 
 // ไม่รวม cooker + zootopia เพราะแสดงในโซนโปรโมชั่นแล้ว
 const REWARDS = [
@@ -17,6 +18,7 @@ const REWARDS = [
 
 export default function RewardsCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null)
+  useDragScroll(scrollRef)
   const [activeIdx, setActiveIdx] = useState(0)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -69,8 +71,10 @@ export default function RewardsCarousel() {
         size="ambient"
         baseHue={275}
         timeScale={1.5}
-        driftArea={{ top: 0.08, bottom: 0.45 }}
+        driftArea={{ top: 0.15, bottom: 0.30 }}
         blend="soft-light"
+        startDelay={1400}
+        fadeInDuration={1500}
       />
       <div className="relative z-[1] container mx-auto px-4">
         <SectionHeader
@@ -116,7 +120,7 @@ export default function RewardsCarousel() {
                 data-card
                 className="flex-shrink-0 w-[55vw] sm:w-[40vw] md:w-[calc(25%-1rem)] lg:w-[calc(20%-1rem)] snap-start group"
               >
-                <div className="bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden hover:border-amber-400/30 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 active:scale-[0.97] transition-all duration-300">
+                <div className="bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden hover:border-amber-400/30 hover:shadow-xl hover:shadow-amber-500/10 max-md:active:scale-[0.97] transition-[border-color,box-shadow,transform] duration-300">
                   {/* Image */}
                   <div className="aspect-square bg-[#252540] relative overflow-hidden">
                     <Image
@@ -144,7 +148,7 @@ export default function RewardsCarousel() {
               data-card
               className="flex-shrink-0 w-[55vw] sm:w-[40vw] md:w-[calc(25%-1rem)] lg:w-[calc(20%-1rem)] snap-start group"
             >
-              <div className="bg-gradient-to-br from-amber-500/10 to-purple-500/10 rounded-2xl border border-amber-400/20 overflow-hidden hover:border-amber-400/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300 h-full flex flex-col items-center justify-center aspect-[3/4] gap-3">
+              <div className="bg-gradient-to-br from-amber-500/10 to-purple-500/10 rounded-2xl border border-amber-400/20 overflow-hidden hover:border-amber-400/40 hover:shadow-xl hover:shadow-amber-500/10 transition-[border-color,box-shadow] duration-300 h-full flex flex-col items-center justify-center aspect-[3/4] gap-3">
                 <div className="w-14 h-14 rounded-full bg-amber-400/20 flex items-center justify-center">
                   <svg className="w-7 h-7 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useRef, useState, useEffect, useCallback } from "react"
 import DevEditLink from "./DevEditLink"
+import { useDragScroll } from "@/hooks/useDragScroll"
 
 interface CarouselProduct {
   id: string
@@ -28,6 +29,7 @@ interface ProductCarouselProps {
 export default function ProductCarousel({ products, accentColor = "cyan", showDevEdit }: ProductCarouselProps) {
   const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
+  useDragScroll(scrollRef)
   const [activeIdx, setActiveIdx] = useState(0)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -92,7 +94,7 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
             key={item.id}
             href={`/products/${item.category}/${encodeURIComponent(item.slug)}`}
             data-card
-            className={`flex-shrink-0 w-[72vw] sm:w-[45vw] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden ${accent.border} ${accent.shadow} hover:-translate-y-1 hover:shadow-xl active:scale-[0.97] transition-all duration-300 group relative`}
+            className={`flex-shrink-0 w-[72vw] sm:w-[45vw] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden ${accent.border} ${accent.shadow} hover:shadow-xl max-md:active:scale-[0.97] transition-[border-color,box-shadow,transform] duration-300 group relative`}
           >
             {/* Badge */}
             {item.badge && (

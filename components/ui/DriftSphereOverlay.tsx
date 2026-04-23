@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useAnimationActivity } from "@/hooks/useAnimationActivity"
 
 interface SizeConfig {
@@ -26,6 +26,8 @@ interface SizeConfig {
   ambientAlpha: number
   /** Peak alpha multiplier added inside the sphere. */
   peakAlphaBoost: number
+  /** Degrees/sec the base hue drifts over time. 0 = locked to theme color. */
+  hueCycleRate: number
 }
 
 const LARGE: SizeConfig = {
@@ -34,6 +36,7 @@ const LARGE: SizeConfig = {
   backdropBlur: 18, backdropAlpha: 0.28,
   saturation: 60, lightness: 72,
   ambientAlpha: 0.07, peakAlphaBoost: 0.85,
+  hueCycleRate: 6,
 }
 
 const SMALL: SizeConfig = {
@@ -42,17 +45,21 @@ const SMALL: SizeConfig = {
   backdropBlur: null, backdropAlpha: 0,
   saturation: 60, lightness: 72,
   ambientAlpha: 0.07, peakAlphaBoost: 0.85,
+  hueCycleRate: 6,
 }
 
 // Calm, soft, pastel — for section backgrounds where the animation is
 // ambient decoration (not a loading state). No backdrop, no dim.
-// Tight cluster with a few prominent dots at the peak, sparse ambient outside.
+// ambientAlpha=0 → dots outside the cluster are invisible, so there's NO
+// visible grid pattern / edge artifact at the canvas boundary; only the
+// floating cluster shows.
 const AMBIENT: SizeConfig = {
-  rows: 22, cols: 38, sphereRadius: 0.28,
-  dotSize: 1.1, dotGrow: 3.8, hueSpread: 18,
+  rows: 32, cols: 56, sphereRadius: 0.14,
+  dotSize: 1.1, dotGrow: 3.8, hueSpread: 10,
   backdropBlur: null, backdropAlpha: 0,
   saturation: 48, lightness: 70,
-  ambientAlpha: 0.04, peakAlphaBoost: 0.7,
+  ambientAlpha: 0, peakAlphaBoost: 0.75,
+  hueCycleRate: 0,
 }
 
 interface DriftArea {
@@ -77,6 +84,12 @@ interface Props {
   driftArea?: DriftArea
   /** CSS mix-blend-mode for the canvas. Default 'normal'. */
   blend?: React.CSSProperties["mixBlendMode"]
+  /** Delay (ms) after the overlay first enters the viewport before it begins
+   *  fading in. Useful for sequencing after a headline/reveal animation.
+   *  Default 0 (appears immediately on intersect). */
+  startDelay?: number
+  /** Opacity transition duration (ms). Default 600. */
+  fadeInDuration?: number
 }
 
 export default function DriftSphereOverlay({
@@ -85,12 +98,37 @@ export default function DriftSphereOverlay({
   timeScale = 2,
   driftArea,
   blend = "normal",
+  startDelay = 0,
+  fadeInDuration = 600,
 }: Props) {
   const cfg = size === "small" ? SMALL : size === "ambient" ? AMBIENT : LARGE
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef(0)
   const t0Ref = useRef(0)
   const activityRef = useAnimationActivity(canvasRef)
+  const [revealed, setRevealed] = useState(false)
+
+  // Defer reveal until the wrapper first intersects viewport (≥25% visible).
+  // Stay revealed after — this is ambient decoration, don't re-trigger on scroll.
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setRevealed(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) { setRevealed(true); io.disconnect(); break }
+        }
+      },
+      { threshold: 0.25 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -158,7 +196,7 @@ export default function DriftSphereOverlay({
           const energy = Math.exp(-(dx * dx + dy * dy) / sigma2)
           const alpha = cfg.ambientAlpha + cfg.peakAlphaBoost * energy
           const radius = cfg.dotSize + energy * cfg.dotGrow
-          const hue = (baseHue + energy * cfg.hueSpread + t * 6) % 360
+          const hue = (baseHue + energy * cfg.hueSpread + t * cfg.hueCycleRate) % 360
           ctx!.beginPath()
           ctx!.fillStyle = `hsla(${hue}, ${cfg.saturation}%, ${cfg.lightness}%, ${alpha.toFixed(3)})`
           ctx!.arc(x, y, radius, 0, Math.PI * 2)
@@ -172,7 +210,17 @@ export default function DriftSphereOverlay({
   }, [cfg, activityRef, baseHue, timeScale, driftArea])
 
   return (
-    <>
+    <div
+      ref={wrapperRef}
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        opacity: revealed ? 1 : 0,
+        transition: `opacity ${fadeInDuration}ms ease-out`,
+        transitionDelay: revealed ? `${startDelay}ms` : "0ms",
+      }}
+    >
       {cfg.backdropAlpha > 0 && (
         <div
           style={{
@@ -185,13 +233,13 @@ export default function DriftSphereOverlay({
           }}
         />
       )}
-      <div style={{ position: "absolute", inset: 0, isolation: "isolate", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", inset: 0, isolation: "isolate" }}>
         <canvas
           ref={canvasRef}
           style={{ position: "absolute", inset: 0, pointerEvents: "none", mixBlendMode: blend }}
           aria-hidden="true"
         />
       </div>
-    </>
+    </div>
   )
 }

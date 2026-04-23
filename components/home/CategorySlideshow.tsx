@@ -2,8 +2,9 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import SectionHeading from "@/components/ui/SectionHeading"
+import { useDragScroll } from "@/hooks/useDragScroll"
 
 interface CategorySlide {
   category: string
@@ -16,47 +17,59 @@ interface Props {
 }
 
 export default function CategorySlideshow({ slides }: Props) {
-  const trackRef = useRef<HTMLDivElement>(null)
+  const desktopTrackRef = useRef<HTMLDivElement>(null)
   const mobileTrackRef = useRef<HTMLDivElement>(null)
-  const autoScrollRef = useRef(true)
+  const mobileAutoScrollRef = useRef(true)
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const [desktopPaused, setDesktopPaused] = useState(false)
+  const { isAnimating: desktopDragAnimating, isPressed: desktopPressed } = useDragScroll(desktopTrackRef)
 
-  // Duplicate for infinite loop
+  // Duplicate for infinite loop (scrollLeft wraps at halfway)
   const loopSlides = [...slides, ...slides]
 
-  // Desktop animation: ~15s per slide
-  const duration = slides.length * 15
-
-  function handlePause() {
-    if (trackRef.current) trackRef.current.style.animationPlayState = "paused"
-  }
-  function handleResume() {
-    if (trackRef.current) trackRef.current.style.animationPlayState = "running"
-  }
+  // Desktop auto-scroll (rAF-driven scrollLeft). Pauses on hover, during
+  // the pre-threshold press window, during the active drag, AND through the
+  // momentum tail so motion never compounds with the user's input.
+  useEffect(() => {
+    const el = desktopTrackRef.current
+    if (!el) return
+    let raf: number
+    let acc = 0
+    const speed = 0.45 // px/frame (~27px/s)
+    function step() {
+      if (el && !desktopPaused && !desktopPressed && !desktopDragAnimating) {
+        acc += speed
+        if (acc >= 1) {
+          const px = Math.floor(acc)
+          el.scrollLeft += px
+          acc -= px
+        }
+        if (el.scrollLeft >= el.scrollWidth / 2) {
+          el.scrollLeft -= el.scrollWidth / 2
+        }
+      }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [desktopPaused, desktopPressed, desktopDragAnimating])
 
   function handleScrollBy(dir: "left" | "right") {
-    const track = trackRef.current
-    if (!track) return
-    const anims = track.getAnimations()
-    if (anims.length === 0) return
-    const anim = anims[0]
-    const jumpMs = (duration * 1000) / slides.length
-    const current = (anim.currentTime as number) || 0
-    const totalMs = duration * 1000
-    const next = ((current + (dir === "right" ? jumpMs : -jumpMs)) % totalMs + totalMs) % totalMs
-    anim.currentTime = next
+    const el = desktopTrackRef.current
+    if (!el) return
+    const amount = el.clientWidth / 5.6 // one slide-width at desktop layout
+    el.scrollBy({ left: dir === "right" ? amount : -amount, behavior: "smooth" })
   }
 
-  // Mobile: auto-scroll via JS (allows touch swipe override)
-  // Uses fractional accumulator because mobile browsers round scrollLeft to integers
+  // Mobile auto-scroll (unchanged from original)
   useEffect(() => {
     const el = mobileTrackRef.current
     if (!el) return
     let raf: number
     let acc = 0
-    const speed = 0.5 // px per frame (~30px/s at 60fps)
+    const speed = 0.5
     function step() {
-      if (autoScrollRef.current && el) {
+      if (mobileAutoScrollRef.current && el) {
         acc += speed
         if (acc >= 1) {
           const px = Math.floor(acc)
@@ -74,13 +87,13 @@ export default function CategorySlideshow({ slides }: Props) {
   }, [])
 
   function onMobileTouchStart() {
-    autoScrollRef.current = false
+    mobileAutoScrollRef.current = false
     if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current)
   }
 
   function onMobileTouchEnd() {
     resumeTimerRef.current = setTimeout(() => {
-      autoScrollRef.current = true
+      mobileAutoScrollRef.current = true
     }, 3000)
   }
 
@@ -131,56 +144,50 @@ export default function CategorySlideshow({ slides }: Props) {
         </div>
       </div>
 
-      {/* ─── Desktop: auto-scroll with CSS animation ─── */}
+      {/* ─── Desktop: rAF scrollLeft auto-scroll + drag-to-scroll ─── */}
       <div
-        className="relative group/slider overflow-hidden hidden md:block"
-        onMouseEnter={handlePause}
-        onMouseLeave={handleResume}
+        className="relative group/slider hidden md:block"
+        onMouseEnter={() => setDesktopPaused(true)}
+        onMouseLeave={() => setDesktopPaused(false)}
       >
-        <div
-          ref={trackRef}
-          className="flex gap-[2px]"
-          style={{
-            width: "max-content",
-            animation: `catSlideScroll ${duration}s linear infinite`,
-            willChange: "transform",
-          }}
-        >
-          {loopSlides.map((slide, i) => (
-            <Link
-              key={`${slide.category}-${i}`}
-              href={`/products/${slide.category}`}
-              data-slide
-              className="flex-shrink-0 relative overflow-hidden group"
-              style={{ width: "calc(100vw / 5.6)", height: "clamp(70px, 8vw, 100px)" }}
-            >
-              {slide.image ? (
-                <Image
-                  src={slide.image}
-                  alt={slide.label}
-                  fill
-                  className="object-cover blur-[3px] scale-110 group-hover:scale-[1.18] group-hover:blur-[2px] transition-all duration-500"
-                  sizes="20vw"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-[#1e2035]" />
-              )}
-              <div
-                className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-80"
-                style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)" }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center px-3">
-                <span className="bg-black/65 backdrop-blur-sm text-white font-extrabold text-base tracking-wide rounded-full inline-flex items-center justify-center gap-2.5 border border-white/10 px-6 py-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-105">
-                  <img
-                    src={`/category-icons/${slide.category}.svg`}
-                    alt=""
-                    className="h-[22px] w-[22px]"
+        <div ref={desktopTrackRef} className="overflow-x-auto no-scrollbar">
+          <div className="flex gap-[2px]" style={{ width: "max-content" }}>
+            {loopSlides.map((slide, i) => (
+              <Link
+                key={`${slide.category}-${i}`}
+                href={`/products/${slide.category}`}
+                data-slide
+                className="flex-shrink-0 relative overflow-hidden group"
+                style={{ width: "calc(100vw / 5.6)", height: "clamp(70px, 8vw, 100px)" }}
+              >
+                {slide.image ? (
+                  <Image
+                    src={slide.image}
+                    alt={slide.label}
+                    fill
+                    className="object-cover blur-[3px] scale-110 group-hover:scale-[1.18] group-hover:blur-[2px] transition-all duration-500"
+                    sizes="20vw"
                   />
-                  {slide.label}
-                </span>
-              </div>
-            </Link>
-          ))}
+                ) : (
+                  <div className="absolute inset-0 bg-[#1e2035]" />
+                )}
+                <div
+                  className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-80"
+                  style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)" }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center px-3">
+                  <span className="bg-black/65 backdrop-blur-sm text-white font-extrabold text-base tracking-wide rounded-full inline-flex items-center justify-center gap-2.5 border border-white/10 px-6 py-2.5 shadow-[0_3px_12px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-105">
+                    <img
+                      src={`/category-icons/${slide.category}.svg`}
+                      alt=""
+                      className="h-[22px] w-[22px]"
+                    />
+                    {slide.label}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* Left arrow button */}
@@ -209,10 +216,6 @@ export default function CategorySlideshow({ slides }: Props) {
       </div>
 
       <style>{`
-        @keyframes catSlideScroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
