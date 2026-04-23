@@ -14,6 +14,10 @@ interface Props {
    *  the site has several ContactLinks per page and showing the pill on
    *  every one was noisy). Enable only on primary CTAs (e.g. homepage hero). */
   showHoursWhenClosed?: boolean
+  /** Extra classes applied ONLY when the link is active (store open).
+   *  Use for effect-heavy styles (e.g. `sci-fi-button` shimmer) that should
+   *  not appear in the dimmed closed state. */
+  openClassName?: string
 }
 
 export default function ContactLink({
@@ -22,6 +26,7 @@ export default function ContactLink({
   className = "",
   onClick,
   showHoursWhenClosed = false,
+  openClassName = "",
 }: Props) {
   const { isOpen, holiday, isHoliday } = useBusinessHours()
 
@@ -72,9 +77,9 @@ export default function ContactLink({
       target={type === "line" ? "_blank" : undefined}
       rel={type === "line" ? "noopener noreferrer" : undefined}
       onClick={onClick}
-      className={className}
+      className={`${className} ${openClassName}`.trim()}
     >
-      {children}
+      {typeof children === "string" ? <span>{children}</span> : children}
     </a>
   )
 }

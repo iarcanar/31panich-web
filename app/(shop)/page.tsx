@@ -36,13 +36,13 @@ export default function HomePage() {
         {/* Gradient: ดำล่าง ไล่ขึ้น */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
         <div className="absolute inset-0 flex items-end justify-center pb-5 px-5 pt-16">
-          <div className="text-center">
+          <div className="flex flex-col items-center">
             <div className="sci-fi-frame">
               <span aria-hidden className="sci-fi-corner tl" />
               <span aria-hidden className="sci-fi-corner tr" />
               <span aria-hidden className="sci-fi-corner bl" />
               <span aria-hidden className="sci-fi-corner br" />
-              <h1 className="sci-fi-title text-2xl leading-tight">ร้านสามหนึ่งพานิช ลพบุรี</h1>
+              <h1 className="sci-fi-title text-2xl">ร้านสามหนึ่งพานิช ลพบุรี</h1>
             </div>
             <p className="sci-fi-subtitle text-[11px] mt-2">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
             <div className="mt-3">
@@ -68,13 +68,13 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-l from-[#0a0a0f]/70 via-[#0a0a0f]/20 to-transparent" />
         {/* Left overlay — ชื่อร้าน + CTA */}
         <div className="absolute inset-0 flex items-center pl-[10%]">
-          <div>
+          <div className="flex flex-col items-center">
             <div className="sci-fi-frame">
               <span aria-hidden className="sci-fi-corner tl" />
               <span aria-hidden className="sci-fi-corner tr" />
               <span aria-hidden className="sci-fi-corner bl" />
               <span aria-hidden className="sci-fi-corner br" />
-              <h1 className="sci-fi-title text-5xl xl:text-6xl leading-tight">ร้านสามหนึ่งพานิช ลพบุรี</h1>
+              <h1 className="sci-fi-title text-5xl xl:text-6xl">ร้านสามหนึ่งพานิช ลพบุรี</h1>
             </div>
             <p className="sci-fi-subtitle text-base xl:text-lg mt-3">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
             <div className="mt-5">

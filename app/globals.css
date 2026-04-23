@@ -102,30 +102,91 @@ body {
   font-family: var(--font-display), var(--font-thai), sans-serif;
   font-weight: 900;
   letter-spacing: 0.012em;
-  background: linear-gradient(180deg, #ffffff 0%, #e0f7ff 48%, #67e8f9 100%);
-  -webkit-background-clip: text;
-          background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  filter:
-    drop-shadow(0 0 10px rgba(34, 211, 238, 0.55))
-    drop-shadow(0 0 24px rgba(34, 211, 238, 0.28))
-    drop-shadow(0 2px 0 rgba(0, 0, 0, 0.55));
+  line-height: 1.4;
+  padding-top: 0.12em;
+  padding-bottom: 0.05em;
+  color: #e8faff;
+  text-shadow:
+    0 0 6px rgba(34, 211, 238, 0.95),
+    0 0 14px rgba(34, 211, 238, 0.65),
+    0 0 28px rgba(103, 232, 249, 0.45),
+    0 0 48px rgba(167, 139, 250, 0.25),
+    0 2px 0 rgba(0, 0, 0, 0.55);
 }
 
 .sci-fi-subtitle {
-  color: #cbd5e1;
-  letter-spacing: 0.04em;
-  text-shadow: 0 0 10px rgba(34, 211, 238, 0.25);
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.65rem;
+  color: #a8d8e8;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+}
+.sci-fi-subtitle::before,
+.sci-fi-subtitle::after {
+  content: "";
+  flex: 0 0 clamp(14px, 3.5vw, 28px);
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(34, 211, 238, 0.55), transparent);
+}
+
+/* Sci-fi CTA button — used only when store is OPEN (closed state stays dim) */
+.sci-fi-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #e8faff !important;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(167, 139, 250, 0.1));
+  border-color: rgba(34, 211, 238, 0.55) !important;
+  box-shadow:
+    0 0 14px rgba(34, 211, 238, 0.35),
+    inset 0 0 10px rgba(34, 211, 238, 0.18);
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.7);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.sci-fi-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: sci-fi-button-sweep 3.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+.sci-fi-button > * { position: relative; z-index: 1; }
+.sci-fi-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 232, 249, 0.85) !important;
+  box-shadow:
+    0 0 22px rgba(34, 211, 238, 0.6),
+    inset 0 0 14px rgba(34, 211, 238, 0.3);
+}
+@keyframes sci-fi-button-sweep {
+  0%          { transform: translateX(-120%); }
+  55%, 100%   { transform: translateX(120%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sci-fi-button::before { animation: none; }
 }
 
 /* Frame with rotating conic-gradient border = "ไฟวิ่งรอบ" */
 .sci-fi-frame {
   position: relative;
   display: inline-block;
-  padding: 0.55rem 1.1rem;
-  border-radius: 14px;
+  padding: 0.95rem 1.25rem;
+  border-radius: 16px;
   isolation: isolate;
+  overflow: visible;
 }
 .sci-fi-frame::before {
   content: "";
@@ -149,7 +210,7 @@ body {
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  animation: sci-fi-spin 5s linear infinite;
+  animation: sci-fi-spin 9s linear infinite;
   pointer-events: none;
   z-index: 0;
 }
