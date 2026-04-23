@@ -15,12 +15,12 @@ const notoSans = Noto_Sans({
   weight: ["400", "500", "600", "700"],
 })
 
-// Display font for tagline / quoted taglines — ExtraLight (200) only.
-// Prompt contrasts with Noto Sans Thai: geometric, modern, thin.
+// Display font for tagline (200) and hero title (900).
+// Prompt contrasts with Noto Sans Thai: geometric, modern — 900 carries the sci-fi hero mark.
 const promptDisplay = Prompt({
   subsets: ["thai", "latin"],
   variable: "--font-display",
-  weight: ["200"],
+  weight: ["200", "900"],
 })
 
 export const viewport: Viewport = {
