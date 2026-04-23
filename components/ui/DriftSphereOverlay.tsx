@@ -46,12 +46,13 @@ const SMALL: SizeConfig = {
 
 // Calm, soft, pastel — for section backgrounds where the animation is
 // ambient decoration (not a loading state). No backdrop, no dim.
+// Tight cluster with a few prominent dots at the peak, sparse ambient outside.
 const AMBIENT: SizeConfig = {
-  rows: 22, cols: 38, sphereRadius: 0.42,
-  dotSize: 1.1, dotGrow: 1.7, hueSpread: 18,
+  rows: 22, cols: 38, sphereRadius: 0.28,
+  dotSize: 1.1, dotGrow: 3.8, hueSpread: 18,
   backdropBlur: null, backdropAlpha: 0,
-  saturation: 45, lightness: 68,
-  ambientAlpha: 0.04, peakAlphaBoost: 0.38,
+  saturation: 48, lightness: 70,
+  ambientAlpha: 0.04, peakAlphaBoost: 0.7,
 }
 
 interface Props {
