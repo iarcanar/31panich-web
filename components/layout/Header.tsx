@@ -41,18 +41,45 @@ export default function Header() {
     setMobileOpen(false)
   }
 
+  const closeMobile = () => {
+    setMobileOpen(false)
+    setExpandedMenu(null)
+  }
+
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus()
   }, [searchOpen])
 
-  // Lock body scroll when mobile menu is open
+  // Lock body scroll when mobile menu is open — iOS-safe approach that
+  // pins the body in place (position: fixed + preserved scrollY) so the
+  // page doesn't rubber-band behind the menu. Restores scroll on close.
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
+    if (!mobileOpen) return
+    const scrollY = window.scrollY
+    const body = document.body
+    body.style.position = "fixed"
+    body.style.top = `-${scrollY}px`
+    body.style.left = "0"
+    body.style.right = "0"
+    body.style.width = "100%"
+    return () => {
+      body.style.position = ""
+      body.style.top = ""
+      body.style.left = ""
+      body.style.right = ""
+      body.style.width = ""
+      window.scrollTo(0, scrollY)
     }
-    return () => { document.body.style.overflow = "" }
+  }, [mobileOpen])
+
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    if (!mobileOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMobile()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
   }, [mobileOpen])
 
   // Mobile: hide header on scroll down, show on scroll up
@@ -150,8 +177,8 @@ export default function Header() {
         {/* Mobile Menu Button */}
         <button
           className="lg:hidden p-2"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="เปิดเมนู"
+          onClick={() => setMobileOpen((o) => !o)}
+          aria-label={mobileOpen ? "ปิดเมนู" : "เปิดเมนู"}
           aria-expanded={mobileOpen}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,74 +190,105 @@ export default function Header() {
           </svg>
         </button>
       </div>
-
-      {/* Mobile Nav */}
-      {mobileOpen && (
-        <nav className="lg:hidden border-t border-slate-700 px-4 py-4 space-y-2 bg-slate-900/95 backdrop-blur-sm overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(100vh - 56px)" }}>
-          {/* Mobile Search */}
-          <form onSubmit={handleSearch} className="flex items-center gap-2 bg-white/5 border border-slate-600 rounded-full px-3 py-2 mb-3">
-            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ค้นหาสินค้า..."
-              className="bg-transparent text-white placeholder-gray-500 text-sm outline-none flex-1"
-            />
-            {searchQuery && (
-              <button type="submit" className="text-cyan-400 text-xs font-medium">ค้นหา</button>
-            )}
-          </form>
-
-          {NAV_ITEMS.map((item) => (
-            <div key={item.href}>
-              {item.children ? (
-                <>
-                  <button
-                    className="flex items-center justify-between w-full py-2 text-sm font-medium hover:text-cyan-400 transition-colors"
-                    onClick={() => setExpandedMenu(expandedMenu === item.href ? null : item.href)}
-                  >
-                    {item.label}
-                    <svg className={`w-4 h-4 transition-transform ${expandedMenu === item.href ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {expandedMenu === item.href && (
-                    <div className="pl-4 space-y-1 pb-1">
-                      {item.children.map((child) => {
-                        const slug = child.href.split("/").pop()
-                        return (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            className="flex items-center gap-2 py-1 text-sm text-gray-400 hover:text-cyan-400"
-                            onClick={() => setMobileOpen(false)}
-                          >
-                            <img src={`/category-icons/${slug}.svg`} alt="" className="h-[14px] w-[14px] opacity-60" />
-                            {child.label}
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <Link
-                  href={item.href}
-                  className="block py-2 text-sm font-medium hover:text-cyan-400"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              )}
-            </div>
-          ))}
-        </nav>
-      )}
     </header>
 
+    {/* Mobile Nav — fixed overlay, independent of sticky header so it's
+        always visible regardless of scroll position. Backdrop closes on
+        tap; panel is top-anchored with its own scroll. */}
+    {mobileOpen && (
+      <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={closeMobile}
+          aria-hidden="true"
+        />
+
+        {/* Panel */}
+        <div className="absolute top-0 inset-x-0 max-h-[92dvh] bg-slate-900/98 backdrop-blur-md shadow-2xl border-b border-white/10 flex flex-col">
+          {/* Top bar — logo + close */}
+          <div className="flex items-center justify-between px-4 py-2 shrink-0 border-b border-white/5">
+            <Link href="/" onClick={closeMobile} className="shrink-0">
+              <Image src="/logo.webp" alt="31 พานิช" width={40} height={40} />
+            </Link>
+            <button
+              onClick={closeMobile}
+              aria-label="ปิดเมนู"
+              className="p-2 text-white hover:text-cyan-400 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Scrollable nav content */}
+          <nav className="overflow-y-auto overscroll-contain px-4 py-4 space-y-2 flex-1">
+            {/* Mobile Search */}
+            <form onSubmit={handleSearch} className="flex items-center gap-2 bg-white/5 border border-slate-600 rounded-full px-3 py-2 mb-3">
+              <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ค้นหาสินค้า..."
+                className="bg-transparent text-white placeholder-gray-500 text-base md:text-sm outline-none flex-1"
+              />
+              {searchQuery && (
+                <button type="submit" className="text-cyan-400 text-xs font-medium">ค้นหา</button>
+              )}
+            </form>
+
+            {NAV_ITEMS.map((item) => (
+              <div key={item.href}>
+                {item.children ? (
+                  <>
+                    <button
+                      className="flex items-center justify-between w-full py-2 text-sm font-medium text-white hover:text-cyan-400 transition-colors"
+                      onClick={() => setExpandedMenu(expandedMenu === item.href ? null : item.href)}
+                      aria-expanded={expandedMenu === item.href}
+                    >
+                      {item.label}
+                      <svg className={`w-4 h-4 transition-transform ${expandedMenu === item.href ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {expandedMenu === item.href && (
+                      <div className="pl-4 space-y-1 pb-1">
+                        {item.children.map((child) => {
+                          const slug = child.href.split("/").pop()
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className="flex items-center gap-2 py-1.5 text-sm text-gray-400 hover:text-cyan-400"
+                              onClick={closeMobile}
+                            >
+                              <img src={`/category-icons/${slug}.svg`} alt="" className="h-[14px] w-[14px] opacity-60" />
+                              {child.label}
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className="block py-2 text-sm font-medium text-white hover:text-cyan-400"
+                    onClick={closeMobile}
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </nav>
+        </div>
+      </div>
+    )}
     </>
   )
 }
