@@ -24,7 +24,7 @@ export default function HomePage() {
       />
 
       {/* Hero Banner — Mobile: full-bleed behind header + CTA overlay */}
-      <section className="lg:hidden -mt-16 relative w-full aspect-[5/4]">
+      <section className="lg:hidden -mt-16 relative w-full aspect-[3/2]">
         <Image
           src="/banner-mobile.webp"
           alt="ร้านสามหนึ่งพานิช ลพบุรี — สี วัสดุก่อสร้าง เครื่องมือช่าง"
@@ -46,19 +46,17 @@ export default function HomePage() {
         />
         {/* Bottom gradient — ดำล่าง ไล่ขึ้น (คอนทราสต์กับข้อความ) */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
-        <div className="absolute inset-0 flex items-end justify-center pb-6 px-5 pt-28">
-          <div className="flex flex-col items-center">
-            <div className="sci-fi-frame">
-              <span aria-hidden className="sci-fi-corner tl" />
-              <span aria-hidden className="sci-fi-corner tr" />
-              <span aria-hidden className="sci-fi-corner bl" />
-              <span aria-hidden className="sci-fi-corner br" />
-              <h1 className="sci-fi-title text-2xl">ร้านสามหนึ่งพานิช ลพบุรี</h1>
-            </div>
-            <p className="sci-fi-subtitle text-[11px] mt-2">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
-            <div className="mt-3">
-              <HeroContactButton className="inline-block border border-white/30 hover:border-white/60 text-white text-xs font-medium px-4 py-2 rounded-full transition" />
-            </div>
+        <div className="absolute inset-0 flex flex-col items-center px-5 pt-[72px]">
+          <div className="sci-fi-frame">
+            <span aria-hidden className="sci-fi-corner tl" />
+            <span aria-hidden className="sci-fi-corner tr" />
+            <span aria-hidden className="sci-fi-corner bl" />
+            <span aria-hidden className="sci-fi-corner br" />
+            <h1 className="sci-fi-title whitespace-nowrap text-[clamp(15px,4.5vw,22px)]">ร้านสามหนึ่งพานิช ลพบุรี</h1>
+          </div>
+          <p className="sci-fi-subtitle text-[11px] mt-2">สี วัสดุก่อสร้าง เครื่องมือช่าง ศูนย์ผสมสี จ.ลพบุรี</p>
+          <div className="mt-3">
+            <HeroContactButton className="inline-block border border-white/30 hover:border-white/60 text-white text-xs font-medium px-4 py-2 rounded-full transition" />
           </div>
         </div>
       </section>
