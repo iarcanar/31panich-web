@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getProductsByCategory, getProducts, CATEGORIES } from "@/lib/products"
 import CategoryProductGrid from "@/components/product/CategoryProductGrid"
+import CategoryBreadcrumb from "@/components/product/CategoryBreadcrumb"
 import { breadcrumbSchema } from "@/lib/structured-data"
 
 export const revalidate = 3600 // ISR: revalidate ทุก 1 ชั่วโมง
@@ -57,24 +58,12 @@ export default async function CategoryPage({ params }: Props) {
   return (
     <div className="bg-[#0e0e14] min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      {/* Breadcrumb */}
-      <div className="container mx-auto px-4 pt-4 pb-2">
-        <nav className="flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/" className="hover:text-white transition">หน้าแรก</Link>
-          <span>/</span>
-          <Link href="/products" className="hover:text-white transition">สินค้า</Link>
-          <span>/</span>
-          <span className="text-gray-300">{cat.label}</span>
-        </nav>
-      </div>
+      {/* Breadcrumb with back button + icon-prefixed active chip */}
+      <CategoryBreadcrumb categoryLabel={cat.label} categoryValue={category} />
 
-      {/* Header */}
+      {/* Count */}
       <div className="container mx-auto px-4 pt-2 pb-6 md:pb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2.5">
-          <img src={`/category-icons/${category}.svg`} alt="" className="h-[1em] w-[1em]" />
-          {cat.label}
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">{products.length} สินค้า</p>
+        <p className="text-gray-500 text-sm text-center">{products.length} สินค้า</p>
 
         {/* Category pills */}
         <div className="flex gap-2 mt-4 overflow-x-auto md:overflow-visible md:flex-wrap pb-2 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>

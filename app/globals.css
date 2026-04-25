@@ -319,6 +319,119 @@ body {
   .sci-fi-gold-badge::before { animation: none; }
 }
 
+/* ===== Breadcrumb ribbon-arrow chips ===== */
+/* Direction: arrow tip on LEFT + chevron notch on RIGHT.
+   Chips read like back-pointing ribbons, pointing toward the back button. */
+.crumb-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem; /* match back button h-10 = 40px */
+  padding: 0.35rem 1rem 0.35rem 1.4rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(203, 213, 225, 0.95);
+  line-height: 1.25;
+  font-weight: 500;
+  text-decoration: none;
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    calc(100% - 10px) 50%,
+    100% 100%,
+    10px 100%,
+    0 50%
+  );
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.crumb-chip:first-child {
+  /* Flat left edge — sits flush against the back button */
+  padding-left: 0.85rem;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    calc(100% - 10px) 50%,
+    100% 100%,
+    0 100%
+  );
+}
+.crumb-chip:last-child {
+  /* Flat right edge — last chip, no further chip to point to */
+  padding-right: 0.85rem;
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% 100%,
+    10px 100%,
+    0 50%
+  );
+}
+.crumb-chip:first-child:last-child {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+.crumb-chip:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+.crumb-chip-active {
+  background: rgba(34, 211, 238, 0.14);
+  color: rgba(243, 244, 246, 1);
+}
+.crumb-chip-active:hover {
+  background: rgba(34, 211, 238, 0.18);
+}
+
+/* First chip that slides UNDER the back button — dark gradient dissolves
+   into the page bg where the back button sits, then fades into the normal
+   chip color where the text "หน้าแรก" begins. Creates a continuous ribbon
+   from back button → first crumb. */
+/* Back button styled as the first chip in the ribbon — purple gradient
+   with a drop-shadow glow so it reads as the distinct action. drop-shadow
+   (not box-shadow) is used because it follows the clip-path silhouette. */
+.crumb-chip-back {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.32) 0%,
+    rgba(168, 85, 247, 0.42) 100%
+  );
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  filter: drop-shadow(0 0 9px rgba(168, 85, 247, 0.6))
+          drop-shadow(0 0 3px rgba(168, 85, 247, 0.8));
+  transition: filter 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+.crumb-chip-back:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.48) 0%,
+    rgba(168, 85, 247, 0.58) 100%
+  );
+  filter: drop-shadow(0 0 14px rgba(168, 85, 247, 0.85))
+          drop-shadow(0 0 4px rgba(168, 85, 247, 1));
+}
+.crumb-chip-back:active {
+  transform: scale(0.97);
+}
+
+/* Soft right-edge fade — last chip dissolves into the page bg instead of
+   ending with a hard flat edge. Works on top of clip-path since mask-image
+   applies per-pixel alpha within the clipped shape. */
+.crumb-chip-dissolve-right {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 0%,
+    black calc(100% - 48px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    black 0%,
+    black calc(100% - 48px),
+    transparent 100%
+  );
+}
+
 /* Shimmer — ใช้ JS-based animation (BannerShimmer component) */
 .banner-shimmer {
   position: relative;

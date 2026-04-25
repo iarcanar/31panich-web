@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import type { Product } from "@/lib/products"
 import ContactLink from "@/components/ui/ContactLink"
@@ -20,9 +21,21 @@ interface Props {
 }
 
 export default function ProductDetailView({ product, categoryLabel, relatedProducts, catalog }: Props) {
+  const router = useRouter()
   const allImages = product.images?.length ? product.images : [product.image]
   const [selectedImg, setSelectedImg] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState<number | null>(null)
+
+  // Smart back: use browser history if there's something to go back to,
+  // otherwise fall back to the category page (e.g. user landed via deep
+  // link, share, or search engine).
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push(`/products/${product.category}`)
+    }
+  }
 
   const hasVariants = product.variants && product.variants.length > 0
   const activeVariant = selectedVariant !== null ? product.variants?.[selectedVariant] : null
@@ -55,14 +68,27 @@ export default function ProductDetailView({ product, categoryLabel, relatedProdu
 
   return (
     <div className="bg-[#0e0e14] min-h-screen">
-      {/* Breadcrumb */}
+      {/* Breadcrumb ribbon — back, home, category, product all unified */}
       <div className="container mx-auto px-4 py-4">
-        <nav className="flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/" className="hover:text-white transition">หน้าแรก</Link>
-          <span>/</span>
-          <Link href={`/products/${product.category}`} className="hover:text-white transition">{categoryLabel}</Link>
-          <span>/</span>
-          <span className="text-gray-300 line-clamp-1">{product.name}</span>
+        <nav className="flex items-stretch gap-0 text-xs md:text-sm -ml-4 -mr-4">
+          <button
+            onClick={handleBack}
+            aria-label="ย้อนกลับ"
+            type="button"
+            className="crumb-chip crumb-chip-back"
+          >
+            <svg className="w-4 h-4 md:w-[18px] md:h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="ml-1 hidden md:inline">ย้อนกลับ</span>
+          </button>
+          <Link href="/" className="crumb-chip">หน้าแรก</Link>
+          <Link href={`/products/${product.category}`} className="crumb-chip">
+            {categoryLabel}
+          </Link>
+          <span className="crumb-chip crumb-chip-active crumb-chip-dissolve-right flex-1 min-w-0">
+            <span className="line-clamp-2 th-text">{product.name}</span>
+          </span>
         </nav>
       </div>
 
