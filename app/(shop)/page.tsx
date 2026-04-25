@@ -24,7 +24,7 @@ export default function HomePage() {
       />
 
       {/* Hero Banner — Mobile: full-bleed behind header + CTA overlay */}
-      <section className="lg:hidden -mt-16 relative w-full aspect-[3/2]">
+      <section className="lg:hidden -mt-16 relative w-full aspect-[5/4]">
         <Image
           src="/banner-mobile.webp"
           alt="ร้านสามหนึ่งพานิช ลพบุรี — สี วัสดุก่อสร้าง เครื่องมือช่าง"
@@ -33,8 +33,17 @@ export default function HomePage() {
           sizes="100vw"
           priority
         />
-        {/* Top dissolve — ดำบน ไล่ลงใส (เบลนด์กับ header + ดันข้อความลงมา) */}
-        <div className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-[#0a0a0f] via-[#0a0a0f]/65 to-transparent" />
+        {/* Top dissolve — ดำเข้มบน ไล่ลงใส, เป็น "safe zone" ให้ header + title ไม่ทับภาพ
+            h-3/5 (60%) คลุมตั้งแต่บนถึงประมาณกลางส่วนล่างของ title frame
+            stops 0% / 35% / 100% ให้ดำคงตัวยาวก่อนค่อย fade — กัน Android ที่
+            status bar / browser chrome สูงเป็นพิเศษ */}
+        <div
+          className="absolute inset-x-0 top-0 h-3/5 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to bottom, #0a0a0f 0%, rgba(10,10,15,0.85) 35%, rgba(10,10,15,0.45) 70%, transparent 100%)",
+          }}
+        />
         {/* Bottom gradient — ดำล่าง ไล่ขึ้น (คอนทราสต์กับข้อความ) */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
         <div className="absolute inset-0 flex items-end justify-center pb-6 px-5 pt-28">
