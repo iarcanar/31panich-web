@@ -225,25 +225,31 @@ export default function ChatWidget() {
     }
   }, [messages, loading, panelOpen])
 
-  // Lock body scroll when chat panel is open (prevents scroll-through on mobile)
+  // Lock body scroll when chat panel is open — iOS-safe approach that
+  // pins body via position: fixed + preserved scrollY. Plain overflow:hidden
+  // lets iOS Safari rubber-band through. Scroll position is restored on close.
   useEffect(() => {
     if (!panelOpen) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    return () => { document.body.style.overflow = prev }
+    const scrollY = window.scrollY
+    const body = document.body
+    body.style.position = "fixed"
+    body.style.top = `-${scrollY}px`
+    body.style.left = "0"
+    body.style.right = "0"
+    body.style.width = "100%"
+    return () => {
+      body.style.position = ""
+      body.style.top = ""
+      body.style.left = ""
+      body.style.right = ""
+      body.style.width = ""
+      window.scrollTo(0, scrollY)
+    }
   }, [panelOpen])
 
-  // Click-outside → collapse chat
-  useEffect(() => {
-    if (!panelOpen) return
-    function handleClick(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setPanelOpen(false)
-      }
-    }
-    const timer = setTimeout(() => document.addEventListener("mousedown", handleClick), 200)
-    return () => { clearTimeout(timer); document.removeEventListener("mousedown", handleClick) }
-  }, [panelOpen])
+  // Click-outside is now handled by the backdrop overlay below (more
+  // reliable than the old document mousedown listener, which mis-fired on
+  // mobile touch events).
 
   // Keyboard handling is now done entirely via CSS `dvh` (dynamic viewport
   // height) units on the panel — the browser auto-shrinks the max-height
@@ -393,6 +399,17 @@ export default function ChatWidget() {
         </svg>
       </button>
 
+      {/* ── Backdrop — dims the page behind the chat and catches taps
+           outside the panel to close it. Always mounted, opacity-toggled
+           so the fade transition works smoothly. */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${
+          panelOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setPanelOpen(false)}
+        aria-hidden="true"
+      />
+
       {/* ── Chat panel (always in DOM — CSS visibility toggle) ──
            Positioning:
              - bottom: safe-area + 24px from visible viewport bottom
@@ -521,7 +538,7 @@ export default function ChatWidget() {
         </div>
 
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-3" style={{ scrollbarWidth: "thin" }}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-3" style={{ scrollbarWidth: "thin" }}>
           {messages.map((msg, i) => (
             <div key={i} className="space-y-1.5">
               <ChatMessage
