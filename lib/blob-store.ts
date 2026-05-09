@@ -1,5 +1,6 @@
 import { Redis } from "@upstash/redis"
 import { put } from "@vercel/blob"
+import { unstable_cache, revalidateTag } from "next/cache"
 import fs from "fs"
 import path from "path"
 
@@ -21,6 +22,23 @@ const redis = useRedis
   : null
 
 console.log(`[blob-store] mode=${useRedis ? "redis" : useBlob ? "blob(legacy)" : "local-fs"}`)
+
+// Tag for revalidating Next's data cache after writes.
+const BLOB_STORE_TAG = "blob-store"
+
+// Wrap Redis GET in Next's data cache so static generation doesn't bail with
+// DYNAMIC_SERVER_USAGE. Upstash uses fetch(cache:no-store) internally, which
+// Next 16 strict mode flags during prerender — `unstable_cache` opts each
+// call into the data cache, suppressing the warning and enabling SSG/ISR.
+// 60s revalidate keeps things fresh; admin writes call `revalidateTag` below
+// so edits propagate immediately rather than waiting for the TTL.
+const cachedRedisGet = redis
+  ? unstable_cache(
+      async (filename: string) => redis.get(redisKey(filename)),
+      ["blob-store-redis-get"],
+      { revalidate: 60, tags: [BLOB_STORE_TAG] }
+    )
+  : null
 
 // In-memory cache with TTL (helps warm serverless instances)
 const cache = new Map<string, { data: unknown; ts: number }>()
@@ -64,9 +82,9 @@ export async function readJSON<T>(filename: string, fallback: T, noCache = false
     }
   }
 
-  if (useRedis && redis) {
+  if (useRedis && cachedRedisGet) {
     try {
-      const data = await redis.get<T>(redisKey(filename))
+      const data = (await cachedRedisGet(filename)) as T | null
       if (data !== null && data !== undefined) {
         cache.set(filename, { data, ts: Date.now() })
         return structuredClone(data) as T
@@ -98,6 +116,9 @@ export async function writeJSON<T>(filename: string, data: T): Promise<void> {
     try {
       await redis.set(redisKey(filename), data)
       cache.set(filename, { data, ts: Date.now() })
+      // Bust Next's data cache so the next read sees the new value (otherwise
+      // ISR pages serve stale data for up to the unstable_cache TTL).
+      try { revalidateTag(BLOB_STORE_TAG, { expire: 0 }) } catch { /* only valid in request scope */ }
     } catch (err) {
       cache.delete(filename)
       console.error(`[blob-store] Redis write FAILED for ${filename}:`, err)
@@ -146,6 +167,7 @@ async function seedFromLocal<T>(filename: string, fallback: T): Promise<T> {
     // Upload to Redis for future reads
     if (useRedis && redis) {
       await redis.set(redisKey(filename), data)
+      try { revalidateTag(BLOB_STORE_TAG, { expire: 0 }) } catch { /* only valid in request scope */ }
     }
     cache.set(filename, { data, ts: Date.now() })
     return structuredClone(data) as T
