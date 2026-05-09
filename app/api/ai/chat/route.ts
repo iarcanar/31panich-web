@@ -380,7 +380,8 @@ export async function POST(request: NextRequest) {
       suggestion: suggestKeyword ? { keyword: suggestKeyword } : undefined,
       mapLink: mapLink || undefined,
     })
-  } catch {
+  } catch (err) {
+    console.error("[ai/chat] Unhandled error:", err)
     return NextResponse.json(
       { error: "ขออภัยครับ ระบบขัดข้อง กรุณาลองใหม่" },
       { status: 503 }
