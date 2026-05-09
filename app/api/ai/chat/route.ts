@@ -7,6 +7,7 @@ import { getAiConfig } from "@/lib/ai-config"
 import { getRelevantKnowledge } from "@/lib/ai-knowledge"
 import { PHONE, LINE_ID, HOURS_TEXT, STORE_LANDMARK } from "@/lib/store-config"
 import { getActiveHoliday, getUpcomingHoliday, type ActiveHoliday } from "@/lib/holidays"
+import { recordError } from "@/lib/error-log"
 
 // ─── Helpers ────────────────────────────────────────────
 
@@ -382,6 +383,8 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error("[ai/chat] Unhandled error:", err)
+    // Surface to /admin/settings — fire-and-forget so logging never breaks chat.
+    recordError("/api/ai/chat", err).catch(() => { /* swallow */ })
     return NextResponse.json(
       { error: "ขออภัยครับ ระบบขัดข้อง กรุณาลองใหม่" },
       { status: 503 }

@@ -36,6 +36,9 @@ interface Deployment {
   state: string
   created: number
   meta?: { githubCommitMessage?: string }
+  errorCode?: string
+  errorMessage?: string
+  inspectorUrl?: string
 }
 
 interface VercelData {
@@ -52,6 +55,12 @@ interface UpstashData {
   keys?: number
   dailyCommands?: { used: number; limit: number }
   error?: string
+}
+
+interface RuntimeError {
+  timestamp: string
+  route: string
+  message: string
 }
 
 // ─── Helpers ─────────────────────────────────────────────
@@ -107,6 +116,33 @@ export default function SettingsPage() {
   const [upstash, setUpstash] = useState<UpstashData | null>(null)
   const [loadingUpstash, setLoadingUpstash] = useState(true)
   const [quota, setQuota] = useState<QuotaCheckResult | null>(null)
+  const [runtimeErrors, setRuntimeErrors] = useState<RuntimeError[]>([])
+  const [loadingRuntime, setLoadingRuntime] = useState(true)
+  const [clearingRuntime, setClearingRuntime] = useState(false)
+
+  const reloadRuntimeErrors = async () => {
+    setLoadingRuntime(true)
+    try {
+      const r = await fetch("/api/admin/runtime-health")
+      const data = await r.json()
+      setRuntimeErrors(data.errors || [])
+    } catch {
+      setRuntimeErrors([])
+    } finally {
+      setLoadingRuntime(false)
+    }
+  }
+
+  const clearRuntimeErrors = async () => {
+    if (!confirm("ล้างรายการ error ทั้งหมด?")) return
+    setClearingRuntime(true)
+    try {
+      await fetch("/api/admin/runtime-health", { method: "DELETE" })
+      setRuntimeErrors([])
+    } finally {
+      setClearingRuntime(false)
+    }
+  }
 
   // Admin-only guard
   useEffect(() => {
@@ -126,6 +162,9 @@ export default function SettingsPage() {
       .then(setUpstash)
       .catch(() => setUpstash({ configured: false, error: "fetch failed" }))
       .finally(() => setLoadingUpstash(false))
+
+    reloadRuntimeErrors()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Compute quota status once both fetches resolve. Pure function — no I/O.
@@ -160,6 +199,9 @@ export default function SettingsPage() {
         </h1>
         <p className="text-xs text-white/40 mt-1">Infrastructure & Tech Stack Overview</p>
       </div>
+
+      {/* ─── Deploy Health Alert ─── (only renders when latest deploy errored / building) */}
+      {vercel?.deployments && <DeployHealthBanner deployments={vercel.deployments} />}
 
       {/* ─── Quota Alerts ─── (only renders when there are warnings/criticals) */}
       {quota && quota.alerts.length > 0 && <QuotaAlertSection result={quota} />}
@@ -359,13 +401,36 @@ export default function SettingsPage() {
                   <div className="space-y-1.5">
                     {vercel.deployments.map((d) => {
                       const s = STATE_MAP[d.state] || { label: d.state, color: "bg-gray-500" }
+                      const isError = d.state === "ERROR" || d.state === "CANCELED"
                       return (
-                        <div key={d.uid} className="flex items-center gap-2 text-xs">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.color}`} />
-                          <span className="text-white/60 truncate flex-1">
-                            {d.meta?.githubCommitMessage || d.url || d.uid.slice(0, 8)}
-                          </span>
-                          <span className="text-[10px] text-white/25 shrink-0">{timeAgo(d.created)}</span>
+                        <div key={d.uid} className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.color}`} />
+                            <span className={`truncate flex-1 ${isError ? "text-red-300" : "text-white/60"}`}>
+                              {d.meta?.githubCommitMessage || d.url || d.uid.slice(0, 8)}
+                            </span>
+                            <span className="text-[10px] text-white/25 shrink-0">{timeAgo(d.created)}</span>
+                          </div>
+                          {/* Show error message + dashboard link only for failed deploys */}
+                          {isError && (d.errorMessage || d.inspectorUrl) && (
+                            <div className="mt-1 ml-3.5 pl-2 border-l border-red-500/30">
+                              {d.errorMessage && (
+                                <p className="text-[10px] text-red-300/80 leading-snug mb-1">
+                                  {d.errorMessage}
+                                </p>
+                              )}
+                              {d.inspectorUrl && (
+                                <a
+                                  href={d.inspectorUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                                >
+                                  ดู Build Log →
+                                </a>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -395,6 +460,17 @@ export default function SettingsPage() {
         </Card>
       </div>
 
+      {/* ─── Row 4.5: Runtime Health ─── */}
+      <Card title="Runtime Health" icon="pulse" className="mb-4">
+        <RuntimeHealthSection
+          errors={runtimeErrors}
+          loading={loadingRuntime}
+          clearing={clearingRuntime}
+          onReload={reloadRuntimeErrors}
+          onClear={clearRuntimeErrors}
+        />
+      </Card>
+
       {/* ─── Row 5: Quick Reference ─── */}
       <Card title="Quick Reference" icon="book">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
@@ -413,6 +489,188 @@ export default function SettingsPage() {
 }
 
 // ─── Sub-components ──────────────────────────────────────
+
+/** Banner that surfaces deploy issues at a glance — silent when all green.
+ *  Shows red if the latest deploy errored, amber if it was canceled, blue if
+ *  one is still building. Older failed deploys among the recent 5 also
+ *  count toward the alert so a flaky run doesn't get buried. */
+function DeployHealthBanner({ deployments }: { deployments: Deployment[] }) {
+  if (!deployments.length) return null
+  const latest = deployments[0]
+  const failedCount = deployments.filter((d) => d.state === "ERROR" || d.state === "CANCELED").length
+  const buildingCount = deployments.filter((d) => d.state === "BUILDING" || d.state === "QUEUED").length
+
+  // Healthy → silent
+  if (latest.state === "READY" && failedCount === 0 && buildingCount === 0) return null
+
+  let tone: "red" | "amber" | "blue"
+  let icon: string
+  let title: string
+  let detail: string
+
+  if (latest.state === "ERROR") {
+    tone = "red"
+    icon = "🚨"
+    title = "Deploy ล่าสุดล้มเหลว"
+    detail = latest.errorMessage || "ดู Build Log ที่ Vercel เพื่อตรวจสาเหตุ"
+  } else if (latest.state === "CANCELED") {
+    tone = "amber"
+    icon = "⚠️"
+    title = "Deploy ล่าสุดถูกยกเลิก"
+    detail = "อาจถูก cancel กลางทาง — กด Redeploy ใหม่ถ้าต้องการ"
+  } else if (buildingCount > 0) {
+    tone = "blue"
+    icon = "⏳"
+    title = "กำลัง deploy"
+    detail = `อีก ${buildingCount} deployment กำลังรัน — รอประมาณ 1-2 นาที`
+  } else if (failedCount > 0) {
+    tone = "amber"
+    icon = "⚠️"
+    title = `Deploy เพิ่งล้มเหลว ${failedCount}/${deployments.length} ครั้ง`
+    detail = "Deploy ล่าสุดสำเร็จแล้ว แต่เพิ่งมีบาง deploy ล้มเหลวก่อนหน้า"
+  } else {
+    return null
+  }
+
+  const toneClass = {
+    red: { border: "border-red-500/40", bg: "bg-red-500/10", title: "text-red-400" },
+    amber: { border: "border-amber-500/40", bg: "bg-amber-500/10", title: "text-amber-400" },
+    blue: { border: "border-blue-500/40", bg: "bg-blue-500/10", title: "text-blue-400" },
+  }[tone]
+
+  return (
+    <div className={`mb-6 rounded-xl border-2 ${toneClass.border} ${toneClass.bg} p-5`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className={`text-base font-bold ${toneClass.title} flex items-center gap-2`}>
+            <span>{icon}</span>
+            <span>{title}</span>
+          </h2>
+          <p className="text-[12px] text-white/70 mt-2 leading-relaxed">{detail}</p>
+          {latest.meta?.githubCommitMessage && (
+            <p className="text-[11px] text-white/40 mt-2 font-mono truncate">
+              {latest.meta.githubCommitMessage}
+            </p>
+          )}
+        </div>
+        {latest.inspectorUrl && (
+          <a
+            href={latest.inspectorUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 text-[11px] text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-lg px-3 py-1.5 inline-flex items-center gap-1 transition-colors"
+          >
+            เปิด Vercel
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function RuntimeHealthSection({
+  errors,
+  loading,
+  clearing,
+  onReload,
+  onClear,
+}: {
+  errors: RuntimeError[]
+  loading: boolean
+  clearing: boolean
+  onReload: () => void
+  onClear: () => void
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="h-12 bg-white/5 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    )
+  }
+
+  if (errors.length === 0) {
+    return (
+      <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-center gap-3">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-emerald-300">ระบบทำงานปกติ</p>
+          <p className="text-[11px] text-white/40 mt-0.5">ไม่มี error จาก API ที่บันทึกไว้</p>
+        </div>
+        <button
+          onClick={onReload}
+          className="text-[10px] text-white/40 hover:text-white/70 px-2 py-1 transition-colors"
+          title="รีโหลด"
+        >
+          ↻
+        </button>
+      </div>
+    )
+  }
+
+  // Group by route for at-a-glance counts
+  const byRoute = errors.reduce<Record<string, number>>((acc, e) => {
+    acc[e.route] = (acc[e.route] || 0) + 1
+    return acc
+  }, {})
+
+  return (
+    <div>
+      {/* Summary bar */}
+      <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-3 mb-3 flex items-center gap-3">
+        <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-red-300">
+            พบ {errors.length} error ใน 10 รายการล่าสุด
+          </p>
+          <p className="text-[11px] text-white/50 mt-0.5">
+            {Object.entries(byRoute)
+              .map(([route, count]) => `${route} (${count})`)
+              .join(" · ")}
+          </p>
+        </div>
+        <button
+          onClick={onClear}
+          disabled={clearing}
+          className="shrink-0 text-[11px] text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
+        >
+          {clearing ? "กำลังล้าง..." : "ล้าง"}
+        </button>
+      </div>
+
+      {/* Error list */}
+      <div className="space-y-1.5">
+        {errors.map((e, i) => {
+          const ts = Date.parse(e.timestamp)
+          const ago = Number.isFinite(ts) ? timeAgo(ts) : e.timestamp
+          return (
+            <div
+              key={`${e.timestamp}-${i}`}
+              className="rounded-lg bg-black/20 border border-white/5 p-3"
+            >
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <code className="text-[11px] text-cyan-300 font-mono truncate">{e.route}</code>
+                <span className="text-[10px] text-white/30 shrink-0">{ago}</span>
+              </div>
+              <p className="text-[11px] text-white/70 leading-relaxed break-all">
+                {e.message}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="text-[10px] text-white/30 mt-3">
+        เก็บได้สูงสุด 10 รายการ · error ที่ซ้ำกันภายใน 60 วินาทีจะนับเป็นรายการเดียว · กด "ล้าง" หลังแก้ปัญหาแล้ว
+      </p>
+    </div>
+  )
+}
 
 function QuotaAlertSection({ result }: { result: QuotaCheckResult }) {
   const isCritical = result.status === "critical"
@@ -610,6 +868,8 @@ function CardIcon({ type }: { type: string }) {
       return <svg className={cls} viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" /></svg>
     case "book":
       return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+    case "pulse":
+      return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h3.75l3-9 4.5 18 3-9h2.25" /></svg>
     default:
       return null
   }

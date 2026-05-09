@@ -42,6 +42,11 @@ export async function GET(request: NextRequest) {
           state: d.state || d.readyState,
           created: d.created || d.createdAt,
           meta: d.meta,
+          // Surface error info so admin can see WHY a deploy failed without
+          // needing to open the Vercel dashboard.
+          errorCode: d.errorCode,
+          errorMessage: d.errorMessage,
+          inspectorUrl: d.inspectorUrl,
         }))
       }
     } catch {}
