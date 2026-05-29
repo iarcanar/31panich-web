@@ -35,6 +35,7 @@ export default async function NewProductsSection() {
         categoryLabel: CATEGORIES.find((c) => c.value === item.category)?.label ?? item.category,
         image: item.image,
         discountPct,
+        meta: item.variants && item.variants.length > 1 ? `มี ${item.variants.length} แบบ` : undefined,
         badge: item.originalPrice
           ? { text: "SALE", color: "bg-red-500 text-white" }
           : item.isNew

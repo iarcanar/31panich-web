@@ -18,6 +18,10 @@ interface Props {
    *  Use for effect-heavy styles (e.g. `sci-fi-button` shimmer) that should
    *  not appear in the dimmed closed state. */
   openClassName?: string
+  /** Replaces `className` ONLY in the closed (dimmed) state. Use when the open
+   *  style reads poorly dimmed — e.g. a solid amber button whose inline hours
+   *  pill would be amber-on-amber; pass a dark/outline style for closed. */
+  closedClassName?: string
 }
 
 export default function ContactLink({
@@ -27,6 +31,7 @@ export default function ContactLink({
   onClick,
   showHoursWhenClosed = false,
   openClassName = "",
+  closedClassName,
 }: Props) {
   const { isOpen, holiday, isHoliday } = useBusinessHours()
 
@@ -38,7 +43,7 @@ export default function ContactLink({
   if (!isOpen && showHoursWhenClosed) {
     return (
       <span
-        className={`relative inline-flex items-center gap-1.5 opacity-50 cursor-not-allowed select-none ${className}`}
+        className={`relative inline-flex items-center gap-1.5 opacity-50 cursor-not-allowed select-none ${closedClassName ?? className}`}
         aria-disabled="true"
       >
         {children}
@@ -60,7 +65,7 @@ export default function ContactLink({
   if (!isOpen) {
     return (
       <span
-        className={`${className} opacity-50 cursor-not-allowed select-none`}
+        className={`${closedClassName ?? className} opacity-50 cursor-not-allowed select-none`}
         aria-disabled="true"
         aria-label={`${typeof children === "string" ? children : ""} — ${closedText}`}
         title={closedText}

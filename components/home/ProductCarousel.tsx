@@ -18,6 +18,8 @@ interface CarouselProduct {
   image: string
   badge?: { text: string; color: string }
   discountPct?: number
+  /** small cue under price, e.g. "มี 3 แบบ" — shown only when meaningful */
+  meta?: string
 }
 
 interface ProductCarouselProps {
@@ -146,6 +148,9 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
                   <p className="text-gray-500 text-xs line-through">฿{item.originalPrice.toLocaleString()}</p>
                 )}
               </div>
+              {item.meta && (
+                <p className="text-[10px] text-gray-500 mt-1 th-text">{item.meta}</p>
+              )}
             </div>
             <DevEditLink productId={item.id} size="sm" />
           </Link>

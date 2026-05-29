@@ -86,6 +86,7 @@ export default function HomeHero() {
               type="phone"
               openClassName=""
               className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-[#1f1500] text-sm font-bold px-5 py-2.5 rounded-full shadow-lg shadow-amber-500/30 transition"
+              closedClassName="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 text-white text-sm font-semibold px-5 py-2.5 rounded-full"
               showHoursWhenClosed
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>

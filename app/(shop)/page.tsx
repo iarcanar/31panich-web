@@ -9,6 +9,7 @@ import { getActivePromotions } from "@/lib/promotions"
 import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
 import CouponsReelsRow from "@/components/home/CouponsReelsRow"
 import HomeHero from "@/components/home/HomeHero"
+import DiscoverFeed from "@/components/home/DiscoverFeed"
 import { localBusinessSchema } from "@/lib/structured-data"
 
 export default function HomePage() {
@@ -52,6 +53,11 @@ export default function HomePage() {
 
       {/* แลกแต้ม 31 POINTS */}
       <RewardsCarousel />
+
+      <div className="border-t border-white/5" />
+
+      {/* เลือกดูสินค้าเพิ่มเติม — feed ท้ายหน้า "เลื่อนดูเพลินๆ ไม่รู้จบ" */}
+      <DiscoverFeed />
     </>
   )
 }
