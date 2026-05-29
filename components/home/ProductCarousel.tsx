@@ -24,9 +24,13 @@ interface ProductCarouselProps {
   products: CarouselProduct[]
   accentColor?: "cyan" | "emerald" | "red" | "purple"
   showDevEdit?: boolean
+  /** When set, renders a "ดูทั้งหมด" card at the end of the carousel linking here. */
+  seeMoreHref?: string
+  /** Sub-label under the see-more card (e.g. "สินค้าทั้งหมดในร้าน"). */
+  seeMoreLabel?: string
 }
 
-export default function ProductCarousel({ products, accentColor = "cyan", showDevEdit }: ProductCarouselProps) {
+export default function ProductCarousel({ products, accentColor = "cyan", showDevEdit, seeMoreHref, seeMoreLabel }: ProductCarouselProps) {
   const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
   useDragScroll(scrollRef)
@@ -52,8 +56,8 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
     const cardWidth = el.querySelector("[data-card]")?.clientWidth ?? 200
     const gap = 16
     const idx = Math.round(el.scrollLeft / (cardWidth + gap))
-    setActiveIdx(Math.min(idx, products.length - 1))
-  }, [products.length])
+    setActiveIdx(Math.min(idx, products.length - 1 + (seeMoreHref ? 1 : 0)))
+  }, [products.length, seeMoreHref])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -78,8 +82,8 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
     el.scrollTo({ left: idx * (cardWidth + 16), behavior: "smooth" })
   }
 
-  // Number of visible dots (max 6 to keep it clean)
-  const dotCount = Math.min(products.length, 6)
+  // Number of visible dots (max 6 to keep it clean) — includes see-more card if present
+  const dotCount = Math.min(products.length + (seeMoreHref ? 1 : 0), 6)
 
   return (
     <div className="relative group/carousel">
@@ -94,7 +98,7 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
             key={item.id}
             href={`/products/${item.category}/${encodeURIComponent(item.slug)}`}
             data-card
-            className={`flex-shrink-0 w-[72vw] sm:w-[45vw] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden ${accent.border} ${accent.shadow} hover:shadow-xl max-md:active:scale-[0.97] transition-[border-color,box-shadow,transform] duration-300 group relative`}
+            className={`flex-shrink-0 w-[60vw] sm:w-[42vw] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start bg-[#1a1a28] rounded-2xl border border-white/10 overflow-hidden ${accent.border} ${accent.shadow} hover:shadow-xl max-md:active:scale-[0.97] transition-[border-color,box-shadow,transform] duration-300 group relative`}
           >
             {/* Badge */}
             {item.badge && (
@@ -111,7 +115,7 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
                   alt={item.name}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 640px) 72vw, (max-width: 768px) 45vw, (max-width: 1024px) 33vw, 25vw"
+                  sizes="(max-width: 640px) 60vw, (max-width: 768px) 42vw, (max-width: 1024px) 33vw, 25vw"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -137,15 +141,34 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
               >{item.categoryLabel}</span>
               <h3 className="text-sm font-semibold text-white mt-1 leading-snug line-clamp-2">{item.name}</h3>
               <div className="flex items-baseline gap-2 mt-2">
-                <p className="text-amber-400 font-bold">{item.price.toLocaleString()} .-</p>
+                <p className="text-amber-400 font-bold">฿{item.price.toLocaleString()}</p>
                 {item.originalPrice && (
-                  <p className="text-gray-500 text-xs line-through">{item.originalPrice.toLocaleString()}</p>
+                  <p className="text-gray-500 text-xs line-through">฿{item.originalPrice.toLocaleString()}</p>
                 )}
               </div>
             </div>
             <DevEditLink productId={item.id} size="sm" />
           </Link>
         ))}
+
+        {/* See-more card — keeps the carousel from dead-ending; gives a place to go after the last item */}
+        {seeMoreHref && (
+          <Link
+            href={seeMoreHref}
+            data-card
+            className="flex-shrink-0 w-[60vw] sm:w-[42vw] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] snap-start group/more"
+          >
+            <div className="h-full min-h-[180px] flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent hover:border-white/25 transition-colors duration-300">
+              <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover/more:scale-110 transition-transform duration-300">
+                <svg className={`w-6 h-6 ${accent.text}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+              <p className={`${accent.text} font-bold text-sm text-center th-text`}>ดูสินค้าทั้งหมด</p>
+              {seeMoreLabel && <p className="text-gray-500 text-xs text-center th-text">{seeMoreLabel}</p>}
+            </div>
+          </Link>
+        )}
       </div>
 
       {/* Peek hint — right: semi-transparent gradient over peeking card + chevron */}

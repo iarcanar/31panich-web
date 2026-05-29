@@ -106,7 +106,7 @@ export default function SectionHeader({
   const lastLetterDelay = 120 + Math.max(0, letters.length - 1) * staggerMs
   const underlineDelay = lastLetterDelay + 100
   const subtitleDelay = underlineDelay + 150
-  const glowOpacity = subtle ? 0.12 : 0.30
+  const glowOpacity = subtle ? 0.12 : 0.18
 
   return (
     <div ref={ref} className="relative py-5 md:py-9">
@@ -127,19 +127,10 @@ export default function SectionHeader({
         }}
       />
 
-      {/* Idle ambient pulse — only after reveal; single GPU layer. Skipped on `subtle`
-          because subpage headers should feel calm after entering. */}
-      {revealed && !subtle && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute left-0 right-0 section-header-pulse"
-          style={{
-            top: "-20px",
-            height: "180px",
-            background: `radial-gradient(ellipse 55% 45% at 50% 50%, rgba(${t.rgb}, 0.14), transparent 72%)`,
-          }}
-        />
-      )}
+      {/* Idle ambient pulse removed 2026-05-29 — constant breathing on every header
+          read as "เท่แต่เย็นชา" for the local audience. Reveal-on-scroll entrance is
+          kept (above); headers animate in once then stay calm. `.section-header-pulse`
+          CSS retained in globals.css in case it's wanted back. */}
 
       <div className="relative">
         {/* Optional hero element (e.g. logo image) — scales in with spring, then floats */}
@@ -183,7 +174,7 @@ export default function SectionHeader({
           aria-label={title}
           className="relative text-2xl md:text-4xl font-bold text-center text-white flex justify-center items-baseline flex-wrap th-text"
           style={{
-            textShadow: revealed && !subtle ? `0 0 24px rgba(${t.rgb}, 0.35)` : "none",
+            textShadow: revealed && !subtle ? `0 0 18px rgba(${t.rgb}, 0.2)` : "none",
             transition: "text-shadow 600ms ease-out",
             transitionDelay: `${underlineDelay}ms`,
           }}
@@ -231,7 +222,7 @@ export default function SectionHeader({
               transformOrigin: "center",
               transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
               transitionDelay: `${underlineDelay}ms`,
-              boxShadow: revealed && !subtle ? `0 0 12px rgba(${t.rgb}, 0.6)` : "none",
+              boxShadow: revealed && !subtle ? `0 0 8px rgba(${t.rgb}, 0.4)` : "none",
             }}
           />
         </div>

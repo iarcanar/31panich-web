@@ -93,7 +93,7 @@ function CouponsColumn({ coupons, loading }: { coupons: Coupon[]; loading: boole
     <>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-white">🎟️ เก็บคูปอง</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-white">🎟️ เก็บคูปอง</h2>
           <p className="text-xs text-white/40 mt-0.5">รับได้เฉพาะบนเว็บเท่านั้น</p>
         </div>
         <Link
@@ -217,7 +217,7 @@ function ReelsColumn({ reels, loading }: { reels: Reel[]; loading: boolean }) {
     <>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-white">🎬 Reel บน Facebook</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-white">🎬 Reel บน Facebook</h2>
           <p className="text-xs text-white/40 mt-0.5">แตะเพื่อเล่นเต็มจอ</p>
         </div>
         <a

@@ -46,6 +46,19 @@ export default async function BestsellerSection() {
           badge="Bestseller"
         />
 
+        {/* "ดูทั้งหมด" — gives the section a destination so it doesn't dead-end */}
+        <div className="flex justify-center -mt-1 mb-3 md:mb-5">
+          <Link
+            href="/products"
+            className="text-amber-300 hover:text-amber-200 text-xs font-semibold transition-colors inline-flex items-center gap-1"
+          >
+            ดูสินค้าทั้งหมด
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+
         {/* Hero card for pinned product */}
         {hero && (
           <Link
@@ -91,9 +104,9 @@ export default async function BestsellerSection() {
                   <p className="text-gray-400 text-sm mt-3 line-clamp-3">{hero.description}</p>
                 )}
                 <div className="flex items-baseline gap-3 mt-4">
-                  <p className="text-amber-400 font-bold text-xl md:text-2xl">{hero.price.toLocaleString()} .-</p>
+                  <p className="text-amber-400 font-bold text-xl md:text-2xl">฿{hero.price.toLocaleString()}</p>
                   {hero.originalPrice && hero.originalPrice > hero.price && (
-                    <p className="text-gray-500 text-sm line-through">{hero.originalPrice.toLocaleString()} .-</p>
+                    <p className="text-gray-500 text-sm line-through">฿{hero.originalPrice.toLocaleString()}</p>
                   )}
                 </div>
                 <div className="mt-4">
@@ -108,7 +121,7 @@ export default async function BestsellerSection() {
           </Link>
         )}
 
-        <ProductCarousel products={carouselProducts} accentColor="purple" showDevEdit />
+        <ProductCarousel products={carouselProducts} accentColor="purple" showDevEdit seeMoreHref="/products" seeMoreLabel="สินค้าทั้งหมดในร้าน" />
       </div>
     </section>
   )

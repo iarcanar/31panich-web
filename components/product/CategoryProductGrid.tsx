@@ -380,7 +380,7 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
                   >
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="font-semibold text-sm">{v.label}</span>
-                      <span className="text-amber-400 font-bold">{v.price.toLocaleString()}.-</span>
+                      <span className="text-amber-400 font-bold">฿{v.price.toLocaleString()}</span>
                     </div>
                     {vPct > 0 && (
                       <div className="flex items-center gap-1.5 mt-0.5">
