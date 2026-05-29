@@ -57,16 +57,16 @@ export default function HomeHero() {
           <p className="text-gray-100/90 font-medium text-[clamp(13px,3.6vw,16px)] md:text-lg th-text">
             ยินดีต้อนรับสู่
           </p>
-          <h1 className="sci-fi-title text-[clamp(25px,6.8vw,34px)] md:text-5xl lg:text-6xl mt-0.5 th-text">
+          <h1 className="sci-fi-title whitespace-nowrap text-[clamp(18px,5.5vw,30px)] md:text-5xl lg:text-6xl mt-0.5 th-text">
             ร้านสามหนึ่งพานิช
           </h1>
 
           <div className="mt-3 max-w-md">
-            <p className="text-purple-400 text-[16px] md:text-base lg:text-xl lg:whitespace-nowrap font-bold leading-snug th-text" style={{ textWrap: "pretty", textShadow: "0 0 12px rgba(168,85,247,0.55)" }}>
-              สี · วัสดุก่อสร้าง · เครื่องมือช่าง · ศูนย์ผสมสี เบเยอร์-TOA
+            <p className="text-purple-400 text-[16px] md:text-base lg:text-xl lg:whitespace-nowrap font-bold leading-snug th-text" style={{ textShadow: "0 0 12px rgba(168,85,247,0.55)" }}>
+              <span className="whitespace-nowrap">สี</span> · <span className="whitespace-nowrap">วัสดุก่อสร้าง</span> · <span className="whitespace-nowrap">เครื่องมือช่าง</span> · <span className="whitespace-nowrap">ศูนย์ผสมสี</span> <span className="whitespace-nowrap">เบเยอร์-TOA</span>
             </p>
             <p className="text-gray-300 text-[14px] md:text-sm leading-relaxed th-text mt-3">
-              ที่ลพบุรี — เข้ามาปรึกษา <br className="md:hidden" />เรื่องเครื่องมือ <br className="hidden md:inline" />อุปกรณ์ก่อสร้าง <br className="md:hidden" />ที่หน้าร้านได้นะคะ
+              <span className="whitespace-nowrap">ที่ลพบุรี — เข้ามาปรึกษา</span> <br className="md:hidden" /><span className="whitespace-nowrap">เรื่องเครื่องมือ</span> <br className="hidden md:inline" /><span className="whitespace-nowrap">อุปกรณ์ก่อสร้าง</span> <br className="md:hidden" /><span className="whitespace-nowrap">ที่หน้าร้านได้นะคะ</span>
             </p>
           </div>
 
