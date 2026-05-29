@@ -52,24 +52,26 @@ export default function HomeHero() {
 
       {/* Content — left column, clears the greeter on the right; pt clears the mobile header */}
       <div className="relative z-20 container mx-auto px-5 md:px-4">
-        <div className="flex flex-col justify-center min-h-[470px] sm:min-h-[430px] lg:min-h-[clamp(460px,40vw,560px)] pt-[72px] pb-9 lg:py-16 max-w-[64%] sm:max-w-[58%] md:max-w-[54%] lg:max-w-[46%]">
-          <span className="inline-flex self-start items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase border bg-amber-500/15 text-amber-300 border-amber-500/40">
-            ร้านของเรา
-          </span>
-
+        <div className="flex flex-col justify-center min-h-[380px] sm:min-h-[400px] md:min-h-[460px] lg:min-h-[clamp(460px,40vw,560px)] pt-[72px] pb-8 md:pb-9 lg:py-16 max-w-[62%] sm:max-w-[58%] md:max-w-[54%] lg:max-w-[52%]">
           {/* lead-in (small) + shop name in the modern glow style from the old hero */}
-          <p className="text-gray-100/90 font-medium text-[clamp(13px,3.6vw,16px)] md:text-lg mt-3 th-text">
+          <p className="text-gray-100/90 font-medium text-[clamp(13px,3.6vw,16px)] md:text-lg th-text">
             ยินดีต้อนรับสู่
           </p>
           <h1 className="sci-fi-title text-[clamp(25px,6.8vw,34px)] md:text-5xl lg:text-6xl mt-0.5 th-text">
             ร้านสามหนึ่งพานิช
           </h1>
 
-          <p className="text-gray-200 text-[13px] md:text-base mt-2.5 md:mt-3 leading-relaxed th-text max-w-md">
-            สี · วัสดุก่อสร้าง · เครื่องมือช่าง · ศูนย์ผสมสี — ที่ลพบุรี ปรึกษาเราได้เลย เหมือนมาเดินที่ร้าน
-          </p>
+          <div className="mt-3 max-w-md">
+            <p className="text-purple-400 text-[16px] md:text-base lg:text-xl lg:whitespace-nowrap font-bold leading-snug th-text" style={{ textWrap: "pretty", textShadow: "0 0 12px rgba(168,85,247,0.55)" }}>
+              สี · วัสดุก่อสร้าง · เครื่องมือช่าง · ศูนย์ผสมสี เบเยอร์-TOA
+            </p>
+            <p className="text-gray-300 text-[14px] md:text-sm leading-relaxed th-text mt-3">
+              ที่ลพบุรี — เข้ามาปรึกษา <br className="md:hidden" />เรื่องเครื่องมือ <br className="hidden md:inline" />อุปกรณ์ก่อสร้าง <br className="md:hidden" />ที่หน้าร้านได้นะคะ
+            </p>
+          </div>
 
-          <div className="flex flex-wrap gap-1.5 mt-3.5">
+          {/* chips + CTA hidden on mobile (contact handled by the bottom-right AI chat button, which has call + LINE) */}
+          <div className="hidden md:flex flex-wrap gap-1.5 mt-3.5">
             {TRUST.map((t) => (
               <span
                 key={t.text}
@@ -81,7 +83,7 @@ export default function HomeHero() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 mt-5">
+          <div className="hidden md:flex flex-wrap items-center gap-2.5 mt-5">
             <ContactLink
               type="phone"
               openClassName=""
