@@ -127,7 +127,7 @@ export default function ProductCarousel({ products, accentColor = "cyan", showDe
               {/* Sale % badge — top right */}
               {item.discountPct && item.discountPct > 0 && (
                 <div className={`absolute top-3 right-3 z-10 px-2 py-0.5 rounded-lg text-xs font-bold shadow-md ${item.discountPct >= 20 ? "bg-red-500 text-white" : "bg-orange-500 text-white"}`}>
-                  -{item.discountPct}%
+                  ลด ฿{(item.originalPrice! - item.price).toLocaleString()}
                 </div>
               )}
             </div>

@@ -60,6 +60,11 @@ export default function ProductDetailView({ product, categoryLabel, relatedProdu
     : hasVariants
       ? Math.max(0, ...product.variants!.map((v) => v.originalPrice && v.originalPrice > v.price ? Math.round((1 - v.price / v.originalPrice) * 100) : 0))
       : discountPercent
+  const imgDiscountBaht = activeVariant
+    ? (activeVariant.originalPrice && activeVariant.originalPrice > activeVariant.price ? activeVariant.originalPrice - activeVariant.price : 0)
+    : hasVariants
+      ? Math.max(0, ...product.variants!.map((v) => v.originalPrice && v.originalPrice > v.price ? v.originalPrice - v.price : 0))
+      : (hasDiscount ? product.originalPrice! - displayPrice : 0)
 
   // Parse description into lines for bullet display
   const descLines = product.description?.split("\n").filter(Boolean) ?? []
@@ -109,7 +114,7 @@ export default function ProductDetailView({ product, categoryLabel, relatedProdu
               />
               {imgDiscountPct > 0 && (
                 <div className={`absolute top-4 left-4 text-white text-sm font-bold px-3 py-1 rounded-lg ${imgDiscountPct >= 20 ? "bg-red-500" : "bg-orange-500"}`}>
-                  -{imgDiscountPct}%
+                  ลด ฿{imgDiscountBaht.toLocaleString()}
                 </div>
               )}
               {product.isNew && (
@@ -190,7 +195,7 @@ export default function ProductDetailView({ product, categoryLabel, relatedProdu
                       {vPct > 0 && (
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className="text-gray-500 text-xs line-through">฿{v.originalPrice!.toLocaleString()}</span>
-                          <span className={`text-[10px] font-bold px-1 rounded ${vPct >= 20 ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"}`}>-{vPct}%</span>
+                          <span className={`text-[10px] font-bold px-1 rounded ${vPct >= 20 ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"}`}>ลด ฿{(v.originalPrice! - v.price).toLocaleString()}</span>
                         </div>
                       )}
                       {v.stock <= 0 && <p className="text-red-400 text-[11px] mt-0.5">สินค้าหมด</p>}

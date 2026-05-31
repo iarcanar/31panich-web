@@ -148,7 +148,7 @@ export default function CategoryProductGrid({ products, categoryLabel, categoryV
                   )}
                   {discountPct > 0 && (
                     <div className={`absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md ${discountPct >= 20 ? "bg-red-500 text-white" : "bg-orange-500 text-white"}`}>
-                      -{discountPct}%
+                      ลด ฿{(p.originalPrice! - p.price).toLocaleString()}
                     </div>
                   )}
                   {p.isNew && (
@@ -270,6 +270,11 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
     : hasVariants
       ? Math.max(0, ...p.variants!.map((v) => v.originalPrice && v.originalPrice > v.price ? Math.round((1 - v.price / v.originalPrice) * 100) : 0))
       : (p.originalPrice && p.originalPrice > displayPrice ? Math.round((1 - displayPrice / p.originalPrice) * 100) : 0)
+  const imgDiscountBaht = activeVariant
+    ? (activeVariant.originalPrice && activeVariant.originalPrice > activeVariant.price ? activeVariant.originalPrice - activeVariant.price : 0)
+    : hasVariants
+      ? Math.max(0, ...p.variants!.map((v) => v.originalPrice && v.originalPrice > v.price ? v.originalPrice - v.price : 0))
+      : (p.originalPrice && p.originalPrice > displayPrice ? p.originalPrice - displayPrice : 0)
   const hasDiscount = p.originalPrice && p.originalPrice > displayPrice
   const discountPercent = hasDiscount ? Math.round((1 - displayPrice / p.originalPrice!) * 100) : 0
 
@@ -307,7 +312,7 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
             )}
             {imgDiscountPct > 0 && (
               <div className={`absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg pointer-events-none ${imgDiscountPct >= 20 ? "bg-red-500" : "bg-orange-500"}`}>
-                -{imgDiscountPct}%
+                ลด ฿{imgDiscountBaht.toLocaleString()}
               </div>
             )}
           </Link>
@@ -385,7 +390,7 @@ const ExpandedDetail = forwardRef<HTMLDivElement, ExpandedDetailProps>(function 
                     {vPct > 0 && (
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-gray-500 text-[11px] line-through">฿{v.originalPrice!.toLocaleString()}</span>
-                        <span className={`text-[10px] font-bold px-1 rounded ${vPct >= 20 ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"}`}>-{vPct}%</span>
+                        <span className={`text-[10px] font-bold px-1 rounded ${vPct >= 20 ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"}`}>ลด ฿{(v.originalPrice! - v.price).toLocaleString()}</span>
                       </div>
                     )}
                     {v.stock <= 0 && <p className="text-red-400 text-[10px] mt-0.5">สินค้าหมด</p>}

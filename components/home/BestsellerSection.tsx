@@ -36,6 +36,7 @@ export default async function BestsellerSection() {
   const heroDiscountPct = hero?.originalPrice && hero.originalPrice > hero.price
     ? Math.round((1 - hero.price / hero.originalPrice) * 100)
     : 0
+  const heroSaveBaht = hero?.originalPrice && hero.originalPrice > hero.price ? hero.originalPrice - hero.price : 0
 
   return (
     <section className="bg-[#0e0e14] pt-4 pb-8 md:pt-8 md:pb-14 -mt-4 md:-mt-6">
@@ -73,7 +74,7 @@ export default async function BestsellerSection() {
               </span>
               {heroDiscountPct > 0 && (
                 <span className={`text-sm md:text-base font-bold px-3.5 py-1 md:px-4 md:py-1.5 rounded-lg shadow-lg ${heroDiscountPct >= 20 ? "bg-red-500 text-white" : "bg-orange-500 text-white"}`}>
-                  SALE -{heroDiscountPct}%
+                  ลดทันที ฿{heroSaveBaht.toLocaleString()}
                 </span>
               )}
             </div>
