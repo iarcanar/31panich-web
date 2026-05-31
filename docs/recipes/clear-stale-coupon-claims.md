@@ -66,5 +66,5 @@ API: `GET /api/admin/coupon-claims?couponId=<id>` returns the full list of `Clai
 ## Things that go wrong
 
 - **`removedCount: 0` but the claim still shows** → check that you used the right `couponId`. The id in `coupons.json` ≠ the human-readable `code`
-- **Claim count won't go down** → confirm Upstash Redis has the latest `data:coupons.json`. The 5-min in-memory cache in `blob-store.ts` may show stale data on a warm lambda — call `?fresh=1` on the read endpoint or wait
+- **Claim count won't go down** → confirm Upstash Redis has the latest `data:coupons.json`. The 30s in-memory cache in `blob-store.ts` may show stale data on a warm lambda — call `?fresh=1` on the read endpoint or wait
 - **Concurrent claim came in mid-reset** → unlikely but possible. The atomic lock is per-file and per-instance, so two lambdas could race. If this happens often, switch the lock to Redis SETNX

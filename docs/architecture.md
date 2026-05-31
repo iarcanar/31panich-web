@@ -39,7 +39,7 @@ Three modes, picked at runtime from env vars:
 
 On top of all three:
 
-- **In-memory cache** (`Map`, 5-min TTL) deduplicates reads inside a warm lambda
+- **In-memory cache** (`Map`, 30s TTL) deduplicates reads inside a warm lambda
 - **Per-file write lock** (`withLock`) queues concurrent writes so read-modify-write is safe
 - **Seeding**: first read from Redis falls back to local file and writes through (one-time migration)
 
@@ -62,7 +62,7 @@ sequenceDiagram
     alt Cache miss
       L->>R: GET data:promotions.json
       R-->>L: JSON
-      L->>L: Cache for 5 min
+      L->>L: Cache for 30s
     end
     L-->>V: Data
     V->>V: Render React tree, cache HTML

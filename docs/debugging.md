@@ -20,18 +20,13 @@ Symptom → root cause → fix. Add to this file whenever you hit a non-obvious 
 
 ## ⚠ "I changed how products display in the admin list and only HALF of them updated"
 
-**Status**: known structural quirk in `app/admin/products/page.tsx`. The product list has **two rendered views in the same file**:
+**Status**: structural quirk in `app/admin/products/page.tsx` — the product list has **two separate JSX trees** rendering the same fields (name, brand, sku, price, stock, image): compact card view (~line 1545) and table view (~line 1597). Edit one, miss the other → half the rows look broken in production.
 
-1. **Compact card view** (~line 1545) — used for the small-card layout
-2. **Table view** (~line 1597) — used for the table layout with clickable copy-SKU button
+**Before editing**: `grep -n "p.brand || p.sku" web/app/admin/products/page.tsx` should show **two matches** — patch both. Inline `⚠` comments mark each block pointing at the other.
 
-Both views render the same fields (name, brand, sku, price, stock, image) but have **separate JSX trees**. They look identical to a casual reader and both contain a render block guarded by something like `(p.brand || p.sku) && ...`.
+**Past incident** (2026-04-09, fixed in 1.3.2): a SKU-display fix patched only the compact view; the table view kept the old `{p.brand && ...}` guard so SKUs stayed hidden.
 
-**Search trick** before editing: `grep -n "p.brand || p.sku" web/app/admin/products/page.tsx` — you should see **two matches**. If you only update one, half the rows in production will look broken.
-
-**Past incident** (2026-04-09): brand-empty rows lost their SKU display. Fix in 1.3.1 only patched the compact view at line 1545; the table view at 1594 still had the old `{p.brand && ...}` guard, so SKUs stayed hidden. Real fix was 1.3.2 which patched both. Inline `⚠` comments now mark both render blocks pointing at each other.
-
-**Rule of thumb**: when editing the product list display, **always** open both blocks side-by-side and apply the same change. If you decompose this file in the future (Phase 4B refactor), extract a single shared `<ProductRow>` so this can never happen again.
+**If you refactor this file** (Phase 4B): extract a shared `<ProductRow>` so this can't recur.
 
 ## ⚠ "Product detail page returns HTTP 500 right after I created or renamed a product"
 
@@ -50,7 +45,7 @@ Both views render the same fields (name, brand, sku, price, stock, image) but ha
 
 **Mitigation in place** (commit `3f360ac`):
 - `web/app/(shop)/products/[category]/[slug]/page.tsx` has `export const dynamic = "force-dynamic"` and **no longer uses `generateStaticParams` or `revalidate`**
-- Every product detail page visit now hits a lambda. Data comes from Upstash Redis with the 5-min in-memory cache in `lib/blob-store.ts`, so it stays fast
+- Every product detail page visit now hits a lambda. Data comes from Upstash Redis with the 30s in-memory cache in `lib/blob-store.ts`, so it stays fast
 - Quota cost: ~150 products × ~10 views/product/day = ~1500 invocations/day, well under Vercel Hobby's ~100k/day soft limit. Bandwidth and image-opt are unaffected (Cloudinary CDN serves images)
 
 **🚫 Do not revert this** unless you have **verified end-to-end** that:
@@ -144,11 +139,11 @@ If you DO revert, do it incrementally and test each product creation. Bring back
 
 ## "Product missing from search / chat AI doesn't see it"
 
-**Likely:** in-memory cache in `blob-store.ts` is serving stale data. The Map cache has a 5-min TTL but a warm lambda holds it through that window.
+**Likely:** in-memory cache in `blob-store.ts` is serving stale data. The Map cache has a 30s TTL but a warm lambda holds it through that window.
 
 **Fixes:**
 
-- Wait 5 minutes
+- Wait 30 seconds
 - Or force a cold start by redeploying
 - Or call the read with `noCache: true` (e.g., `readJSON("products.json", [], true)`)
 
@@ -218,7 +213,7 @@ Upstash free tier = **10,000 commands/day**.
 
 **Fixes:**
 
-- Increase `CACHE_TTL` in `blob-store.ts` (currently 5 min). 10 min is safe for promotions/products
+- **Do NOT raise `CACHE_TTL`** (in-memory Map, 30s — kept low so admin edits propagate fast). The Map is per-instance and does NOT gate Upstash; the real command gate is the `unstable_cache` layer (60s). Raise that layer's TTL if you genuinely need fewer commands
 - Check `/admin/quota` (Phase 3 dashboard) for breakdown
 - Disable any background polling in admin UI (use Page Visibility API)
 

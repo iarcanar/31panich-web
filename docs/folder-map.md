@@ -35,7 +35,7 @@ Next.js App Router. Two route groups, plus the API tree.
 | `(shop)/promotions/` | Active promotions + verification page | `page.tsx` (ISR 5min), `verify/page.tsx` |
 | `(shop)/about/`, `contact/`, `points/`, `warranty/`, `catalog/` | Static info pages | `page.tsx` each |
 | `admin/` | Admin panel (auth-gated) | `layout.tsx` (auth wrapper + `useAuth`), `login/page.tsx` |
-| `admin/products/` | Product CRUD + AI enrich | `page.tsx` (large — see Phase 4 refactor in [active plan](../../../Users/Welcome/.claude/projects/C--31-Site/memory/project_active_improvement_plan.md)) |
+| `admin/products/` | Product CRUD + AI enrich | `page.tsx` (large — Phase 4 refactor planned; see memory `project_active_improvement_plan`) |
 | `admin/coupons/` | Coupon CRUD | `page.tsx` |
 | `admin/settings/` | Edit AI system prompt + view hosting/links | `page.tsx` |
 | `admin/analytics/`, `ai-logs/`, `test-claim/` | Admin views — `ai-logs` = AI Back-end (chat logs + AI prompt + วันหยุด) | `page.tsx` each |
