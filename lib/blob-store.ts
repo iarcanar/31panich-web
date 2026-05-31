@@ -40,9 +40,13 @@ const cachedRedisGet = redis
     )
   : null
 
-// In-memory cache with TTL (helps warm serverless instances)
+// In-memory cache with TTL (helps warm serverless instances).
+// Kept SHORT: this Map is per-instance and is checked BEFORE the Next data
+// cache, so a long TTL would shadow admin edits on other warm instances
+// (revalidateTag/revalidatePath can't clear another instance's Map). 30s
+// bounds cross-instance staleness; unstable_cache (60s) absorbs Redis quota.
 const cache = new Map<string, { data: unknown; ts: number }>()
-const CACHE_TTL = 300_000 // 5 minutes (ลด Redis calls สำหรับข้อมูลที่เปลี่ยนไม่บ่อย)
+const CACHE_TTL = 30_000 // 30s — admin edits propagate within ~30s
 
 // Per-file write lock to prevent race conditions within the same instance
 const locks = new Map<string, Promise<void>>()

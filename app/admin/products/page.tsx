@@ -46,6 +46,27 @@ const EMPTY_FORM = {
   variants: [] as { label: string; price: string; discount: string; stock: string }[],
 }
 
+/** Single source of truth for price math (used by both the single-product form
+ *  and variants — SAME model: `fullPrice` is the full/normal price, `disc`
+ *  ("100" baht or "20%") reduces it). Returns the actual selling price the
+ *  customer pays + the original (strikethrough) price, or original=null when
+ *  there's no valid discount. */
+function computeSellPrice(fullPrice: number, disc: string): { selling: number; original: number | null } {
+  let selling = fullPrice
+  let original: number | null = null
+  const d = (disc || "").trim()
+  if (d && fullPrice > 0) {
+    if (d.endsWith("%")) {
+      const pct = parseFloat(d)
+      if (pct > 0 && pct < 100) { selling = Math.floor(fullPrice * (1 - pct / 100)); original = fullPrice }
+    } else {
+      const amt = parseFloat(d)
+      if (amt > 0 && amt < fullPrice) { selling = fullPrice - amt; original = fullPrice }
+    }
+  }
+  return { selling, original }
+}
+
 // ─── Main page ──────────────────────────────────────────
 
 export default function AdminProductsPage() {
@@ -262,7 +283,7 @@ export default function AdminProductsPage() {
       // ถ้ามี variants → คำนวณ price/stock อัตโนมัติ, ไม่ใช้ originalPrice
       price: hasVariants
         ? Math.min(...cleanVariants.map((v) => v.price))
-        : Number(form.price),
+        : computeSellPrice(Number(form.price), discountInput).selling,
       originalPrice: hasVariants
         ? (() => {
             const discounted = cleanVariants.filter((v) => v.originalPrice && v.originalPrice > v.price)
@@ -271,7 +292,7 @@ export default function AdminProductsPage() {
             const minPrice = Math.min(...cleanVariants.map((v) => v.price))
             return Math.ceil(minPrice / (1 - maxPct / 100))
           })()
-        : (form.originalPrice ? Number(form.originalPrice) : null),
+        : computeSellPrice(Number(form.price), discountInput).original,
       stock: hasVariants
         ? cleanVariants.reduce((sum, v) => sum + v.stock, 0)
         : Number(form.stock),
@@ -308,8 +329,9 @@ export default function AdminProductsPage() {
   function handleEdit(p: Product) {
     scrollPosRef.current = window.scrollY
     const imgs = p.images?.length ? p.images : p.image ? [p.image] : []
+    const mainFull = p.originalPrice && p.originalPrice > p.price ? p.originalPrice : p.price
     setForm({
-      name: p.name, description: p.description, price: String(p.price),
+      name: p.name, description: p.description, price: String(mainFull),
       originalPrice: p.originalPrice ? String(p.originalPrice) : "",
       category: p.category, images: imgs, stock: String(p.stock),
       isNew: p.isNew, isBestseller: p.isBestseller, isPinned: p.isPinned ?? false, brand: p.brand, sku: p.sku,
@@ -327,12 +349,12 @@ export default function AdminProductsPage() {
     setEditingId(p.id)
     setShowForm(true)
     setUploadInfo("")
-    const disc = (p.originalPrice && p.price && p.originalPrice > p.price)
-      ? `${Math.round((1 - p.price / p.originalPrice) * 100)}%` : ""
+    const disc = (p.originalPrice && p.originalPrice > p.price)
+      ? String(p.originalPrice - p.price) : ""
     setDiscountInput(disc)
     // snapshot สำหรับ dirty tracking
     setFormSnapshot(JSON.stringify({ ...{
-      name: p.name, description: p.description, price: String(p.price),
+      name: p.name, description: p.description, price: String(mainFull),
       originalPrice: p.originalPrice ? String(p.originalPrice) : "",
       category: p.category, images: imgs, stock: String(p.stock),
       isNew: p.isNew, isBestseller: p.isBestseller, isPinned: p.isPinned ?? false, brand: p.brand, sku: p.sku,
@@ -915,50 +937,35 @@ export default function AdminProductsPage() {
                       <SectionHeader>ราคา & สต็อก</SectionHeader>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div>
-                          <FieldLabel required>ราคาขาย (฿)</FieldLabel>
+                          <FieldLabel required>ราคาเต็ม (฿)</FieldLabel>
                           <TextInput type="number" value={form.price} onChange={(v) => setForm((f) => ({ ...f, price: v }))} placeholder="0" mono dataField="price" />
                         </div>
                         <div>
-                          <FieldLabel>ลดราคา</FieldLabel>
+                          <FieldLabel>ส่วนลด</FieldLabel>
                           <TextInput
                             value={discountInput}
-                            onChange={(v) => {
-                              setDiscountInput(v)
-                              const price = Number(form.price)
-                              if (!price || !v.trim()) {
-                                setForm((f) => ({ ...f, originalPrice: "" }))
-                                return
-                              }
-                              if (v.trim().endsWith("%")) {
-                                const pct = parseFloat(v)
-                                if (pct > 0 && pct < 100) {
-                                  setForm((f) => ({ ...f, originalPrice: String(Math.ceil(price / (1 - pct / 100))) }))
-                                }
-                              } else {
-                                const amt = parseFloat(v)
-                                if (amt > 0) {
-                                  setForm((f) => ({ ...f, originalPrice: String(price + amt) }))
-                                }
-                              }
-                            }}
+                            onChange={(v) => setDiscountInput(v)}
                             placeholder="100 หรือ 20%"
                             mono
                           />
                         </div>
                         <StepperInput label="สต็อก (ชิ้น)" value={form.stock} onChange={(v) => setForm((f) => ({ ...f, stock: v }))} />
                       </div>
-                      {form.originalPrice && Number(form.originalPrice) > Number(form.price) && (() => {
-                        const orig = Number(form.originalPrice)
-                        const sell = Number(form.price)
-                        const pct = Math.round((1 - sell / orig) * 100)
+                      {/* ราคาขายจริง — โชว์ชัดว่าลูกค้าจ่ายเท่าไหร่ (คำนวณสดจาก ราคาเต็ม + ส่วนลด) */}
+                      {Number(form.price) > 0 && (() => {
+                        const { selling, original } = computeSellPrice(Number(form.price), discountInput)
+                        const pct = original ? Math.round((1 - selling / original) * 100) : 0
                         return (
-                          <div className="mt-2 flex items-center gap-3 text-[11px]">
-                            <span className="text-gray-500 line-through">฿{orig.toLocaleString()}</span>
-                            <span className="text-white font-semibold">฿{sell.toLocaleString()}</span>
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${pct >= 20 ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"}`}>
-                              -{pct}%
-                            </span>
-                            <span className="text-emerald-400">ประหยัด ฿{(orig - sell).toLocaleString()}</span>
+                          <div className="mt-2.5 flex flex-wrap items-center gap-2.5 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20 px-3 py-2">
+                            <span className="text-[11px] text-[#94a3b8]">ราคาขายจริง (ลูกค้าจ่าย)</span>
+                            <span className="text-emerald-300 font-bold text-base font-mono">฿{selling.toLocaleString()}</span>
+                            {original && (
+                              <>
+                                <span className="text-gray-500 line-through text-[11px] font-mono">฿{original.toLocaleString()}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${pct >= 20 ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"}`}>-{pct}%</span>
+                                <span className="text-emerald-400 text-[11px]">ประหยัด ฿{(original - selling).toLocaleString()}</span>
+                              </>
+                            )}
                           </div>
                         )
                       })()}
