@@ -185,6 +185,11 @@ export default function ThaiChuayThaiBanner() {
                     ℹ️ รัฐช่วยสูงสุด ฿{baht(DAILY_STATE_CAP)}/วัน{capped ? " — ส่วนเกินจ่ายเอง" : ""}
                   </div>
                 </div>
+
+                {/* เงื่อนไขร่วมโปร */}
+                <p className="text-[10px] md:text-[11px] text-slate-400 th-text mt-2 leading-snug">
+                  *โครงการไทยช่วยไทยไม่สามารถใช้ร่วมกับการเก็บแต้มสามหนึ่ง
+                </p>
               </div>
 
               {/* Timeline — minimizable (พับไว้ default) */}
