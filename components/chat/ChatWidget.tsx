@@ -46,6 +46,10 @@ export default function ChatWidget() {
   const [input, setInput] = useState("")
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // Special promo starter chip (e.g. ไทยช่วยไทย พลัส) — only shown while a
+  // campaign is active. Fetched lazily on first panel open. See lib/campaigns.ts.
+  const [campaignChip, setCampaignChip] = useState<string | null>(null)
+  const campaignFetched = useRef(false)
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT)
   const panelHeightRef = useRef(DEFAULT_HEIGHT)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -84,6 +88,17 @@ export default function ChatWidget() {
   useEffect(() => {
     try { window.localStorage.setItem(TTS_PREF_KEY, String(ttsEnabled)) } catch {}
   }, [ttsEnabled])
+
+  // Fetch active promo campaign once, on first panel open (lazy → no cost
+  // until the user actually opens the chat). Adds a starter chip if active.
+  useEffect(() => {
+    if (!panelOpen || campaignFetched.current) return
+    campaignFetched.current = true
+    fetch("/api/campaigns/active")
+      .then((r) => r.json())
+      .then((d) => { if (d?.active && d.chipLabel) setCampaignChip(d.chipLabel) })
+      .catch(() => {})
+  }, [panelOpen])
 
   // Stop any active audio when panel closes
   useEffect(() => {
@@ -592,6 +607,14 @@ export default function ChatWidget() {
 
           {showSuggestions && !loading && (
             <div className="flex flex-wrap gap-1.5 pt-1">
+              {campaignChip && (
+                <button
+                  onClick={() => sendMessage(campaignChip)}
+                  className="text-[11px] text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 rounded-full px-3 py-1.5 font-semibold transition-colors"
+                >
+                  🇹🇭 {campaignChip}
+                </button>
+              )}
               {SUGGESTIONS.map((q) => (
                 <button
                   key={q}

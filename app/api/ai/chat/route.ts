@@ -7,6 +7,7 @@ import { getAiConfig } from "@/lib/ai-config"
 import { getRelevantKnowledge } from "@/lib/ai-knowledge"
 import { PHONE, LINE_ID, HOURS_TEXT, STORE_LANDMARK } from "@/lib/store-config"
 import { getActiveHoliday, getUpcomingHoliday, type ActiveHoliday } from "@/lib/holidays"
+import { getActiveCampaign, isCampaignQuery } from "@/lib/campaigns"
 import { recordError } from "@/lib/error-log"
 
 // ─── Helpers ────────────────────────────────────────────
@@ -235,6 +236,9 @@ export async function POST(request: NextRequest) {
     const upcomingHoliday = !activeHoliday ? await getUpcomingHoliday() : null
     const holidayObj = activeHoliday || upcomingHoliday
 
+    // Special promo campaign check (โปรพิเศษมีระยะเวลาจำกัด — plug in/out ที่ lib/campaigns.ts)
+    const activeCampaign = getActiveCampaign()
+
     // ── Step 1: Keyword detection → route to pipeline ──
     const holidaySpecific = isHolidaySpecific(message, holidayObj)
     const hoursGeneral = isHoursGeneral(message)
@@ -302,6 +306,10 @@ export async function POST(request: NextRequest) {
       //     (cacheable TTS: text matches a pre-generated WAV on the CDN) ══
       reply = `ร้านอยู่${STORE_LANDMARK}ครับ กดเพื่อนำทางได้เลยครับ`
       mapLink = true
+      searchKeyword = undefined
+    } else if (activeCampaign && isCampaignQuery(message)) {
+      // ══ Pipeline D: Special promo campaign (ไทยช่วยไทย พลัส ฯลฯ) — fixed concise reply, skip Gemini ══
+      reply = activeCampaign.answer
       searchKeyword = undefined
     } else {
       // ══ Pipeline B: Normal (products + general) ══
