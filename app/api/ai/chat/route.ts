@@ -7,7 +7,7 @@ import { getAiConfig } from "@/lib/ai-config"
 import { getRelevantKnowledge } from "@/lib/ai-knowledge"
 import { PHONE, LINE_ID, HOURS_TEXT, STORE_LANDMARK } from "@/lib/store-config"
 import { getActiveHoliday, getUpcomingHoliday, type ActiveHoliday } from "@/lib/holidays"
-import { getActiveCampaign, isCampaignQuery } from "@/lib/campaigns"
+import { getActiveCampaign, isCampaignQuery, pickCampaignAnswer } from "@/lib/campaigns"
 import { recordError } from "@/lib/error-log"
 
 // ─── Helpers ────────────────────────────────────────────
@@ -308,8 +308,8 @@ export async function POST(request: NextRequest) {
       mapLink = true
       searchKeyword = undefined
     } else if (activeCampaign && isCampaignQuery(message)) {
-      // ══ Pipeline D: Special promo campaign (ไทยช่วยไทย พลัส ฯลฯ) — fixed concise reply, skip Gemini ══
-      reply = activeCampaign.answer
+      // ══ Pipeline D: Special promo campaign — สั้น default, ละเอียดเมื่อถามรายละเอียด ══
+      reply = pickCampaignAnswer(activeCampaign, message)
       searchKeyword = undefined
     } else {
       // ══ Pipeline B: Normal (products + general) ══

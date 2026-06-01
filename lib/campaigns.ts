@@ -17,7 +17,8 @@ export interface Campaign {
   startDate: string // "YYYY-MM-DD" inclusive (เวลา Bangkok)
   endDate: string   // "YYYY-MM-DD" inclusive
   chipLabel: string // ข้อความ chip เริ่มต้นในแชท
-  answer: string    // คำตอบ AI แบบ fixed กระชับ (ผู้ชาย ลงท้าย "ครับ")
+  answer: string    // คำตอบสั้น (default) — แค่บอกว่าร้านร่วมโครงการ ลงท้าย "ครับ"
+  answerDetail?: string // คำตอบละเอียด — ใช้เมื่อลูกค้าถามรายละเอียด (กี่บาท/เงื่อนไข)
 }
 
 const FILE = "campaigns.json"
@@ -32,8 +33,9 @@ const DEFAULT_CAMPAIGNS: Campaign[] = [
     startDate: "2026-06-01",
     endDate: "2026-09-30",
     chipLabel: "ร่วมโครงการไทยช่วยไทยมั้ย?",
-    answer: [
-      'ร้านสามหนึ่งร่วมโครงการ "ไทยช่วยไทย พลัส (60/40)" แล้วครับ — รัฐช่วยจ่าย 60% เราจ่ายเอง 40% (สูงสุด 200 บาท/วัน) ผ่านแอปเป๋าตัง ถึง 30 ก.ย. 69',
+    answer: 'ร่วมครับ ร้านสามหนึ่งเข้าร่วมโครงการ "ไทยช่วยไทย พลัส" แล้ว ใช้สิทธิ์ซื้อของที่ร้านได้เลยครับ',
+    answerDetail: [
+      'ร้านสามหนึ่งร่วมโครงการ "ไทยช่วยไทย พลัส (60/40)" ครับ — รัฐช่วยจ่าย 60% เราจ่ายเอง 40% (สูงสุด 200 บาท/วัน) ผ่านแอปเป๋าตัง ถึง 30 ก.ย. 69',
       "ลองคำนวณยอดจ่ายจริงได้ที่แบนเนอร์หน้าแรกเลยครับ",
     ].join("\n"),
   },
@@ -43,6 +45,13 @@ const DEFAULT_CAMPAIGNS: Campaign[] = [
 const CAMPAIGN_KEYWORDS = [
   "ไทยช่วยไทย", "คนละครึ่ง", "60/40", "รัฐช่วย", "ร่วมโครงการ",
   "โครงการรัฐ", "โครงการของรัฐ", "เป๋าตัง", "สิทธิ์รัฐ", "สิทธิรัฐ",
+]
+
+// คำที่บ่งชี้ว่าลูกค้าอยากรู้ "รายละเอียด" → ตอบแบบละเอียด แทนคำตอบสั้น
+const CAMPAIGN_DETAIL_KEYWORDS = [
+  "กี่บาท", "เท่าไหร่", "เท่าไร", "เงื่อนไข", "ยังไง", "อย่างไร",
+  "คืออะไร", "รายละเอียด", "สูงสุด", "กี่เปอร์", "เปอร์เซ็น",
+  "ถึงเมื่อไหร่", "วันไหน", "คิดยังไง", "ใช้ยังไง",
 ]
 
 // ─── Data access (admin) ────────────────────────────────
@@ -77,4 +86,16 @@ export async function getActiveCampaign(): Promise<Campaign | null> {
 export function isCampaignQuery(message: string): boolean {
   const n = message.normalize("NFC")
   return CAMPAIGN_KEYWORDS.some((kw) => n.includes(kw.normalize("NFC")))
+}
+
+/** ลูกค้าถาม "รายละเอียด" โครงการหรือไม่ (กี่บาท/เงื่อนไข/คิดยังไง) */
+export function isCampaignDetailQuery(message: string): boolean {
+  const n = message.normalize("NFC")
+  return CAMPAIGN_DETAIL_KEYWORDS.some((kw) => n.includes(kw.normalize("NFC")))
+}
+
+/** เลือกคำตอบ: ละเอียดเมื่อถามรายละเอียด (และมี answerDetail), ไม่งั้นสั้น */
+export function pickCampaignAnswer(c: Campaign, message: string): string {
+  if (c.answerDetail && isCampaignDetailQuery(message)) return c.answerDetail
+  return c.answer
 }

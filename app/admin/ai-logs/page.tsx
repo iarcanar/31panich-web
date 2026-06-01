@@ -55,6 +55,7 @@ interface Campaign {
   endDate: string
   chipLabel: string
   answer: string
+  answerDetail?: string
 }
 
 const EMPTY_CAMPAIGN: Campaign = {
@@ -65,6 +66,7 @@ const EMPTY_CAMPAIGN: Campaign = {
   endDate: "",
   chipLabel: "",
   answer: "",
+  answerDetail: "",
 }
 
 export default function AiLogsPage() {
@@ -780,11 +782,21 @@ export default function AiLogsPage() {
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block text-[#64748b] text-[10px] mb-1">คำตอบของบอท (กระชับ ลงท้าย &quot;ครับ&quot;)</label>
+                      <label className="block text-[#64748b] text-[10px] mb-1">คำตอบสั้น (default — แค่บอกว่าร่วมโครงการ ลงท้าย &quot;ครับ&quot;)</label>
                       <textarea
                         value={editingCampaign.answer}
                         onChange={(e) => setEditingCampaign({ ...editingCampaign, answer: e.target.value })}
-                        placeholder="คำตอบที่บอทใช้เมื่อลูกค้าถามถึงโครงการ"
+                        placeholder="เช่น ร่วมครับ ร้านสามหนึ่งเข้าร่วมโครงการ ... แล้ว"
+                        rows={2}
+                        className="w-full bg-[#0e0e14] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-white placeholder-[#475569] outline-none focus:border-amber-400/40 resize-none"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[#64748b] text-[10px] mb-1">คำตอบเมื่อลูกค้าถามรายละเอียด (ไม่ใส่ก็ได้ — เช่น กี่บาท/เงื่อนไข)</label>
+                      <textarea
+                        value={editingCampaign.answerDetail || ""}
+                        onChange={(e) => setEditingCampaign({ ...editingCampaign, answerDetail: e.target.value })}
+                        placeholder="คำตอบละเอียด ใช้เมื่อลูกค้าถาม กี่บาท / เงื่อนไข / คิดยังไง"
                         rows={4}
                         className="w-full bg-[#0e0e14] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-white placeholder-[#475569] outline-none focus:border-amber-400/40 resize-none"
                       />
