@@ -39,7 +39,7 @@ export default function HomeHero() {
       <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-[#0e0e14]/35 to-transparent pointer-events-none" />
 
       {/* Greeter cutout — foreground, stands at bottom-right; her gesture points toward the text */}
-      <div className="pointer-events-none absolute right-0 bottom-0 z-10 w-[46%] sm:w-[40%] md:w-[34%] lg:w-[30%] max-w-[440px] aspect-[888/1000]">
+      <div className="pointer-events-none absolute right-0 bottom-5 z-10 w-[46%] sm:w-[40%] md:w-[34%] lg:w-[30%] max-w-[440px] aspect-[888/1000]">
         <Image
           src="/store/greeter-female.webp"
           alt="พนักงานต้อนรับร้านสามหนึ่งพานิช ยินดีให้คำปรึกษา"

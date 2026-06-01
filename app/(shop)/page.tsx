@@ -9,6 +9,7 @@ import { getActivePromotions } from "@/lib/promotions"
 import GoogleReviewStrip from "@/components/home/GoogleReviewStrip"
 import CouponsReelsRow from "@/components/home/CouponsReelsRow"
 import HomeHero from "@/components/home/HomeHero"
+import ThaiChuayThaiBanner from "@/components/home/ThaiChuayThaiBanner"
 import DiscoverFeed from "@/components/home/DiscoverFeed"
 import { localBusinessSchema } from "@/lib/structured-data"
 
@@ -24,6 +25,9 @@ export default function HomePage() {
 
       {/* Hero — ภาพหน้าร้านจริง + คนต้อนรับ (แทน sci-fi banner เดิม; รวมโซน "ยินดีต้อนรับ" เข้าด้วยกันไม่ให้ซ้ำ) */}
       <HomeHero />
+
+      {/* แบนเนอร์โครงการรัฐ "ไทยช่วยไทย พลัส (60/40)" — กดเพื่อ expand วิธีคิด + คำนวณสิทธิ์ */}
+      <ThaiChuayThaiBanner />
 
       {/* Google Review Strip — ใต้ banner */}
       <GoogleReviewStrip />
