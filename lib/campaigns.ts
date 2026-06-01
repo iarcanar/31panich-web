@@ -1,11 +1,14 @@
+import { readJSON, writeJSON } from "./blob-store"
+
 // ─── Special time-limited promo campaigns ───────────────
-// โปรพิเศษที่มีระยะเวลาจำกัด (เช่น มาตรการรัฐ co-payment) — โครงสร้างคล้าย holidays
-// แต่เป็น constant sync (ไม่พึ่ง Redis/admin) เพราะเป็น one-off ที่ dev คุมเอง
+// โปรพิเศษมีระยะเวลาจำกัด (เช่น มาตรการรัฐ co-payment) — จัดการผ่านหน้า admin
+// เหมือนวันหยุดนักขัตฤกษ์: เก็บใน data/campaigns.json → Redis (blob-store)
+// แก้/ปิด/ลบได้ที่ Admin: /admin/ai-logs → accordion "โปรพิเศษ / โครงการรัฐ"
 //
-// ── Plug in/out ──
-//  - เพิ่ม/แก้/ลบ entry ใน CAMPAIGNS ด้านล่าง
-//  - หมดโครงการ → ตั้ง active:false หรือปล่อยให้เลย endDate (date gating ตัดให้เอง)
-//  - ลบทิ้งถาวร → เอา entry ออกได้เลย ระบบที่เหลือไม่พัง (getActiveCampaign คืน null)
+// ── Plug out ──
+//  - กด toggle ปิด หรือเลย endDate → หายเอง (ไม่ต้อง deploy)
+//  - ลบรายการในหน้า admin → ถอดถาวร
+// คำตอบ AI แก้ได้ที่ฟิลด์ answer · keyword ตรวจจับอยู่ใน CAMPAIGN_KEYWORDS ด้านล่าง
 
 export interface Campaign {
   id: string
@@ -17,7 +20,11 @@ export interface Campaign {
   answer: string    // คำตอบ AI แบบ fixed กระชับ (ผู้ชาย ลงท้าย "ครับ")
 }
 
-const CAMPAIGNS: Campaign[] = [
+const FILE = "campaigns.json"
+
+// Seed เริ่มต้น — ใช้เมื่อ Redis ยังไม่มีข้อมูล (prod ครั้งแรก) หรือ local ไม่มีไฟล์
+// admin บันทึกทับเมื่อใดก็เก็บลง Redis แล้วใช้ค่านั้นแทน
+const DEFAULT_CAMPAIGNS: Campaign[] = [
   {
     id: "thaichuaythai-plus-2026",
     name: "ไทยช่วยไทย พลัส (60/40)",
@@ -26,9 +33,8 @@ const CAMPAIGNS: Campaign[] = [
     endDate: "2026-09-30",
     chipLabel: "ร่วมโครงการไทยช่วยไทยมั้ย?",
     answer: [
-      'ร้านสามหนึ่งเข้าร่วมโครงการ "ไทยช่วยไทย พลัส (60/40)" แล้วครับ',
-      "ซื้อของที่ร้าน รัฐช่วยจ่าย 60% เราจ่ายเอง 40% (รัฐช่วยสูงสุด 200 บาท/วัน) ใช้สิทธิ์ผ่านแอปเป๋าตัง ได้ถึง 30 ก.ย. 69 ครับ",
-      "ลองคำนวณว่าจ่ายเองเท่าไหร่ได้ที่แบนเนอร์หน้าแรกเว็บเลยครับ",
+      'ร้านสามหนึ่งร่วมโครงการ "ไทยช่วยไทย พลัส (60/40)" แล้วครับ — รัฐช่วยจ่าย 60% เราจ่ายเอง 40% (สูงสุด 200 บาท/วัน) ผ่านแอปเป๋าตัง ถึง 30 ก.ย. 69',
+      "ลองคำนวณยอดจ่ายจริงได้ที่แบนเนอร์หน้าแรกเลยครับ",
     ].join("\n"),
   },
 ]
@@ -39,15 +45,28 @@ const CAMPAIGN_KEYWORDS = [
   "โครงการรัฐ", "โครงการของรัฐ", "เป๋าตัง", "สิทธิ์รัฐ", "สิทธิรัฐ",
 ]
 
+// ─── Data access (admin) ────────────────────────────────
+
+export async function getCampaigns(): Promise<Campaign[]> {
+  return readJSON<Campaign[]>(FILE, DEFAULT_CAMPAIGNS)
+}
+
+export async function saveCampaigns(campaigns: Campaign[]): Promise<void> {
+  await writeJSON(FILE, campaigns)
+}
+
+// ─── Active check (server-side) ─────────────────────────
+
 /** วันที่ Bangkok วันนี้ "YYYY-MM-DD" */
 function todayBangkok(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" })
 }
 
 /** โครงการที่กำลัง active วันนี้ (อยู่ในช่วงวันที่ + active) — ไม่มีก็คืน null */
-export function getActiveCampaign(): Campaign | null {
+export async function getActiveCampaign(): Promise<Campaign | null> {
   const today = todayBangkok()
-  for (const c of CAMPAIGNS) {
+  const campaigns = await getCampaigns()
+  for (const c of campaigns) {
     if (!c.active) continue
     if (today >= c.startDate && today <= c.endDate) return c
   }

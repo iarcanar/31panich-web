@@ -236,8 +236,8 @@ export async function POST(request: NextRequest) {
     const upcomingHoliday = !activeHoliday ? await getUpcomingHoliday() : null
     const holidayObj = activeHoliday || upcomingHoliday
 
-    // Special promo campaign check (โปรพิเศษมีระยะเวลาจำกัด — plug in/out ที่ lib/campaigns.ts)
-    const activeCampaign = getActiveCampaign()
+    // Special promo campaign check (โปรพิเศษมีระยะเวลาจำกัด — จัดการที่ admin → campaigns.json)
+    const activeCampaign = await getActiveCampaign()
 
     // ── Step 1: Keyword detection → route to pipeline ──
     const holidaySpecific = isHolidaySpecific(message, holidayObj)

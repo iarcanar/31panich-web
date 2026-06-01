@@ -47,6 +47,26 @@ const EMPTY_HOLIDAY: Holiday = {
   active: true,
 }
 
+interface Campaign {
+  id: string
+  name: string
+  active: boolean
+  startDate: string
+  endDate: string
+  chipLabel: string
+  answer: string
+}
+
+const EMPTY_CAMPAIGN: Campaign = {
+  id: "",
+  name: "",
+  active: true,
+  startDate: "",
+  endDate: "",
+  chipLabel: "",
+  answer: "",
+}
+
 export default function AiLogsPage() {
   const { isAdmin } = useAuth()
   const [logs, setLogs] = useState<ChatLogs>({})
@@ -68,6 +88,14 @@ export default function AiLogsPage() {
   const [holidaySaving, setHolidaySaving] = useState(false)
   const [holidayMsg, setHolidayMsg] = useState("")
   const [editing, setEditing] = useState<Holiday | null>(null)
+
+  // Campaign (โปรพิเศษ/โครงการรัฐ) state
+  const [showCampaigns, setShowCampaigns] = useState(false)
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [campaignLoading, setCampaignLoading] = useState(true)
+  const [campaignSaving, setCampaignSaving] = useState(false)
+  const [campaignMsg, setCampaignMsg] = useState("")
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
 
   async function fetchLogs() {
     setLoading(true)
@@ -189,7 +217,67 @@ export default function AiLogsPage() {
     setEditing(next)
   }
 
-  useEffect(() => { fetchLogs(); fetchConfig(); fetchHolidays() }, [])
+  // ── Campaign handlers ──
+  async function fetchCampaigns() {
+    setCampaignLoading(true)
+    try {
+      const res = await fetch("/api/admin/campaigns")
+      const data = await res.json()
+      if (Array.isArray(data)) setCampaigns(data)
+    } catch { /* ignore */ }
+    setCampaignLoading(false)
+  }
+
+  async function persistCampaigns() {
+    setCampaignSaving(true)
+    setCampaignMsg("")
+    try {
+      const res = await fetch("/api/admin/campaigns", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(campaigns),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setCampaignMsg("บันทึกแล้ว")
+        setTimeout(() => setCampaignMsg(""), 3000)
+      } else {
+        setCampaignMsg(data.error || "เกิดข้อผิดพลาด")
+      }
+    } catch {
+      setCampaignMsg("เกิดข้อผิดพลาด")
+    }
+    setCampaignSaving(false)
+  }
+
+  function handleToggleCampaign(id: string) {
+    setCampaigns((prev) => prev.map((c) => c.id === id ? { ...c, active: !c.active } : c))
+  }
+
+  function handleDeleteCampaign(id: string) {
+    setCampaigns((prev) => prev.filter((c) => c.id !== id))
+  }
+
+  function handleCampaignEditorSave() {
+    if (!editingCampaign) return
+    if (!editingCampaign.name || !editingCampaign.startDate || !editingCampaign.endDate || !editingCampaign.chipLabel || !editingCampaign.answer) {
+      setCampaignMsg("กรุณากรอกข้อมูลให้ครบ")
+      setTimeout(() => setCampaignMsg(""), 3000)
+      return
+    }
+    setCampaigns((prev) => {
+      const idx = prev.findIndex((c) => c.id === editingCampaign.id)
+      if (idx >= 0) {
+        const copy = [...prev]
+        copy[idx] = editingCampaign
+        return copy
+      }
+      return [...prev, editingCampaign]
+    })
+    setEditingCampaign(null)
+  }
+
+  useEffect(() => { fetchLogs(); fetchConfig(); fetchHolidays(); fetchCampaigns() }, [])
 
   const hasChanges = instructions !== savedInstructions
 
@@ -534,6 +622,210 @@ export default function AiLogsPage() {
                     className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 disabled:bg-[#2a2a3a] disabled:text-[#64748b] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                   >
                     {holidaySaving ? "กำลังบันทึก..." : "บันทึกวันหยุด"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Campaign Manager — โปรพิเศษ/โครงการรัฐ (plug in/out เหมือนวันหยุด) */}
+        <div className="bg-[#14141f] border border-[#2a2a3a] rounded-xl overflow-hidden">
+          <button
+            onClick={() => setShowCampaigns(!showCampaigns)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+              </svg>
+              <span className="text-sm font-medium">โปรพิเศษ / โครงการรัฐ</span>
+              {campaigns.some((c) => c.active) && (
+                <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">
+                  {campaigns.filter((c) => c.active).length} รายการ
+                </span>
+              )}
+            </div>
+            <svg className={`w-4 h-4 text-[#64748b] transition-transform ${showCampaigns ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showCampaigns && (
+            <div className="border-t border-[#2a2a3a] p-4 space-y-3">
+              <p className="text-[11px] text-[#64748b]">
+                โปรพิเศษมีระยะเวลาจำกัด (เช่น มาตรการรัฐ) · บอทจะตอบลูกค้า + โชว์ปุ่มลัดในแชทเฉพาะช่วงที่เปิดใช้ · ปิด/ลบ หรือเลยวันสิ้นสุด = หายเอง · กดบันทึกเพื่อให้มีผล
+              </p>
+
+              {campaignLoading ? (
+                <div className="text-center text-[#64748b] py-4 text-sm">กำลังโหลด...</div>
+              ) : campaigns.length === 0 && !editingCampaign ? (
+                <div className="text-[#64748b] text-sm py-4 text-center border border-dashed border-[#2a2a3a] rounded-xl">
+                  ยังไม่มีโปรพิเศษ
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {campaigns.map((c) => (
+                    <div
+                      key={c.id}
+                      className={`border rounded-lg p-3 transition-colors ${
+                        c.active ? "border-amber-500/30 bg-[#1e1e2e]" : "border-[#2a2a3a] bg-[#1e1e2e]/50 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className={`text-sm text-white font-bold ${!c.active ? "line-through" : ""}`}>
+                              {c.name}
+                            </span>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium ${
+                              c.active
+                                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                                : "bg-gray-500/20 text-gray-400 border-gray-500/40"
+                            }`}>
+                              {c.active ? "เปิดใช้" : "ปิด"}
+                            </span>
+                          </div>
+                          <p className="text-[#94a3b8] text-[11px]">
+                            {formatThaiDate(c.startDate)} – {formatThaiDate(c.endDate)}
+                          </p>
+                          {c.chipLabel && (
+                            <p className="text-amber-300/70 text-[10px] mt-0.5 truncate">ปุ่มลัด: {c.chipLabel}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button
+                            onClick={() => handleToggleCampaign(c.id)}
+                            className="p-1 rounded text-[#64748b] hover:text-amber-400 hover:bg-amber-400/10 transition-colors"
+                            title={c.active ? "ปิดการใช้งาน" : "เปิดการใช้งาน"}
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              {c.active ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                              )}
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setEditingCampaign({ ...c })}
+                            className="p-1 rounded text-[#64748b] hover:text-purple-400 hover:bg-purple-400/10 transition-colors"
+                            title="แก้ไข"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCampaign(c.id)}
+                            className="p-1 rounded text-[#64748b] hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                            title="ลบ"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Editor inline */}
+              {editingCampaign && (
+                <div className="border border-amber-500/30 bg-[#1e1e2e] rounded-lg p-4 space-y-3">
+                  <p className="text-xs text-white font-bold">
+                    {campaigns.some((c) => c.id === editingCampaign.id) ? "แก้ไขโปรพิเศษ" : "เพิ่มโปรพิเศษใหม่"}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-[#64748b] text-[10px] mb-1">ชื่อโครงการ</label>
+                      <input
+                        type="text"
+                        value={editingCampaign.name}
+                        onChange={(e) => setEditingCampaign({ ...editingCampaign, name: e.target.value })}
+                        placeholder="เช่น ไทยช่วยไทย พลัส (60/40)"
+                        className="w-full bg-[#0e0e14] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-white placeholder-[#475569] outline-none focus:border-amber-400/40"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[#64748b] text-[10px] mb-1">เริ่มวันที่</label>
+                      <input
+                        type="date"
+                        value={editingCampaign.startDate}
+                        onChange={(e) => setEditingCampaign({ ...editingCampaign, startDate: e.target.value })}
+                        className="w-full bg-[#0e0e14] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-amber-400/40 [color-scheme:dark]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[#64748b] text-[10px] mb-1">สิ้นสุดวันที่</label>
+                      <input
+                        type="date"
+                        value={editingCampaign.endDate}
+                        onChange={(e) => setEditingCampaign({ ...editingCampaign, endDate: e.target.value })}
+                        className="w-full bg-[#0e0e14] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-amber-400/40 [color-scheme:dark]"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[#64748b] text-[10px] mb-1">ข้อความปุ่มลัดในแชท</label>
+                      <input
+                        type="text"
+                        value={editingCampaign.chipLabel}
+                        onChange={(e) => setEditingCampaign({ ...editingCampaign, chipLabel: e.target.value })}
+                        placeholder="เช่น ร่วมโครงการไทยช่วยไทยมั้ย?"
+                        className="w-full bg-[#0e0e14] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-white placeholder-[#475569] outline-none focus:border-amber-400/40"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[#64748b] text-[10px] mb-1">คำตอบของบอท (กระชับ ลงท้าย &quot;ครับ&quot;)</label>
+                      <textarea
+                        value={editingCampaign.answer}
+                        onChange={(e) => setEditingCampaign({ ...editingCampaign, answer: e.target.value })}
+                        placeholder="คำตอบที่บอทใช้เมื่อลูกค้าถามถึงโครงการ"
+                        rows={4}
+                        className="w-full bg-[#0e0e14] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-white placeholder-[#475569] outline-none focus:border-amber-400/40 resize-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <button onClick={() => setEditingCampaign(null)} className="px-3 py-1.5 text-[#64748b] hover:text-white text-xs transition-colors">
+                      ยกเลิก
+                    </button>
+                    <button
+                      onClick={handleCampaignEditorSave}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium rounded-lg transition-colors"
+                    >
+                      ตกลง
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Add + Save buttons */}
+              <div className="flex items-center justify-between">
+                {!editingCampaign ? (
+                  <button
+                    onClick={() => setEditingCampaign({ ...EMPTY_CAMPAIGN, id: `campaign-${Date.now()}` })}
+                    className="text-[#64748b] hover:text-amber-300 text-xs px-3 py-1.5 rounded-lg border border-dashed border-[#2a2a3a] hover:border-amber-400/40 transition-colors"
+                  >
+                    + เพิ่มโปรพิเศษ
+                  </button>
+                ) : <div />}
+                <div className="flex items-center gap-2">
+                  {campaignMsg && (
+                    <span className={`text-xs ${campaignMsg === "บันทึกแล้ว" ? "text-emerald-400" : "text-red-400"}`}>
+                      {campaignMsg}
+                    </span>
+                  )}
+                  <button
+                    onClick={persistCampaigns}
+                    disabled={campaignSaving}
+                    className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 disabled:bg-[#2a2a3a] disabled:text-[#64748b] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                  >
+                    {campaignSaving ? "กำลังบันทึก..." : "บันทึกโปรพิเศษ"}
                   </button>
                 </div>
               </div>
