@@ -19,7 +19,7 @@ import { useState } from "react"
  * accents on the site's dark theme) so it renders without an image dependency.
  */
 
-const OFFICIAL_URL = "https://www.xn--42caj4e1a2ame9b2cq0dyo.com/" // www.คนละครึ่งพลัส.com
+const OFFICIAL_URL = "https://www.xn--b3czb2arbbzn9a6eulf7c.th/" // www.ไทยช่วยไทยพลัส.th
 const STATE_SHARE = 0.6 // รัฐช่วย 60%
 const DAILY_STATE_CAP = 200 // เพดานรัฐช่วยต่อวัน (บาท)
 
