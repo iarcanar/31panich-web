@@ -1,6 +1,6 @@
 ---
 title: Architecture & Data Flow
-last_reviewed: 2026-04-19
+last_reviewed: 2026-06-10
 audience: both
 ---
 
@@ -42,6 +42,8 @@ On top of all three:
 - **In-memory cache** (`Map`, 30s TTL) deduplicates reads inside a warm lambda
 - **Per-file write lock** (`withLock`) queues concurrent writes so read-modify-write is safe
 - **Seeding**: first read from Redis falls back to local file and writes through (one-time migration)
+
+> ⚠ **Seed drift**: seeding happens ONLY when the Redis key is empty. Once data exists in Redis, editing the local `data/*.json` or in-code defaults (e.g. `DEFAULT_CAMPAIGNS`) and deploying changes **nothing** in production. Update live data through the admin UI/API instead — see [`debugging.md`](./debugging.md) "Redis seed drift".
 
 ## Request flow: load homepage `/`
 
@@ -98,6 +100,9 @@ sequenceDiagram
     API-->>C: "ร้านเปิดทุกวัน 7.30 – 17.30 น. ครับ" (cacheable WAV)
   else Pipeline A3 — location ("อยู่ไหน/แถวไหน/แผนที่/นำทาง")
     API-->>C: STORE_LANDMARK reply + mapLink:true (cacheable WAV)
+  else Pipeline D — active campaign + campaign keyword ("ไทยช่วยไทย/คนละครึ่ง/เป๋าตัง")
+    API->>API: pickCampaignAnswer — short answer, or answerDetail on detail keywords
+    API-->>C: Fixed text from campaigns.json (no Gemini call, cacheable WAV)
   else Pipeline B — everything else (products/general)
     API->>P: buildChatContextWithProducts(message)
     P-->>API: Top 5 matches + category summary
@@ -111,9 +116,11 @@ sequenceDiagram
   API-->>C: { reply, searchQuery?, suggestion?, mapLink? }
 ```
 
-**Multi-pipeline design**: AI chat uses keyword detection to route to separate pipelines. A/A2a/A2b/A3 return **deterministic** replies (no Gemini call) so they can be pre-rendered as static WAV audio. Only Pipeline B hits Gemini. This saves API cost on the most common questions (hours, location, confirmation) and avoids cross-contamination (e.g., product pipeline volunteering holiday info).
+**Multi-pipeline design**: AI chat uses keyword detection to route to separate pipelines. A/A2a/A2b/A3/D return **deterministic** replies (no Gemini call) so they can be pre-rendered as static WAV audio. Only Pipeline B hits Gemini. This saves API cost on the most common questions (hours, location, campaigns, confirmation) and avoids cross-contamination (e.g., product pipeline volunteering holiday info).
 
-**TTS static cache** (v2.0.10): when a reply from a deterministic pipeline matches `CACHED_TTS_REPLIES` in `web/lib/tts-cache.ts`, the client plays the pre-generated WAV from `public/audio/tts/*.wav` (CDN-served) and skips `/api/ai/tts` entirely — zero Gemini TTS cost, instant playback. Regenerate cache with `node scripts/gen-tts-cache.mjs`.
+**Pipeline D — campaigns** (v2.1.17+): time-limited government/promo campaigns (e.g. ไทยช่วยไทย พลัส) live in `web/lib/campaigns.ts` + `campaigns.json` (Redis). An active campaign adds a starter chip in ChatWidget; campaign keywords return a fixed short `answer`, detail keywords ("กี่บาท/เงื่อนไข") return `answerDetail`. Managed at `/admin/ai-logs` → "โปรพิเศษ / โครงการรัฐ" — expires automatically past `endDate`.
+
+**TTS static cache** (v2.0.10): when a reply from a deterministic pipeline matches `CACHED_TTS_REPLIES` in `web/lib/tts-cache.ts`, the client plays the pre-generated WAV from `public/audio/tts/*.wav` (CDN-served) and skips `/api/ai/tts` entirely — zero Gemini TTS cost, instant playback. Regenerate with `node scripts/gen-tts-cache.mjs [file.wav ...]` (no args = all files; pass filenames to regen only those and save TTS quota).
 
 **Tag rendering in ChatWidget**:
 - `[SEARCH:keyword]` → auto-navigate to `/products?search=...` (panel stays open, user likely continues chat)

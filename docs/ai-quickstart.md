@@ -1,6 +1,6 @@
 ---
 title: AI Session Quick Start
-last_reviewed: 2026-04-23
+last_reviewed: 2026-06-10
 audience: ai-session
 ---
 
@@ -34,13 +34,14 @@ python verify.py          # ONLY when touching env vars / auth
 | You want to… | Look at |
 |---|---|
 | Change the AI's personality / rules | `web/data/ai-config.json` (admin panel UI: `/admin/settings`) |
-| Change the AI chat system prompt template | `web/app/api/ai/chat/route.ts` (Pipelines A/A2a/A2b/A3/B/C — see [`recipes/edit-ai-prompt.md`](./recipes/edit-ai-prompt.md)) |
+| Change the AI chat system prompt template | `web/app/api/ai/chat/route.ts` (Pipelines A/A2a/A2b/A3/B/C/D — see [`recipes/edit-ai-prompt.md`](./recipes/edit-ai-prompt.md)) |
+| โปรพิเศษ/โครงการรัฐ (chip + คำตอบ AI เช่น ไทยช่วยไทย) | `web/lib/campaigns.ts` (keyword + Pipeline D) · Admin: `/admin/ai-logs` → accordion "โปรพิเศษ / โครงการรัฐ" · ⚠ ข้อมูลจริงอยู่ Redis — แก้ seed ในโค้ดไม่พอ (ดู debugging.md "Redis seed drift") |
 | จัดการวันหยุดนักขัตฤกษ์ (AI + ปุ่ม) | Admin: `/admin/ai-logs` → accordion "วันหยุด" · Data: `web/data/holidays.json` · Logic: `web/lib/holidays.ts` |
 | แก้คำตอบ "ร้านอยู่ไหน" / landmark ร้าน | `STORE_LANDMARK` ใน `web/lib/store-config.ts` — แก้แล้วต้องรัน `node scripts/gen-tts-cache.mjs` เพื่อ regen WAV cache |
 | เพิ่ม/แก้ TTS static cache (เสียงตอบสำเร็จรูป) | `web/lib/tts-cache.ts` (map) + `web/scripts/gen-tts-cache.mjs` (generator) + `web/public/audio/tts/*.wav` (assets) |
 | Edit the 15 product categories | `web/lib/categories.ts` (single source of truth) |
 | Change shop contact info (phone, LINE, hours) | `web/lib/store-config.ts` |
-| Change a JSON data file (products, coupons, promotions) | `web/data/*.json` — but in production these live in Upstash Redis (see `lib/blob-store.ts`) |
+| Change a JSON data file (products, coupons, promotions) | `web/data/*.json` — but in production these live in Upstash Redis (see `lib/blob-store.ts`). ⚠ Local file/seed edits do NOT reach production once Redis has the key — update via admin UI/API (see debugging.md "Redis seed drift") |
 | Add a new API route | `web/app/api/...` — wrap in try-catch, return `NextResponse.json({error}, {status: 500})` |
 | Add a new page | `web/app/(shop)/...` for shop, `web/app/admin/...` for admin |
 | Read/write JSON data with caching + atomic locks | `web/lib/blob-store.ts` (`readJSON`, `writeJSON`, `withLock`) |

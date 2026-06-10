@@ -1,6 +1,6 @@
 ---
 title: Recipe — Edit the AI System Prompt
-last_reviewed: 2026-04-19
+last_reviewed: 2026-06-10
 audience: both
 ---
 
@@ -48,6 +48,13 @@ The chat route (`web/app/api/ai/chat/route.ts`) uses a **multi-pipeline** archit
 - **To change the description**: edit `STORE_LANDMARK` in `web/lib/store-config.ts` **AND** rerun `node scripts/gen-tts-cache.mjs` to regenerate `public/audio/tts/location.wav`
 - **To change which keywords trigger**: edit `LOCATION_KEYWORDS` array in `route.ts`
 
+### Pipeline D — Special promo campaign (v2.1.17)
+- **When**: there is an active campaign (`getActiveCampaign()` — date range + `active` flag in `campaigns.json`) **and** `CAMPAIGN_KEYWORDS` matches ("ไทยช่วยไทย", "คนละครึ่ง", "เป๋าตัง", "ร่วมโครงการ", ...)
+- **Reply**: fixed `answer` (short, cached WAV) — or `answerDetail` when `CAMPAIGN_DETAIL_KEYWORDS` also match ("กี่บาท", "เงื่อนไข", "ใช้ยังไง", ...)
+- **Chip**: an active campaign also adds a starter chip (`chipLabel`) in ChatWidget via `/api/campaigns/active`
+- **To change answers/keywords**: answers via `/admin/ai-logs` → "โปรพิเศษ / โครงการรัฐ" (data lives in Redis — ⚠ editing `DEFAULT_CAMPAIGNS` in code does NOT update production, see debugging.md "Redis seed drift"); keywords in `web/lib/campaigns.ts`
+- **TTS**: the campaign `answer` has a cached WAV — if you change the answer text, update the matching key in `web/lib/tts-cache.ts` and regen (`node scripts/gen-tts-cache.mjs campaign-thaichuaythai.wav`), or accept fallback to live TTS
+
 ### Pipeline C — Instant confirmation
 - **When**: short message like "ดู / เอา / โอเค / ได้เลย" and session has a previous product question
 - **Reply**: extract keyword from previous turn → fixed "ดูสินค้าที่หน้าเว็บได้เลยครับ" + `searchQuery` for auto-navigation
@@ -71,7 +78,7 @@ The chat route (`web/app/api/ai/chat/route.ts`) uses a **multi-pipeline** archit
 
 ### TTS cache contract
 
-Any Pipeline A-series reply text that's listed in `CACHED_TTS_REPLIES` in `web/lib/tts-cache.ts` will play a pre-generated WAV from `public/audio/tts/`. When you change that reply text, you **must** rerun `node scripts/gen-tts-cache.mjs` and commit the new `.wav` — otherwise the audio plays the OLD text while the UI shows the NEW text.
+Any deterministic-pipeline reply text that's listed in `CACHED_TTS_REPLIES` in `web/lib/tts-cache.ts` will play a pre-generated WAV from `public/audio/tts/`. When you change that reply text, you **must** rerun `node scripts/gen-tts-cache.mjs <file.wav>` (pass the changed file only) and commit the new `.wav` — otherwise the audio plays the OLD text while the UI shows the NEW text. Exception: campaign answers edited via admin just cache-miss → live TTS fallback (works, but costs quota).
 
 ## Layer 3 — Holiday data (admin panel)
 
@@ -95,7 +102,9 @@ Trigger-based knowledge injection: `web/data/knowledge/points.txt` is read into 
 
 - `web/data/ai-config.json` — runtime config (Redis in production)
 - `web/lib/ai-config.ts` — `getAiConfig`, `saveAiConfig`
-- `web/app/api/ai/chat/route.ts` — dual pipeline handler (HOLIDAY_TEMPLATE + SYSTEM_TEMPLATE)
+- `web/app/api/ai/chat/route.ts` — multi-pipeline handler (HOLIDAY_TEMPLATE + SYSTEM_TEMPLATE + deterministic replies)
+- `web/lib/campaigns.ts` + `web/data/campaigns.json` — Pipeline D data + keywords
+- `web/app/api/admin/campaigns/route.ts` — campaign CRUD (admin)
 - `web/app/api/admin/ai-config/route.ts` — GET/PUT API (admin-only, blocked for managers in middleware)
 - `web/lib/ai-knowledge.ts` — trigger-based knowledge injection
 - `web/data/knowledge/*.txt` — knowledge snippets

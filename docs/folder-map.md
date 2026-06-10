@@ -1,6 +1,6 @@
 ---
 title: Folder Map
-last_reviewed: 2026-04-23
+last_reviewed: 2026-06-10
 audience: both
 ---
 
@@ -40,7 +40,10 @@ Next.js App Router. Two route groups, plus the API tree.
 | `admin/settings/` | Edit AI system prompt + view hosting/links | `page.tsx` |
 | `admin/analytics/`, `ai-logs/`, `test-claim/` | Admin views — `ai-logs` = AI Back-end (chat logs + AI prompt + วันหยุด) | `page.tsx` each |
 | `api/admin/` | Admin-only API routes | All require `getSessionUser()` admin check |
-| `api/ai/chat/` | Customer chat with Gemini (dual pipeline: holiday / product) | `route.ts` — public, no auth |
+| `api/ai/chat/` | Customer chat (multi-pipeline A/A2a/A2b/A3/C/D deterministic + B Gemini) | `route.ts` — public, no auth |
+| `api/ai/tts/` | Text-to-speech for chat replies (Gemini TTS, rate-limited per IP) | `route.ts` — public; static cache hits skip this entirely |
+| `api/admin/campaigns/` | โปรพิเศษ/โครงการรัฐ CRUD (Pipeline D data) | `route.ts` — GET/PUT |
+| `api/campaigns/active/` | Active campaign check (ChatWidget starter chip) | `route.ts` — public |
 | `api/holidays/active/` | Active holiday check for frontend (ISR 5min) | `route.ts` — public |
 | `api/admin/holidays/` | Holiday CRUD (admin-only) | `route.ts` — GET/PUT |
 | `api/ai/enrich/` | Admin product description AI | `route.ts` — uses `gemini-cache.ts` |
@@ -86,6 +89,11 @@ All business logic. No JSX in here.
 | `ai-products.ts` | `buildChatContextWithProducts`, `buildEnrichContext` | Score products against a Thai query (bidirectional matching), build context strings |
 | `ai-knowledge.ts` | `getRelevantKnowledge` | Trigger-based knowledge injection (e.g., "แต้ม" → reads `data/knowledge/points.txt`) |
 | `holidays.ts` | `getHolidays`, `saveHolidays`, `getActiveHoliday`, `getUpcomingHoliday`, `isHolidayClosed` | วันหยุดนักขัตฤกษ์ — ข้อมูลจาก `holidays.json`, ใช้ทั้ง AI pipeline + frontend buttons |
+| `campaigns.ts` | `getCampaigns`, `saveCampaigns`, `getActiveCampaign`, `isCampaignQuery`, `isCampaignDetailQuery`, `pickCampaignAnswer` | โปรพิเศษ/โครงการรัฐ (Pipeline D) — keyword detection + short/detail answer. ⚠ `DEFAULT_CAMPAIGNS` เป็นแค่ seed — production อ่านจาก Redis, แก้ผ่าน admin เท่านั้น |
+| `coupon-status.ts` | `getCouponStatus`, `CouponStatus` | คำนวณสถานะคูปอง (active/upcoming/expired/sold_out/hidden) จากวันที่ + claimCount |
+| `date-utils.ts` | `fmtShort`, `holidayShortName`, `MONTHS_SHORT` | Thai date formatting helpers (ใช้ใน ChatWidget + admin) |
+| `error-log.ts` | `recordError`, `getRecentErrors`, `clearRecentErrors` | Runtime error ring buffer (`runtime-errors.json`) — แสดงใน admin runtime-health |
+| `quota-check.ts` | `checkQuota`, `QuotaStatus`, `QuotaAlert` | Threshold-based quota alert logic (ใช้โดย quota dashboard) |
 | `chat-logger.ts` | `logChat` (no-op), `getChatLogs` | **Disabled** to save Vercel Blob ops |
 | `tts.ts` | `generateSpeech`, `cleanForTTS`, `pcmToWav`, `normalizeThaiTimes`, `normalizeBrandPronunciation`, `TTS_CONFIG` | Gemini TTS wrapper — hybrid 3.1→2.5 fallback, voice Orus, Thai time normalization, brand phonetic overrides |
 | `tts-cache.ts` | `CACHED_TTS_REPLIES`, `lookupCachedTts` | Phrase → static WAV URL map. ChatWidget checks this before calling `/api/ai/tts` so deterministic FAQ replies are served from CDN. Regen WAVs with `node scripts/gen-tts-cache.mjs` |
@@ -107,6 +115,8 @@ JSON data files. In dev these are read/written directly. In production they live
 | `promotions.json` | `Promotion[]` | Marketing promos shown on home |
 | `reviews.json` | Google reviews snapshot | Used by `GoogleReviewStrip` |
 | `holidays.json` | `Holiday[]` | วันหยุดนักขัตฤกษ์ (id, name, closedFrom/To, reopenDate, greeting, active) |
+| `campaigns.json` | `Campaign[]` | โปรพิเศษ/โครงการรัฐ (chipLabel, answer, answerDetail, start/endDate) — Pipeline D |
+| `runtime-errors.json` | `ErrorRecord[]` | Recent runtime errors (written by `lib/error-log.ts`) |
 | `chat-logs.json` | `ChatLog[]` | Logger disabled, file kept for shape |
 | `knowledge/points.txt` | plain text | Loyalty program info injected into chat when triggered |
 
@@ -120,7 +130,7 @@ JSON data files. In dev these are read/written directly. In production they live
 | `points/` | Loyalty reward images |
 | `category-icons/` | One SVG per category (15 files: `tools.svg`, `paint.svg`, etc.) |
 | `catalog/` | PDF product catalogs |
-| `audio/tts/` | Pre-generated TTS WAV files for FAQ replies (`hours-open.wav`, `no-holiday.wav`, `location.wav`). Regen via `node scripts/gen-tts-cache.mjs` after changing any cached phrase |
+| `audio/tts/` | Pre-generated TTS WAV files for deterministic replies (`hours-open.wav`, `no-holiday.wav`, `location.wav`, `campaign-thaichuaythai.wav`). Regen via `node scripts/gen-tts-cache.mjs [file.wav ...]` after changing any cached phrase (no args = all) |
 
 Plus the homepage banner (`banner-mobile.webp`), favicons, and `robots.txt`.
 
@@ -129,7 +139,7 @@ Plus the homepage banner (`banner-mobile.webp`), favicons, and `robots.txt`.
 | File | Purpose |
 |---|---|
 | `sync-from-redis.mjs` | Pulls production Redis → `data/*.json` for local dev (called by `npm run sync`) |
-| `gen-tts-cache.mjs` | One-shot generator for FAQ TTS WAV cache. Mirrors `cleanForTTS` + `pcmToWav` from `lib/tts.ts` so output matches the live route. Run manually when a cached phrase text changes |
+| `gen-tts-cache.mjs` | One-shot generator for the TTS WAV cache. Mirrors `cleanForTTS` + `pcmToWav` from `lib/tts.ts` so output matches the live route. Run manually when a cached phrase text changes — pass filenames as args to regen only those (e.g. `node scripts/gen-tts-cache.mjs campaign-thaichuaythai.wav`) |
 
 ## Other top-levels
 

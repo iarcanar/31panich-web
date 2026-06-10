@@ -37,6 +37,11 @@ Single source of truth for how this codebase fits together. **AI sessions: start
 
 ## Changelog
 
+### 2026-06-10
+- **Campaign chip answer + TTS cache** (v2.1.21): "ไทยช่วยไทย" chip now returns a short fixed answer with a pre-generated WAV (`campaign-thaichuaythai.wav`); details stay in `answerDetail`. `gen-tts-cache.mjs` accepts filename args for selective regen.
+- **Docs: Pipeline D documented** across architecture/debugging/quota/edit-ai-prompt (was missing since v2.1.17); folder-map caught up on `lib/` (campaigns, coupon-status, date-utils, error-log, quota-check) and `data/` (campaigns, runtime-errors).
+- **New debugging section: "Redis seed drift"** — editing in-code seeds/`data/*.json` does NOT update production once Redis holds the key; update via admin UI/API. This bit us with the campaign answer (production had a stale long answer + missing `answerDetail`).
+
 ### 2026-05-31
 - **Discount badges → baht** (v2.1.16, 8 spots): pinned/hero, card, and variant badges now show "ลดทันที ฿X" / "ลด ฿X" instead of "%" (small-shop discounts read stronger in baht). Red/orange thresholds still use % internally — see [[project_admin_price_model]].
 - **Docs accuracy**: corrected stale "5-min cache" → 30s across architecture/debugging/recipes (matches `CACHE_TTL` since 2026-05-29); removed the obsolete advice to raise `CACHE_TTL` to cut Upstash (it doesn't gate Upstash — the 60s `unstable_cache` does) — see [[blob-store-cache-30s-ttl-revalidatetag-needs-expire-0]].

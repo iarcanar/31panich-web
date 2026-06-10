@@ -1,6 +1,6 @@
 ---
 title: Debugging Playbook
-last_reviewed: 2026-04-19
+last_reviewed: 2026-06-10
 audience: both
 ---
 
@@ -68,6 +68,7 @@ If you DO revert, do it incrementally and test each product creation. Bring back
 - **Pipeline A2a**: "มีวันหยุดมั้ย" แต่ไม่มีวันหยุด → fixed reply "ไม่มีวันหยุดพิเศษ"
 - **Pipeline A2b**: "เปิดกี่โมง/เปิดมั้ย" → fixed reply ชั่วโมงเปิด
 - **Pipeline A3 (v2.0.10)**: "อยู่ไหน/แถวไหน/แผนที่/นำทาง" → fixed reply พร้อม `mapLink:true` (ไม่เรียก Gemini)
+- **Pipeline D (v2.1.17+)**: campaign active + keyword ("ไทยช่วยไทย/คนละครึ่ง/เป๋าตัง" — ดู `CAMPAIGN_KEYWORDS` ใน `lib/campaigns.ts`) → fixed `answer` สั้น หรือ `answerDetail` เมื่อถามรายละเอียด (ไม่เรียก Gemini)
 - **Pipeline B (Product/Default)**: ไม่เข้าเงื่อนไขบน → prompt สินค้าเต็ม + Gemini
 - **Pipeline C**: ยืนยันสั้นๆ ("ดู/เอา/โอเค") → extract keyword จาก turn ก่อน + `searchQuery` (ไม่เรียก Gemini)
 
@@ -77,7 +78,12 @@ If you DO revert, do it incrementally and test each product creation. Bring back
 3. **Holiday prompt**: `HOLIDAY_TEMPLATE` ใน route.ts — prompt ที่ Gemini ใช้ตอบเรื่องวันหยุด
 4. **Admin UI**: `/admin/ai-logs` → accordion "วันหยุดนักขัตฤกษ์" — ตรวจว่า active หรือไม่
 
-**Testing protocol**: เมื่อแก้ข้อมูลวันหยุดหรือ AI prompt ต้องทดสอบอย่างน้อย 5 คำถาม ผ่าน ChatWidget จริง (ไม่ใช่ curl เพราะ encoding ต่างกัน):
+**Testing protocol**: เมื่อแก้ข้อมูลวันหยุดหรือ AI prompt ต้องทดสอบอย่างน้อย 5 คำถาม ผ่าน ChatWidget จริง — **ห้ามใช้ curl บน Windows** (ส่งภาษาไทยเพี้ยน → keyword detection ไม่ match → หลุดไป Pipeline B แบบงงๆ) ถ้าจะยิง API ตรง ใช้ Node แทน:
+
+```bash
+node -e "fetch('http://localhost:3001/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:'ร้านเปิดกี่โมง'})}).then(r=>r.json()).then(j=>console.log(j.reply))"
+```
+
 1. ถามตรง ("สงกรานต์หยุดไหม")
 2. ถามเวลา ("ร้านเปิดกี่โมง")
 3. ถามวันที่ ("หยุดวันไหนถึงวันไหน")
@@ -107,8 +113,10 @@ If you DO revert, do it incrementally and test each product creation. Bring back
 
 **Fix:**
 1. ยืนยันว่าข้อความ reply ในโค้ดตรงกับ key ใน `CACHED_TTS_REPLIES` (whitespace สำคัญ — `normalize()` ใน `lookupCachedTts` แค่ collapse ws เท่านั้น)
-2. รัน `cd web/ && node scripts/gen-tts-cache.mjs` เพื่อ regen WAV ทั้งหมด
+2. รัน `cd web/ && node scripts/gen-tts-cache.mjs <file.wav>` เพื่อ regen เฉพาะไฟล์ที่ข้อความเปลี่ยน (ไม่ใส่ args = regen ทั้งหมด — เปลือง TTS quota และเสียงไฟล์อื่นเปลี่ยน rendition โดยไม่จำเป็น)
 3. commit ไฟล์ WAV ใหม่ + push — Vercel CDN serve ไฟล์ใหม่อัตโนมัติ
+
+**กรณี campaign (Pipeline D)**: ข้อความ `answer` อยู่ใน Redis และแก้ได้จากหน้า admin — ถ้า admin แก้ข้อความแล้วไม่ regen WAV จะไม่พัง แค่ cache miss → fallback ไปเรียก `/api/ai/tts` สด (เสีย Gemini TTS ปกติ) ถ้าอยากให้ฟรีอีกครั้ง: แก้ key ใน `CACHED_TTS_REPLIES` ให้ตรงข้อความใหม่ + regen WAV + commit
 
 **ถ้าอยากปิด cache ชั่วคราว**: ลบ entry ใน `CACHED_TTS_REPLIES` → `lookupCachedTts` จะ return undefined → ไป fetch `/api/ai/tts` สด (Gemini charge ปกติ)
 
@@ -126,6 +134,21 @@ If you DO revert, do it incrementally and test each product creation. Bring back
 - Was the answer cached? Chat itself is NOT cached (`gemini-cache.ts` is opt-in, used by `/api/ai/enrich` but not `/api/ai/chat`). If chat seems to give the same wrong answer, it's the prompt, not the cache
 - Is the system prompt being saved? Check the admin UI's `/api/admin/ai-config` PUT response
 - Is `temperature` too high? `web/lib/gemini.ts` uses 0.3 — fine for chat. Higher values would make answers drift
+
+## ⚠ "แก้ seed/default ในโค้ดแล้ว deploy แต่ production ไม่เปลี่ยน" (Redis seed drift)
+
+**Status**: by design — เจอจริง 2026-06-10 กับ campaign "ไทยช่วยไทย"
+
+**Root cause**: `readJSON()` ใน `blob-store.ts` seed จาก local file/default **เฉพาะตอน Redis key ว่าง** (first deploy) เท่านั้น — เมื่อ Redis มีข้อมูลแล้ว การแก้ `web/data/*.json` หรือ default ในโค้ด (เช่น `DEFAULT_CAMPAIGNS` ใน `lib/campaigns.ts`) + deploy จะ**ไม่มีผลใดๆ กับ production** ข้อมูลจริงกับโค้ดจึง drift จากกันเงียบๆ
+
+**ไฟล์ที่เสี่ยง drift**: ทุกไฟล์ที่ admin แก้ได้ — `campaigns.json`, `holidays.json`, `ai-config.json`, `products.json`, `coupons.json`, `promotions.json`
+
+**Fix — อัปเดต production ผ่าน admin เสมอ:**
+1. ทางปกติ: หน้า admin UI (`/admin/ai-logs`, `/admin/products`, ...)
+2. ทาง script (แก้ field ที่ UI ไม่มี): login `POST /api/admin/auth` → เก็บ cookie → `GET`/`PUT /api/admin/<resource>` — ตัวอย่างจริง: commit `40c0340` อัปเดต campaign answer + เติม `answerDetail` ที่หายไป
+3. **ห้าม** เขียน Redis ตรงๆ ข้าม validation ของ API route
+
+**วิธีตรวจว่า drift หรือไม่**: `GET /api/admin/<resource>` (production) เทียบกับ seed ในโค้ด — หรือยิงคำถามใส่ production chat API ตรงๆ แล้วเทียบคำตอบ
 
 ## "I added a product but it doesn't show on the homepage"
 
