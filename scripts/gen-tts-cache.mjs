@@ -195,13 +195,19 @@ const PHRASES = [
   { file: "hours-open.wav", text: `ร้านเปิดทุกวัน ${HOURS_TEXT} ครับ` },
   { file: "no-holiday.wav", text: `ตอนนี้ไม่มีวันหยุดพิเศษครับ ร้านเปิดบริการทุกวัน ${HOURS_TEXT} ครับ` },
   { file: "location.wav", text: `ร้านอยู่${STORE_LANDMARK}ครับ กดเพื่อนำทางได้เลยครับ` },
+  // mirror `answer` ของ campaign thaichuaythai-plus-2026 (lib/campaigns.ts + Redis)
+  { file: "campaign-thaichuaythai.wav", text: 'ร่วมครับ ร้านสามหนึ่งเข้าร่วม "ไทยช่วยไทย พลัส" แล้ว\nใช้สิทธิ์ผ่านแอปเป๋าตังที่หน้าร้านได้เลยครับ' },
 ]
 
 // ── Run ────────────────────────────────────────────────────
+// Optional args = generate only these files (avoid re-spending quota on
+// unchanged phrases): node scripts/gen-tts-cache.mjs campaign-thaichuaythai.wav
+const onlyFiles = process.argv.slice(2)
+const targets = onlyFiles.length ? PHRASES.filter((p) => onlyFiles.includes(p.file)) : PHRASES
 mkdirSync(OUT_DIR, { recursive: true })
 const ai = new GoogleGenAI({ apiKey: KEY })
 
-for (const { file, text } of PHRASES) {
+for (const { file, text } of targets) {
   const cleaned = cleanForTTS(text)
   console.log(`\n[gen] ${file}`)
   console.log(`      raw:     "${text}"`)
@@ -213,4 +219,4 @@ for (const { file, text } of PHRASES) {
   console.log(`      ✓ ${wav.length} bytes @ ${sampleRate}Hz`)
 }
 
-console.log(`\nDone. ${PHRASES.length} files in ${OUT_DIR}`)
+console.log(`\nDone. ${targets.length} files in ${OUT_DIR}`)

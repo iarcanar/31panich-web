@@ -18,6 +18,9 @@ export const CACHED_TTS_REPLIES: Record<string, string> = {
   [`ร้านเปิดทุกวัน ${HOURS_TEXT} ครับ`]: "/audio/tts/hours-open.wav",
   [`ตอนนี้ไม่มีวันหยุดพิเศษครับ ร้านเปิดบริการทุกวัน ${HOURS_TEXT} ครับ`]: "/audio/tts/no-holiday.wav",
   [`ร้านอยู่${STORE_LANDMARK}ครับ กดเพื่อนำทางได้เลยครับ`]: "/audio/tts/location.wav",
+  // Pipeline D — campaign chip answer. Text mirrors `answer` ใน lib/campaigns.ts
+  // (admin แก้ answer ได้ → cache miss → fallback ไป /api/ai/tts ตามปกติ)
+  ['ร่วมครับ ร้านสามหนึ่งเข้าร่วม "ไทยช่วยไทย พลัส" แล้ว\nใช้สิทธิ์ผ่านแอปเป๋าตังที่หน้าร้านได้เลยครับ']: "/audio/tts/campaign-thaichuaythai.wav",
 }
 
 function normalize(text: string): string {
