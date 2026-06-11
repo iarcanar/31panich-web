@@ -149,25 +149,35 @@ export default function LiquidGlass({
     const el = ref.current
     if (!el) return
     let raf = 0
+    let cancelled = false
     const ro = new ResizeObserver(([e]) => {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
         const w = Math.round(e.contentRect.width)
         const h = Math.round(e.contentRect.height)
         if (!w || !h) return
-        if (w === lastWidth.current && map) return // width unchanged → keep map
+        if (w === lastWidth.current) return // width unchanged → keep map
         lastWidth.current = w
-        const pad = Math.ceil(strength / 2) + 4
-        setDims({ w, h, pad })
-        setMap(bakeLensMap(w, h, radius, bevel, pad))
+        // Pad generously: 2-pass displacement shifts pixels up to ~0.8×strength
+        // at the rim, so the filter region must extend that far or the
+        // refraction gets clipped.
+        const pad = Math.ceil(strength * 0.75) + 10
+        const url = bakeLensMap(w, h, radius, bevel, pad)
+        // Decode the data-URL BEFORE handing it to feImage. An undecoded map
+        // makes feDisplacementMap fall back to identity (zero displacement) →
+        // "no refraction at all", and backdrop-filter won't re-paint on load.
+        const pre = new Image()
+        pre.onload = () => { if (!cancelled) { setDims({ w, h, pad }); setMap(url) } }
+        pre.src = url
       })
     })
     ro.observe(el)
     return () => {
+      cancelled = true
       ro.disconnect()
       cancelAnimationFrame(raf)
     }
-  }, [lensActive, radius, bevel, strength, map])
+  }, [lensActive, radius, bevel, strength])
 
   const ready = lensActive && map && dims
   const bf = ready
@@ -199,11 +209,23 @@ export default function LiquidGlass({
             height={`${100 + (dims!.pad / dims!.h) * 200}%`}
             colorInterpolationFilters="sRGB"
           >
+            {/* 2-pass refraction (heavier but only one element, no scroll):
+                soften the map, then displace twice so the rim visibly bends
+                the backdrop like thick liquid glass. */}
             <feImage href={map!} result="m" preserveAspectRatio="none" />
+            <feGaussianBlur in="m" stdDeviation="0.5" result="mb" />
             <feDisplacementMap
               in="SourceGraphic"
-              in2="m"
+              in2="mb"
               scale={-strength}
+              xChannelSelector="R"
+              yChannelSelector="G"
+              result="p1"
+            />
+            <feDisplacementMap
+              in="p1"
+              in2="mb"
+              scale={-strength * 0.55}
               xChannelSelector="R"
               yChannelSelector="G"
             />

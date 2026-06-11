@@ -51,22 +51,31 @@ export default function PointsPage() {
         }}
       />
 
-      {/* Hero */}
-      <section>
-        <div className="container mx-auto px-4 py-12 md:py-16 flex flex-col items-center text-center">
-          <Image
-            src="/points/hero.webp"
-            alt="เทศกาลแลกแต้ม 2026"
-            width={800}
-            height={600}
-            className="w-full max-w-2xl h-auto rounded-2xl shadow-2xl ring-1 ring-inset ring-white/15"
-            priority
-          />
+      {/* Main banner — faded bottom blends into the purple page; the glass
+          "สะสมแต้มง่ายๆ" panel below is pulled up to overlap the fade. */}
+      <section className="relative">
+        <div className="container mx-auto px-4 pt-8 md:pt-12">
+          <div
+            className="relative max-w-5xl mx-auto aspect-[16/9] overflow-hidden rounded-3xl"
+            style={{
+              maskImage: "linear-gradient(to bottom, #000 56%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, #000 56%, transparent 100%)",
+            }}
+          >
+            <Image
+              src="/points/banner-2026.webp"
+              alt="เทศกาลแลกแต้ม สามหนึ่งพานิช 2026"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-cover"
+            />
+          </div>
         </div>
       </section>
 
-      {/* วิธีสะสม */}
-      <section className="container mx-auto px-4 -mt-6 relative z-10">
+      {/* วิธีสะสม — overlaps the banner's faded bottom edge */}
+      <section className="container mx-auto px-4 -mt-20 md:-mt-28 relative z-10">
         <HowToCollect />
       </section>
 
