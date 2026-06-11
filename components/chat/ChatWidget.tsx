@@ -402,8 +402,15 @@ export default function ChatWidget() {
       {/* ── Floating button ── */}
       <button
         onClick={() => setPanelOpen(true)}
-        style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
-        className={`fixed right-4 z-50 rounded-full shadow-2xl shadow-purple-900/50 border-2 border-purple-400/60 bg-purple-950/90 hover:bg-purple-900 backdrop-blur-sm flex items-center gap-2 px-4 py-2.5 transition-all duration-500 ${
+        style={{
+          bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))",
+          background: "linear-gradient(180deg, rgba(99,56,170,0.62), rgba(46,24,90,0.58))",
+          backdropFilter: "blur(12px) saturate(160%)",
+          WebkitBackdropFilter: "blur(12px) saturate(160%)",
+          boxShadow:
+            "inset 0 0 0 1px rgba(255,255,255,0.20), inset 0 1px 0 rgba(255,255,255,0.32), 0 12px 30px rgba(20,10,40,0.5)",
+        }}
+        className={`fixed right-4 z-50 rounded-full flex items-center gap-2 px-4 py-2.5 transition-all duration-500 ${
           panelOpen ? "opacity-0 pointer-events-none scale-75" : ""
         } ${isScrolling ? "opacity-30" : "opacity-100"} ${wiggle ? "animate-[wiggle_0.5s_ease-in-out]" : ""}`}
         aria-label="เปิดแชท AI"
@@ -418,7 +425,7 @@ export default function ChatWidget() {
            outside the panel to close it. Always mounted, opacity-toggled
            so the fade transition works smoothly. */}
       <div
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${
+        className={`fixed inset-0 z-40 bg-[#0a0614]/65 backdrop-blur-sm transition-opacity duration-200 ${
           panelOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setPanelOpen(false)}
@@ -439,8 +446,17 @@ export default function ChatWidget() {
           height: panelHeight,
           maxHeight: "calc(100dvh - 3rem)",
           bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))",
+          // Frosted dark-purple glass. Tint is opaque enough (0.86–0.92) that
+          // chat text stays readable over busy page content behind it.
+          background: "linear-gradient(180deg, rgba(26,16,46,0.86), rgba(16,12,30,0.93))",
+          // Only blur while open — an always-mounted blur(20px) over the whole
+          // viewport would burn GPU/battery even when the chat is closed.
+          backdropFilter: panelOpen ? "blur(20px) saturate(150%)" : "none",
+          WebkitBackdropFilter: panelOpen ? "blur(20px) saturate(150%)" : "none",
+          boxShadow:
+            "inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1.5px 0 rgba(255,255,255,0.30), 0 24px 60px rgba(20,10,40,0.6)",
         }}
-        className={`fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 max-w-[calc(100vw-1.5rem)] md:max-w-none bg-[#14141f] border border-[#2a2a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
+        className={`fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 max-w-[calc(100vw-1.5rem)] md:max-w-none rounded-3xl flex flex-col overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
           panelOpen
             ? "opacity-100 pointer-events-auto translate-y-0"
             : "opacity-0 pointer-events-none translate-y-3"
@@ -452,28 +468,31 @@ export default function ChatWidget() {
           onTouchStart={handleDragStart}
           className="flex items-center justify-center h-5 cursor-ns-resize shrink-0 group touch-none relative"
         >
-          <div className="w-8 h-1 rounded-full bg-[#2a2a3a] group-hover:bg-purple-400/50 transition-colors" />
+          <div className="w-8 h-1 rounded-full bg-white/20 group-hover:bg-purple-400/60 transition-colors" />
+          {/* Close tab — hugs the panel's rounded top-right corner. The hover
+              background shares the panel radius (rounded-tr-3xl) so it nests
+              cleanly into the corner instead of poking past the curve. */}
           <button
             onClick={(e) => { e.stopPropagation(); setPanelOpen(false) }}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-gray-600 hover:text-gray-200 hover:bg-white/10 transition-colors cursor-pointer"
+            className="chat-close-tab absolute top-0 right-0 z-20 w-12 h-9 flex items-center justify-center rounded-tr-3xl rounded-bl-2xl cursor-pointer"
             aria-label="ปิดแชท"
             title="ปิด"
           >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-4 h-4 -mt-0.5 -mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-[#2a2a3a]">
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-white/10">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2 h-2 rounded-full bg-emerald-400 self-start mt-1.5 shrink-0" />
             <div className="min-w-0">
               <span className="text-white text-sm font-medium block">สามหนึ่ง Ai</span>
-              <p className="text-[9px] text-gray-500 leading-tight truncate">Gemini 2.5 Flash · AI อาจผิดพลาดได้</p>
+              <p className="text-[9px] text-gray-400 leading-tight truncate">Gemini 2.5 Flash · AI อาจผิดพลาดได้</p>
             </div>
           </div>
 
@@ -487,7 +506,7 @@ export default function ChatWidget() {
               }
               setTtsEnabled((v) => !v)
             }}
-            className={`shrink-0 h-8 pl-2 pr-3 rounded-full flex items-center gap-1.5 border transition-all cursor-pointer active:scale-95 ${
+            className={`shrink-0 mr-10 h-8 pl-2 pr-3 rounded-full flex items-center gap-1.5 border transition-all cursor-pointer active:scale-95 ${
               ttsEnabled
                 ? "bg-emerald-500/15 border-emerald-400/50 hover:bg-emerald-500/25 hover:border-emerald-400/70"
                 : "bg-white/5 border-white/15 hover:bg-white/10"
@@ -516,7 +535,7 @@ export default function ChatWidget() {
         </div>
 
         {/* Contact bar */}
-        <div className="flex border-b border-[#2a2a3a]">
+        <div className="flex border-b border-white/10">
           <a
             href={LINE_URL}
             target="_blank"
@@ -528,7 +547,7 @@ export default function ChatWidget() {
           </a>
           {isDuringHours ? (
             <>
-              <div className="w-px bg-[#2a2a3a]" />
+              <div className="w-px bg-white/10" />
               <button
                 onClick={handlePhoneClick}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium text-emerald-400 hover:bg-emerald-400/10 transition-colors"
@@ -541,7 +560,7 @@ export default function ChatWidget() {
             </>
           ) : (
             <>
-              <div className="w-px bg-[#2a2a3a]" />
+              <div className="w-px bg-white/10" />
               <div className="flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-medium text-amber-400/70">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -619,7 +638,7 @@ export default function ChatWidget() {
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="text-[11px] text-purple-300 bg-purple-950/60 hover:bg-purple-900/60 border border-purple-400/20 rounded-full px-3 py-1.5 transition-colors"
+                  className="text-[11px] text-purple-200 bg-purple-400/10 hover:bg-purple-400/20 border border-purple-300/25 rounded-full px-3 py-1.5 transition-colors"
                 >
                   {q}
                 </button>
@@ -629,7 +648,7 @@ export default function ChatWidget() {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-400 rounded-2xl rounded-bl-md px-3 py-2 text-sm">
+              <div className="bg-white/[0.06] border border-white/10 text-gray-300 rounded-2xl rounded-bl-md px-3 py-2 text-sm">
                 <span className="inline-flex gap-1">
                   <span className="animate-bounce" style={{ animationDelay: "0ms" }}>.</span>
                   <span className="animate-bounce" style={{ animationDelay: "150ms" }}>.</span>
@@ -643,7 +662,7 @@ export default function ChatWidget() {
         {/* Input */}
         <form
           onSubmit={(e) => { e.preventDefault(); sendMessage(input) }}
-          className="flex items-center gap-2 px-3 py-2.5 border-t border-[#2a2a3a]"
+          className="flex items-center gap-2 px-3 py-2.5 border-t border-white/10"
         >
           <input
             type="text"
@@ -651,7 +670,7 @@ export default function ChatWidget() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="พิมพ์ข้อความ..."
             maxLength={500}
-            className="flex-1 min-w-0 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg px-3 py-2 text-base md:text-sm text-white placeholder-gray-600 outline-none focus:border-purple-400/40"
+            className="flex-1 min-w-0 bg-white/[0.07] border border-white/15 rounded-lg px-3 py-2 text-base md:text-sm text-white placeholder-gray-500 outline-none focus:border-purple-400/50"
           />
           <button
             type="submit"

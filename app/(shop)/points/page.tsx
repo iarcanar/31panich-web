@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 import Image from "next/image"
 import HowToCollect from "@/components/points/HowToCollect"
+import LiquidGlass from "@/components/ui/LiquidGlass"
 import { LINE_POINTS_URL } from "@/lib/store-config"
 import { breadcrumbSchema } from "@/lib/structured-data"
 
@@ -35,17 +36,20 @@ export default function PointsPage() {
   return (
     <div className="min-h-screen relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      {/* Background */}
-      <div className="fixed inset-0 -z-10">
-        <Image
-          src="/points/bg.webp"
-          alt=""
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/70" />
-      </div>
+      {/* Background — purple "silk" gradient (pure CSS, zero filter → GPU-free).
+          Replaces the 143KB jungle photo; gives the glass surfaces something
+          to refract. DECISION POINT A/B — see audit; revert = restore <Image>. */}
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          background: `
+            radial-gradient(90% 70% at 22% 16%, rgba(99,56,170,0.55) 0%, rgba(56,30,110,0.32) 38%, transparent 72%),
+            radial-gradient(95% 80% at 82% 30%, rgba(150,64,190,0.4) 0%, rgba(70,30,120,0.26) 42%, transparent 76%),
+            radial-gradient(120% 80% at 50% 102%, rgba(64,36,128,0.5) 0%, rgba(24,14,48,0.4) 46%, transparent 82%),
+            linear-gradient(180deg, #140d28 0%, #0e0a1c 52%, #0a0710 100%)
+          `,
+        }}
+      />
 
       {/* Hero */}
       <section>
@@ -55,7 +59,7 @@ export default function PointsPage() {
             alt="เทศกาลแลกแต้ม 2026"
             width={800}
             height={600}
-            className="w-full max-w-2xl h-auto rounded-2xl shadow-2xl"
+            className="w-full max-w-2xl h-auto rounded-2xl shadow-2xl ring-1 ring-inset ring-white/15"
             priority
           />
         </div>
@@ -68,47 +72,61 @@ export default function PointsPage() {
 
       {/* รางวัล */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center text-white mb-2">
+        <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-b from-white to-purple-300 bg-clip-text text-transparent">
           รางวัลล็อตแรกพร้อมให้แลกวันนี้!
         </h2>
-        <div className="w-24 h-1 bg-gradient-to-r from-red-500 to-amber-500 mx-auto mt-3 mb-10 rounded-full" />
+        <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-fuchsia-500 mx-auto mt-3 mb-10 rounded-full" />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {REWARDS.map((item) => (
             <div
               key={item.name}
-              className="bg-[#1a1a28]/80 backdrop-blur rounded-2xl overflow-hidden border border-white/10 hover:border-amber-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
+              className="glass-card rounded-2xl overflow-hidden transition-transform duration-300 hover:-translate-y-1 group"
             >
               <div className="aspect-square relative overflow-hidden">
                 <Image
                   src={item.image}
                   alt={item.name}
                   fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="p-5">
                 <h3 className="text-white font-medium leading-snug text-sm">{item.name}</h3>
-                <p className="text-amber-400 font-bold text-lg mt-2">{item.points} แต้ม</p>
+                <span className="inline-flex items-center mt-3 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 font-bold text-base">
+                  {item.points} แต้ม
+                </span>
               </div>
             </div>
           ))}
         </div>
 
-        <p className="text-center text-red-400 font-semibold mt-8 text-lg">
-          ของรางวัลมีจำนวนจำกัด
-        </p>
+        <div className="flex justify-center mt-8">
+          <span className="glass-pill inline-flex items-center gap-2 px-5 py-2 text-amber-200 font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            ของรางวัลมีจำนวนจำกัด
+          </span>
+        </div>
       </section>
 
-      {/* CTA — ตรวจสอบแต้ม */}
+      {/* CTA — ตรวจสอบแต้ม (LiquidGlass lens surface #2) */}
       <section className="container mx-auto px-4 pb-16">
-        <div className="max-w-2xl mx-auto bg-[#1a1a28]/80 backdrop-blur border border-purple-500/20 rounded-2xl p-8 text-center">
+        <LiquidGlass
+          lens
+          radius={24}
+          bevel={15}
+          strength={60}
+          frost={1}
+          tint="linear-gradient(180deg, rgba(58,38,104,0.46), rgba(22,15,40,0.56))"
+          className="max-w-2xl mx-auto p-8 text-center"
+        >
           <Image
             src="/points/checkpoint.webp"
             alt="ตรวจสอบแต้มคงเหลือ"
             width={600}
             height={300}
-            className="w-full max-w-md h-auto mx-auto rounded-xl mb-6"
+            className="w-full max-w-md h-auto mx-auto rounded-xl mb-6 ring-1 ring-inset ring-white/10"
           />
           <h3 className="text-2xl font-bold text-white mb-4">ตรวจสอบแต้มคงเหลือ</h3>
           <p className="text-gray-300 mb-6">เช็คแต้มสะสมของคุณได้ง่ายๆ กดปุ่มด้านล่าง</p>
@@ -120,7 +138,7 @@ export default function PointsPage() {
           >
             เช็คแต้มคงเหลือ
           </a>
-        </div>
+        </LiquidGlass>
       </section>
     </div>
   )

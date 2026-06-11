@@ -108,8 +108,8 @@ export default function ChatMessage({ role, text, onReplay, ttsLoading, ttsPlayi
       <div
         className={`relative max-w-[85%] px-3 py-2 text-sm leading-relaxed ${
           isUser
-            ? "bg-purple-950 border border-purple-400/20 text-white rounded-2xl rounded-br-md"
-            : "bg-[#1e1e2e] border border-[#2a2a3a] text-gray-200 rounded-2xl rounded-bl-md"
+            ? "bg-purple-500/[0.18] border border-purple-300/25 text-white rounded-2xl rounded-br-md"
+            : "bg-white/[0.06] border border-white/10 text-gray-100 rounded-2xl rounded-bl-md"
         } ${showSpeaker ? "pr-8" : ""}`}
       >
         {content}
