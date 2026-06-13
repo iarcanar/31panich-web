@@ -20,6 +20,8 @@ interface AnalyticsData {
   summary?: Summary
   timeseries?: TimeseriesItem[]
   error?: string
+  dashboardOnly?: boolean
+  dashboardUrl?: string
 }
 
 // ─── Helpers ──────────────────────────────────────────
@@ -1278,9 +1280,35 @@ export default function AdminAnalyticsPage() {
       {/* Error */}
       {!loading && (!data?.configured || data?.error) && (
         <div className="bg-[#13131d] border border-[#2a2a3a] rounded-xl p-6 md:p-8 text-center">
-          <p className="text-sm text-[#64748b] mb-2">ยังไม่สามารถดึงข้อมูล Analytics ได้</p>
-          {data?.error && <p className="text-xs text-red-400/70 mt-2 font-mono break-all">{data.error}</p>}
-          <p className="text-xs text-[#475569] mt-2">ตรวจสอบว่าเปิด Web Analytics ใน Vercel Dashboard แล้ว</p>
+          {data?.dashboardOnly ? (
+            <>
+              <div className="text-2xl mb-2">📊</div>
+              <p className="text-sm text-white font-medium mb-2">ข้อมูล Analytics ดูได้ที่ Vercel Dashboard</p>
+              <p className="text-xs text-[#94a3b8] mb-4 max-w-md mx-auto leading-relaxed">
+                Vercel ไม่เปิด API ให้ดึงข้อมูล Web Analytics ด้วย access token (ยังไม่มี public API)
+                จึงต้องเปิดดูในหน้า Dashboard โดยตรง — ข้อมูลครบกว่าและเป็นปัจจุบัน
+              </p>
+              {data?.dashboardUrl && (
+                <a
+                  href={data.dashboardUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 text-sm font-medium transition-colors cursor-pointer"
+                >
+                  เปิด Vercel Analytics
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-[#64748b] mb-2">ยังไม่สามารถดึงข้อมูล Analytics ได้</p>
+              {data?.error && <p className="text-xs text-red-400/70 mt-2 font-mono break-all">{data.error}</p>}
+              <p className="text-xs text-[#475569] mt-2">ตรวจสอบว่าเปิด Web Analytics ใน Vercel Dashboard แล้ว</p>
+            </>
+          )}
         </div>
       )}
 

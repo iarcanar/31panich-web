@@ -3,6 +3,11 @@ import { getSessionUser } from "@/lib/auth"
 
 const PROJECT_ID = "prj_f61eaKwaLKLcb7YcTkNh19Z6Tqfk"
 const TEAM_ID = "teeiarcanar-9511s-projects"
+// Where the data actually lives. Vercel has NO public REST API for Web Analytics
+// timeseries — the dashboard reads it from the cookie-authenticated front-API
+// (vercel.com/api/web-analytics/*), which ignores personal access tokens and
+// answers 404. We deep-link admins there instead of showing a raw error.
+const DASHBOARD_URL = "https://vercel.com/teeiarcanar-9511s-projects/31panich-web/analytics"
 
 interface TimeseriesItem {
   key: string
@@ -64,7 +69,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 })
     }
 
-    const token = process.env.VERCEL_TOKEN
+    // Prefer a dedicated analytics token if supplied. Vercel's Web Analytics
+    // front-API needs a browser *session* bearer (not a PAT); paste one into
+    // VERCEL_ANALYTICS_TOKEN to pull live data here. Falls back to VERCEL_TOKEN.
+    const token = process.env.VERCEL_ANALYTICS_TOKEN || process.env.VERCEL_TOKEN
     if (!token) {
       return NextResponse.json({ configured: false, error: "VERCEL_TOKEN not set" })
     }
@@ -117,6 +125,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(payload)
   } catch (err) {
     const msg = err instanceof Error ? err.message : "internal error"
+    // 404 = Vercel's front-API rejected token auth (no public Web Analytics API).
+    // Surface an actionable state with a deep-link rather than a cryptic "404:".
+    if (msg.startsWith("404")) {
+      return NextResponse.json({
+        configured: true,
+        dashboardOnly: true,
+        dashboardUrl: DASHBOARD_URL,
+        error: "Vercel ไม่เปิด API ให้ดึงข้อมูล Web Analytics ด้วย token — เปิดดูได้ใน Dashboard",
+      }, { status: 200 })
+    }
     return NextResponse.json({ configured: true, error: msg }, { status: 200 })
   }
 }
