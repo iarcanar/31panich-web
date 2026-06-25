@@ -158,12 +158,11 @@ body {
   line-height: 1.4;
   padding-top: 0.12em;
   padding-bottom: 0.05em;
-  color: #e8faff;
+  color: #f3fbff;
   text-shadow:
-    0 0 6px rgba(34, 211, 238, 0.95),
-    0 0 14px rgba(34, 211, 238, 0.65),
-    0 0 28px rgba(103, 232, 249, 0.45),
-    0 0 48px rgba(167, 139, 250, 0.25),
+    0 0 10px rgba(103, 232, 249, 0.28),
+    0 0 22px rgba(167, 139, 250, 0.14),
+    0 2px 6px rgba(0, 0, 0, 0.6),
     0 2px 0 rgba(0, 0, 0, 0.55);
 }
 
