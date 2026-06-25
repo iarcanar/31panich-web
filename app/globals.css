@@ -107,6 +107,15 @@ body {
   80% { transform: translateX(1px) rotate(0.5deg); }
 }
 
+/* Hero AI dot overlay — slow dim/brighten drift */
+@keyframes hero-dot-float {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+.animate-hero-dot {
+  animation: hero-dot-float 8s ease-in-out infinite;
+}
+
 /* Idle ambient pulse for SectionHeader — subtle breathing after reveal */
 @keyframes section-header-pulse {
   0%, 100% { opacity: 0.55; transform: scale(1); }

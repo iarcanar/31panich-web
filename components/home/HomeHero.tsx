@@ -1,5 +1,6 @@
 import Image from "next/image"
 import ContactLink from "@/components/ui/ContactLink"
+import StoreStatusChip from "@/components/home/StoreStatusChip"
 import { LINE_URL } from "@/lib/store-config"
 
 /**
@@ -15,9 +16,32 @@ import { LINE_URL } from "@/lib/store-config"
  */
 
 const TRUST = [
-  { icon: "⏰", text: "เปิดทุกวัน" },
-  { icon: "🎨", text: "ศูนย์ผสมสี Beger · TOA" },
-  { icon: "💰", text: "ราคาไม่แพง" },
+  {
+    icon: (
+      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
+        <circle cx="12" cy="12" r="9" />
+        <path strokeLinecap="round" d="M12 7v5l3 2" />
+      </svg>
+    ),
+    text: "เปิดทุกวัน",
+  },
+  {
+    icon: (
+      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" />
+      </svg>
+    ),
+    text: "ศูนย์ผสมสี Beger · TOA",
+  },
+  {
+    icon: (
+      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+      </svg>
+    ),
+    text: "ราคาไม่แพง",
+  },
 ]
 
 export default function HomeHero() {
@@ -38,6 +62,19 @@ export default function HomeHero() {
       <div className="absolute inset-0 bg-gradient-to-r from-[#0e0e14] via-[#0e0e14]/85 md:via-[#0e0e14]/65 to-[#0e0e14]/15 pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-[#0e0e14]/35 to-transparent pointer-events-none" />
 
+      {/* AI dot grid — visible on dark left, dissolves into bright right */}
+      <div
+        aria-hidden
+        className="animate-hero-dot absolute inset-0 z-[6] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(168,85,247,0.7) 1.1px, transparent 1.1px)",
+          backgroundSize: "18px 18px",
+          backgroundPosition: "4px 9px",
+          maskImage: "linear-gradient(90deg, black 0%, black 20%, rgba(0,0,0,0.5) 44%, transparent 66%)",
+          WebkitMaskImage: "linear-gradient(90deg, black 0%, black 20%, rgba(0,0,0,0.5) 44%, transparent 66%)",
+        }}
+      />
+
       {/* Greeter cutout — foreground, stands at bottom-right; her gesture points toward the text */}
       <div className="pointer-events-none absolute right-0 bottom-5 z-10 w-[46%] sm:w-[40%] md:w-[34%] lg:w-[30%] max-w-[440px] aspect-[888/1000]">
         <Image
@@ -53,20 +90,18 @@ export default function HomeHero() {
       {/* Content — left column, clears the greeter on the right; pt clears the mobile header */}
       <div className="relative z-20 container mx-auto px-5 md:px-4">
         <div className="flex flex-col justify-center min-h-[380px] sm:min-h-[400px] md:min-h-[460px] lg:min-h-[clamp(460px,40vw,560px)] pt-[72px] pb-8 md:pb-9 lg:py-16 max-w-[62%] sm:max-w-[58%] md:max-w-[54%] lg:max-w-[52%]">
-          {/* lead-in (small) + shop name in the modern glow style from the old hero */}
-          <p className="text-gray-100/90 font-medium text-[clamp(13px,3.6vw,16px)] md:text-lg th-text">
-            ยินดีต้อนรับสู่
-          </p>
-          <h1 className="sci-fi-title whitespace-nowrap text-[clamp(18px,5.5vw,30px)] md:text-5xl lg:text-6xl mt-0.5 th-text">
+          {/* store open/closed status chip */}
+          <div className="mb-3">
+            <StoreStatusChip />
+          </div>
+
+          <h1 className="sci-fi-title whitespace-nowrap text-[clamp(18px,5.5vw,30px)] md:text-5xl lg:text-6xl th-text">
             ร้านสามหนึ่งพานิช
           </h1>
 
           <div className="mt-3 max-w-md">
             <p className="text-purple-400 text-[16px] md:text-base lg:text-xl lg:whitespace-nowrap font-bold leading-snug th-text" style={{ textShadow: "0 0 12px rgba(168,85,247,0.55)" }}>
               <span className="whitespace-nowrap">สี</span> · <span className="whitespace-nowrap">วัสดุก่อสร้าง</span> · <span className="whitespace-nowrap">เครื่องมือช่าง</span> · <span className="whitespace-nowrap">ศูนย์ผสมสี</span> <span className="whitespace-nowrap">เบเยอร์-TOA</span>
-            </p>
-            <p className="text-gray-300 text-[14px] md:text-sm leading-relaxed th-text mt-3">
-              <span className="whitespace-nowrap">ที่ลพบุรี — เข้ามาปรึกษา</span> <br className="md:hidden" /><span className="whitespace-nowrap">เรื่องเครื่องมือ</span> <br className="hidden md:inline" /><span className="whitespace-nowrap">อุปกรณ์ก่อสร้าง</span> <br className="md:hidden" /><span className="whitespace-nowrap">ที่หน้าร้านได้นะคะ</span>
             </p>
           </div>
 
