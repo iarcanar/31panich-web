@@ -30,6 +30,12 @@ const SUGGESTIONS = [
 
 const MIN_HEIGHT = 380
 const DEFAULT_HEIGHT = 480
+// Chat color scheme experiment (2026-07-17):
+//   "velvet" = variant A — dark panel base + vivid-purple sender box
+//   "vivid"  = variant B — vivid-purple panel base + dark sender box
+// Variant A's styles are the defaults (sam-bubble in globals.css); variant B
+// applies scoped .chat-vivid overrides. Flip this constant to switch.
+const CHAT_THEME: "velvet" | "vivid" = "vivid"
 // Bumped suffix to reset any stale preference from prior testing. Ensures
 // EVERY user starts with TTS = ON after this deploy, regardless of what they
 // toggled before. They can turn it off via the toggle; the new choice will
@@ -446,9 +452,13 @@ export default function ChatWidget() {
           height: panelHeight,
           maxHeight: "calc(100dvh - 3rem)",
           bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))",
-          // Frosted dark-purple glass. Tint is opaque enough (0.86–0.92) that
-          // chat text stays readable over busy page content behind it.
-          background: "linear-gradient(180deg, rgba(26,16,46,0.86), rgba(16,12,30,0.93))",
+          // Frosted purple glass. Tint is opaque enough (0.86–0.94) that chat
+          // text stays readable over busy page content behind it.
+          // velvet = dark plum base · vivid = bright brand-purple base
+          background:
+            CHAT_THEME === "vivid"
+              ? "linear-gradient(180deg, rgba(124,58,237,0.90), rgba(88,28,180,0.94))"
+              : "linear-gradient(180deg, rgba(26,16,46,0.86), rgba(16,12,30,0.93))",
           // Only blur while open — an always-mounted blur(20px) over the whole
           // viewport would burn GPU/battery even when the chat is closed.
           backdropFilter: panelOpen ? "blur(20px) saturate(150%)" : "none",
@@ -456,7 +466,7 @@ export default function ChatWidget() {
           boxShadow:
             "inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1.5px 0 rgba(255,255,255,0.30), 0 24px 60px rgba(20,10,40,0.6)",
         }}
-        className={`fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 max-w-[calc(100vw-1.5rem)] md:max-w-none rounded-3xl flex flex-col overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
+        className={`${CHAT_THEME === "vivid" ? "chat-vivid " : ""}fixed right-3 left-3 md:left-auto md:right-6 z-50 md:w-96 max-w-[calc(100vw-1.5rem)] md:max-w-none rounded-3xl flex flex-col overflow-hidden transition-[opacity,transform] duration-200 ease-out ${
           panelOpen
             ? "opacity-100 pointer-events-auto translate-y-0"
             : "opacity-0 pointer-events-none translate-y-3"
@@ -492,7 +502,7 @@ export default function ChatWidget() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 self-start mt-1.5 shrink-0" />
             <div className="min-w-0">
               <span className="text-white text-sm font-medium block">สามหนึ่ง Ai</span>
-              <p className="text-[9px] text-gray-400 leading-tight truncate">Gemini 2.5 Flash · AI อาจผิดพลาดได้</p>
+              <p className="chat-subtext text-[9px] text-purple-200/50 leading-tight truncate">Gemini 2.5 Flash · AI อาจผิดพลาดได้</p>
             </div>
           </div>
 
@@ -506,10 +516,10 @@ export default function ChatWidget() {
               }
               setTtsEnabled((v) => !v)
             }}
-            className={`shrink-0 mr-10 h-8 pl-2 pr-3 rounded-full flex items-center gap-1.5 border transition-all cursor-pointer active:scale-95 ${
+            className={`shrink-0 mr-10 h-8 pl-2 pr-3 rounded-full flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
               ttsEnabled
-                ? "bg-emerald-500/15 border-emerald-400/50 hover:bg-emerald-500/25 hover:border-emerald-400/70"
-                : "bg-white/5 border-white/15 hover:bg-white/10"
+                ? "chat-tts-on bg-emerald-500/20 hover:bg-emerald-500/30"
+                : "chat-tts-off bg-purple-300/10 hover:bg-purple-300/20"
             }`}
             title={ttsEnabled ? "แตะเพื่อปิดเสียงอ่านอัตโนมัติ" : "แตะเพื่อเปิดเสียงอ่านอัตโนมัติ"}
             aria-pressed={ttsEnabled}
@@ -520,7 +530,7 @@ export default function ChatWidget() {
                 <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14l-1.42-1.42a8 8 0 000-11.3l1.42-1.42zM15.54 8.46a5 5 0 010 7.07l-1.41-1.41a3 3 0 000-4.24l1.41-1.42z" />
               </svg>
             ) : (
-              <svg className="w-4 h-4 text-gray-500 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-purple-200/40 shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M11 5L6 9H2v6h4l5 4V5z" />
                 <path fillRule="evenodd" d="M16.47 8.47a.75.75 0 011.06 0L19 9.94l1.47-1.47a.75.75 0 111.06 1.06L20.06 11l1.47 1.47a.75.75 0 11-1.06 1.06L19 12.06l-1.47 1.47a.75.75 0 01-1.06-1.06L17.94 11l-1.47-1.47a.75.75 0 010-1.06z" clipRule="evenodd" />
               </svg>
@@ -535,12 +545,12 @@ export default function ChatWidget() {
         </div>
 
         {/* Contact bar */}
-        <div className="flex border-b border-white/10">
+        <div className="chat-contactbar flex border-b border-white/10">
           <a
             href={LINE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium text-[#06C755] hover:bg-[#06C755]/10 transition-colors"
+            className="chat-contact-line flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium text-[#06C755] hover:bg-[#06C755]/10 transition-colors"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.271.173-.508.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
             ติดต่อ Line
@@ -550,7 +560,7 @@ export default function ChatWidget() {
               <div className="w-px bg-white/10" />
               <button
                 onClick={handlePhoneClick}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium text-emerald-400 hover:bg-emerald-400/10 transition-colors"
+                className="chat-contact-phone flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium text-emerald-400 hover:bg-emerald-400/10 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -589,7 +599,7 @@ export default function ChatWidget() {
                       setPanelOpen(false)
                       router.push(`/products?search=${encodeURIComponent(msg.suggestion!.keyword)}`)
                     }}
-                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg shadow-purple-500/30 active:scale-95 transition-all"
+                    className="chat-cta-product inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg shadow-purple-500/30 active:scale-95 transition-all"
                     aria-label={`ค้นหาสินค้า ${msg.suggestion.keyword}`}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -629,7 +639,7 @@ export default function ChatWidget() {
               {campaignChip && (
                 <button
                   onClick={() => sendMessage(campaignChip)}
-                  className="text-[11px] text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 rounded-full px-3 py-1.5 font-semibold transition-colors"
+                  className="chat-chip-campaign text-[11px] text-amber-100 bg-amber-500/25 hover:bg-amber-500/35 rounded-full px-3 py-1.5 font-semibold transition-colors"
                 >
                   🇹🇭 {campaignChip}
                 </button>
@@ -638,7 +648,7 @@ export default function ChatWidget() {
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="text-[11px] text-purple-200 bg-purple-400/10 hover:bg-purple-400/20 border border-purple-300/25 rounded-full px-3 py-1.5 transition-colors"
+                  className="chat-chip text-[11px] text-purple-100 bg-purple-400/[0.14] hover:bg-purple-400/25 rounded-full px-3 py-1.5 transition-colors"
                 >
                   {q}
                 </button>
@@ -648,7 +658,7 @@ export default function ChatWidget() {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white/[0.06] border border-white/10 text-gray-300 rounded-2xl rounded-bl-md px-3 py-2 text-sm">
+              <div className="chat-bubble-ai bg-purple-300/[0.08] text-purple-200 rounded-[22px] rounded-bl-md px-3.5 py-2 text-sm">
                 <span className="inline-flex gap-1">
                   <span className="animate-bounce" style={{ animationDelay: "0ms" }}>.</span>
                   <span className="animate-bounce" style={{ animationDelay: "150ms" }}>.</span>
@@ -659,10 +669,13 @@ export default function ChatWidget() {
           )}
         </div>
 
-        {/* Input */}
+        {/* Input — "sam-bubble" sender surface (see globals.css): the box that
+             carries the user's words to the AI is filled with the brand's deep
+             purple, borderless; the input is a translucent well and the send
+             button is an inverted light pill. */}
         <form
           onSubmit={(e) => { e.preventDefault(); sendMessage(input) }}
-          className="flex items-center gap-2 px-3 py-2.5 border-t border-white/10"
+          className="sam-bubble shrink-0 flex items-center gap-2 mx-3 mb-3 mt-1 p-1.5 pl-2 rounded-[28px]"
         >
           <input
             type="text"
@@ -670,14 +683,14 @@ export default function ChatWidget() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="พิมพ์ข้อความ..."
             maxLength={500}
-            className="flex-1 min-w-0 bg-white/[0.07] border border-white/15 rounded-lg px-3 py-2 text-base md:text-sm text-white placeholder-gray-500 outline-none focus:border-purple-400/50"
+            className="sam-bubble-well flex-1 min-w-0 rounded-full px-4 py-2 text-base md:text-sm text-inherit placeholder:text-inherit placeholder:opacity-50 outline-none"
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="shrink-0 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 text-white rounded-lg px-3 py-2 transition"
+            className="sam-bubble-btn shrink-0 rounded-full p-2.5 disabled:opacity-40 hover:opacity-90 active:scale-95 transition"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" />
             </svg>
           </button>

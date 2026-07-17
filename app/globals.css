@@ -52,6 +52,122 @@ body {
     0 6px 18px rgba(20, 10, 40, 0.35);
 }
 
+/* ===== Sam bubble — sender-surface design language =====
+   Ported from comfy-zeta's "Fix prompt UI" (zeta-bubble): any box that carries
+   the USER's words to the AI is FILLED with the brand's deep velvet purple and
+   everything inside flips to light ink. Borderless by design (border lines read
+   as slop) — depth comes from the fill + shadow alone. Inner "wells" (inputs /
+   read-only areas) are a translucent layer of the light ink color so contrast
+   stays relative. Submit buttons invert the polarity: light pill, purple text.
+   Geometry: container 28px · well/bubble 22px · buttons rounded-full. */
+.sam-bubble {
+  background-color: #5b2ea6; /* deep velvet purple (un-vivid, wide-area safe) */
+  color: #f6f1ff;
+  box-shadow: 0 8px 24px rgba(20, 10, 40, 0.45);
+}
+.sam-bubble-well {
+  background-color: rgba(246, 241, 255, 0.12);
+}
+.sam-bubble-btn {
+  background-color: #f6f1ff;
+  color: #5b2ea6;
+}
+
+/* ===== Chat theme variant B — "vivid" (inverted polarity) =====
+   Experiment: panel base = vivid brand purple, sender surfaces (composer +
+   user bubbles) = deep dark plum instead. Toggled by CHAT_THEME in
+   ChatWidget.tsx — variant A ("velvet", the defaults above) is kept intact
+   so we can flip back with one word. Scoped overrides win over Tailwind
+   utilities by specificity (.chat-vivid .x = 0,2,0). */
+.chat-vivid .sam-bubble {
+  background-color: #1b0f30; /* near-black plum — dark box on vivid base */
+  color: #f6f1ff;
+  box-shadow: 0 10px 26px rgba(15, 6, 32, 0.55);
+}
+.chat-vivid .sam-bubble-well {
+  background-color: rgba(246, 241, 255, 0.10);
+}
+.chat-vivid .sam-bubble-btn {
+  background-color: #f6f1ff;
+  color: #47238f;
+}
+.chat-vivid .chat-bubble-ai {
+  background-color: rgba(255, 255, 255, 0.13);
+  color: #ffffff;
+}
+.chat-vivid .chat-bubble-ai a.chat-url {
+  color: #efe7ff;
+}
+.chat-vivid .chat-speaker {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+}
+.chat-vivid .chat-chip {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+.chat-vivid .chat-chip:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+/* Campaign chip: solid amber pill + dark ink — tinted amber went muddy-brown
+   on the vivid base; solid -500 is the "color IS the meaning" recipe. */
+.chat-vivid .chat-chip-campaign {
+  background-color: #f59e0b;
+  color: #3a2303;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+.chat-vivid .chat-chip-campaign:hover {
+  background-color: #fbbf24;
+}
+/* TTS toggle: ON = solid emerald pill (white ink), OFF = dark plum pill —
+   translucent tints didn't separate from the vivid base. */
+.chat-vivid .chat-tts-on {
+  background-color: #059669;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.45);
+}
+.chat-vivid .chat-tts-on:hover {
+  background-color: #10b981;
+}
+.chat-vivid .chat-tts-on svg,
+.chat-vivid .chat-tts-on span {
+  color: #ffffff;
+}
+.chat-vivid .chat-tts-off {
+  background-color: rgba(27, 15, 48, 0.55);
+}
+.chat-vivid .chat-tts-off:hover {
+  background-color: rgba(27, 15, 48, 0.75);
+}
+.chat-vivid .chat-tts-off svg {
+  color: rgba(255, 255, 255, 0.45);
+}
+/* Contact bar: sink the band into a darker plum so the brand-green actions
+   pop; brighten both labels a step for the vivid base. */
+.chat-vivid .chat-contactbar {
+  background-color: rgba(15, 6, 32, 0.40);
+}
+.chat-vivid .chat-contact-line {
+  color: #31e173;
+  font-weight: 600;
+}
+.chat-vivid .chat-contact-phone {
+  color: #6ee7b7;
+  font-weight: 600;
+}
+.chat-vivid .chat-close-tab {
+  color: rgba(255, 255, 255, 0.85);
+}
+.chat-vivid .chat-subtext {
+  color: rgba(255, 255, 255, 0.65);
+}
+/* Product CTA: purple gradient blends into the vivid base — invert to a light
+   pill (same polarity trick as .sam-bubble-btn). */
+.chat-vivid .chat-cta-product {
+  background-image: none;
+  background-color: #f6f1ff;
+  color: #5b21b6;
+}
+
 /* Chat close corner-tab: subtle by default, red-glass + white X on hover. */
 .chat-close-tab {
   color: rgba(255, 255, 255, 0.5);

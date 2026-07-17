@@ -61,7 +61,7 @@ function parseLinks(text: string): ReactNode[] {
           href={isLineUrl ? LINE_URL : matched}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-purple-400 underline underline-offset-2 hover:brightness-125 transition break-all"
+          className="chat-url text-purple-400 underline underline-offset-2 hover:brightness-125 transition break-all"
         >
           {isLineUrl ? "LINE @31PANICH" : matched}
         </a>
@@ -106,11 +106,11 @@ export default function ChatMessage({ role, text, onReplay, ttsLoading, ttsPlayi
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`relative max-w-[85%] px-3 py-2 text-sm leading-relaxed ${
+        className={`relative max-w-[85%] px-3.5 py-2 text-sm leading-relaxed ${
           isUser
-            ? "bg-purple-500/[0.18] border border-purple-300/25 text-white rounded-2xl rounded-br-md"
-            : "bg-white/[0.06] border border-white/10 text-gray-100 rounded-2xl rounded-bl-md"
-        } ${showSpeaker ? "pr-8" : ""}`}
+            ? "sam-bubble rounded-[22px] rounded-br-md"
+            : "chat-bubble-ai bg-purple-300/[0.08] text-purple-50 rounded-[22px] rounded-bl-md"
+        } ${showSpeaker ? "pr-9" : ""}`}
       >
         {content}
 
@@ -120,14 +120,14 @@ export default function ChatMessage({ role, text, onReplay, ttsLoading, ttsPlayi
             onClick={onReplay}
             className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer ${
               ttsPlaying
-                ? "bg-purple-500/30 text-purple-200 ring-1 ring-purple-400/60 animate-pulse"
-                : "bg-white/5 hover:bg-purple-500/20 text-gray-500 hover:text-purple-300"
+                ? "bg-purple-500/30 text-purple-200 animate-pulse"
+                : "chat-speaker bg-purple-300/10 hover:bg-purple-500/25 text-purple-200/50 hover:text-purple-200"
             }`}
             title={ttsPlaying ? "กำลังเล่น" : ttsLoading ? "กำลังสร้างเสียง..." : "ฟังเสียง"}
             aria-label={ttsPlaying ? "กำลังเล่นเสียง" : "อ่านออกเสียงข้อความนี้"}
           >
             {ttsLoading ? (
-              <span className="block w-3 h-3 rounded-full border border-gray-500 border-t-transparent animate-spin" />
+              <span className="block w-3 h-3 rounded-full border border-purple-300/60 border-t-transparent animate-spin" />
             ) : ttsPlaying ? (
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14l-1.42-1.42a8 8 0 000-11.3l1.42-1.42zM15.54 8.46a5 5 0 010 7.07l-1.41-1.41a3 3 0 000-4.24l1.41-1.42z" />
