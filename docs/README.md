@@ -24,6 +24,10 @@ Single source of truth for how this codebase fits together. **AI sessions: start
 - [`recipes/add-catalog.md`](./recipes/add-catalog.md) — เพิ่มแคตตาล็อกแบรนด์บนหน้าแรก
 - [`recipes/clear-stale-coupon-claims.md`](./recipes/clear-stale-coupon-claims.md) — ล้าง claim count คูปอง
 
+## Subsystems
+
+- [`task-board.md`](./task-board.md) — ระบบใบสั่งงาน `/admin/tasks` (พนักงาน → ทีมทำสื่อ): โครงข้อมูล, สิทธิ์แบนราบ, รูปต้นฉบับ/Cloudinary, **กับดัก 4 ข้อที่ต้องอ่านก่อนแก้**
+
 ## Reference
 
 - [`performance-checklist.md`](./performance-checklist.md) — ISR values, image sizes, prefetch strategy
@@ -36,6 +40,11 @@ Single source of truth for how this codebase fits together. **AI sessions: start
 - [`/PRODUCT_SCRAPING_GUIDE.md`](../../PRODUCT_SCRAPING_GUIDE.md) — JSON schema for bulk product import
 
 ## Changelog
+
+### 2026-07-28
+- **ระบบใบสั่งงาน `/admin/tasks`** (adminVersion 1.10.0 → 1.11.0): พนักงานหน้าร้านสั่งงานทีมทำสื่อ — การ์ดละ 1 โปร ผูกสินค้าจาก DB แนบรูปต้นฉบับ ติดตามสถานะ รอทำ/กำลังทำ/เสร็จแล้ว + เครื่องมือดาวน์โหลดรูปทั้งหมด/ตั้งชื่อไฟล์อัตโนมัติ/คัดลอกบรีฟ → [`task-board.md`](./task-board.md)
+- **`/api/upload/sign` รับ flag `keepOriginal`**: ข้ามการบังคับ `format=webp` เพื่อเก็บภาพต้นฉบับเต็มความละเอียด (backward compatible — reels/products ไม่ส่ง flag จึงได้ webp เหมือนเดิม) · ตอนแสดงผลต้องมี `f_auto` เสมอ ไม่งั้น HEIC จาก iPhone เปิดไม่ขึ้นบน Android
+- **`components/admin/ui/TextInput.tsx` → `text-base md:text-sm`**: input ทั้ง admin เลิก auto-zoom บน iOS (แก้จุดเดียวมีผลทุกหน้า)
 
 ### 2026-06-10
 - **Campaign chip answer + TTS cache** (v2.1.21): "ไทยช่วยไทย" chip now returns a short fixed answer with a pre-generated WAV (`campaign-thaichuaythai.wav`); details stay in `answerDetail`. `gen-tts-cache.mjs` accepts filename args for selective regen.

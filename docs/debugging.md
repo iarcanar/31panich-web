@@ -181,6 +181,30 @@ node -e "fetch('http://localhost:3001/api/ai/chat',{method:'POST',headers:{'Cont
 1. `CLOUDINARY_URL` env var missing or wrong format. Must be `cloudinary://<key>:<secret>@<cloudname>`
 2. The params being signed don't match the params being uploaded. Check `web/app/api/upload/sign/route.ts` — only signed params should be sent to Cloudinary (do NOT add extras client-side after signing)
 3. Clock skew on the server (signatures are time-bounded)
+4. **อัปโหลดไฟล์แนบใบสั่งงานพังทั้งหมด** — โฟลเดอร์ `tasks` ใช้ `keepOriginal: true` ทำให้ sign route **ไม่ใส่ `format` ในพารามิเตอร์ที่เซ็น** ฝั่ง client จึงต้อง `fd.append("format", ...)` **เฉพาะเมื่อ `sign.format` มีค่า** ถ้า append ค่า `undefined` เข้าไป signature จะไม่ตรงทันที (ดู [`task-board.md`](./task-board.md) §5)
+
+## ⚠ "รูปในใบสั่งงานหายหมดหลังกดเปลี่ยนสถานะ"
+
+**อาการ:** กดปุ่ม "ทำเสร็จแล้ว" / "เริ่มทำงานนี้" แล้วรูปที่แนบไว้หายเกลี้ยงทั้งใบ และหายจาก Cloudinary ถาวรด้วย
+
+**สาเหตุ:** `PUT /api/admin/tasks/[id]` มี logic ลบไฟล์ที่ถูกเอาออก โดยเทียบ attachment เก่ากับใหม่ ถ้าเผลอให้มัน diff ทุกครั้ง การส่ง body แค่ `{status}` จะถูกตีความว่า "รูปหายหมด" → `destroyCloudinaryAsset()` ลบไฟล์จริงทิ้ง
+
+**กันไว้ 2 ชั้น — ห้ามรื้อ:**
+1. ฝั่ง API: destroy เฉพาะเมื่อ body มี key `items` จริงๆ (`Object.prototype.hasOwnProperty.call(body, "items")`)
+2. ฝั่ง UI: `TaskCard` ส่ง `{status}` เดี่ยวๆ เท่านั้น **ห้ามพ่วง `items` ไปกับ PUT เปลี่ยนสถานะ**
+
+**เทสต์ที่ต้องรันทุกครั้งที่แตะ task API:** เปลี่ยนสถานะแล้วนับ attachment ต้องเท่าเดิม
+
+## "เทสต์ API ใบสั่งงานบน dev แล้วผลตกแบบไม่มีเหตุผล"
+
+**อาการ:** ลบใบงานแล้ว GET ยังเห็นอยู่ · โพสต์คอมเมนต์แล้วอีก request อ่านไม่เจอ — ทั้งที่โค้ดถูก
+
+**สาเหตุ:** `blob-store` cache 30 วินาที (ตั้งใจ) + dev hot-reload โคลน module ทำให้แต่ละ route ถือ cache Map คนละก้อน route หนึ่งเขียนไฟล์แล้วอีก route อ่านค่าเก่าจาก cache ตัวเอง
+
+**วิธีแยกแยะว่าเป็นบั๊กจริงหรือไม่:**
+1. เปิด `web/data/tasks.json` บนดิสก์ดูข้อมูลจริง — ถ้าถูกต้อง = ไม่ใช่บั๊ก
+2. รีสตาร์ท dev server แล้วรันเทสต์ใหม่
+3. บน production ไม่เจอปัญหานี้ (instance เดียวต่อ invocation + Redis)
 
 ## "Build fails locally"
 
@@ -260,6 +284,8 @@ Check `web/lib/auth.ts` → `canPerform(role, action)`. Two-layer enforcement:
 2. Each destructive route also calls `canPerform()` defensively
 
 Manager has access to: product CRUD (including delete), coupon view/edit/create. Manager does NOT have access to: delete coupons, edit AI config, view AI logs, settings page (nav hidden + middleware blocks).
+
+**ข้อยกเว้นที่ตั้งใจ — ระบบใบสั่งงาน `/admin/tasks` สิทธิ์แบนราบ**: manager ทำได้เท่า admin ทุกอย่างรวมถึงลบใบงาน ทุก route เช็กแค่ `getSessionUser()` ไม่มี `canPerform` เลย เป็นการตัดสินใจของเจ้าของร้าน **ห้ามเติม role check เข้าไปเพราะเห็นว่าไม่สม่ำเสมอกับหน้าอื่น** (ดู [`task-board.md`](./task-board.md) §4)
 
 ## ปุ่มโทร/LINE ไม่ซ่อนตอนปิดร้าน
 
