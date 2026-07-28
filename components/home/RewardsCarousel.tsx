@@ -155,7 +155,7 @@ export default function RewardsCarousel() {
                   </svg>
                 </div>
                 <p className="text-amber-400 font-bold text-sm">ดูของรางวัลทั้งหมด</p>
-                <p className="text-gray-500 text-xs">อีก 4+ รายการ</p>
+                <p className="text-gray-500 text-xs">อีก 7+ รายการ</p>
               </div>
             </Link>
           </div>

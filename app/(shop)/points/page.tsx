@@ -21,6 +21,9 @@ const breadcrumb = breadcrumbSchema([
 ])
 
 const REWARDS = [
+  { image: "/points/reward-300-chainsaw.webp", name: "เลื่อยโซ่ไร้สาย PITA 21V CT5-14", points: 300 },
+  { image: "/points/reward-250-welder.webp", name: "เครื่องเชื่อม APOLLO 120A T", points: 250 },
+  { image: "/points/reward-150-grinder.webp", name: "เครื่องเจียร EUROX 750W", points: 150 },
   { image: "/points/reward-200.webp", name: "สว่านกระแทกไร้สาย BOXER 128V 3 ระบบ", points: 200 },
   { image: "/points/reward-100-cooker.webp", name: "หม้ออเนกประสงค์ SMARTHOME Multi Cooker", points: 100 },
   { image: "/points/reward-100-zootopia.webp", name: "ชุดผ้าปูที่นอน Zootopia ครบเซ็ท", points: 100 },
@@ -51,38 +54,43 @@ export default function PointsPage() {
         }}
       />
 
-      {/* Main banner — faded bottom blends into the purple page; the glass
-          "สะสมแต้มง่ายๆ" panel below is pulled up to overlap the fade. */}
+      {/* Main banner — near-square poster (1400×1273) whose "เทศกาลแลกแต้ม 2026"
+          logo sits at the BOTTOM, so the fade only softens the last ~8% instead
+          of the old wide banner's deep 56% fade (which would erase the logo).
+          Width matches HowToCollect's max-w-3xl so the glass panel tucks in flush. */}
       <section className="relative">
         <div className="container mx-auto px-4 pt-8 md:pt-12">
           <div
-            className="relative max-w-5xl mx-auto aspect-[16/9] overflow-hidden rounded-3xl"
+            className="relative max-w-3xl mx-auto aspect-[1400/1273] overflow-hidden rounded-3xl"
             style={{
-              maskImage: "linear-gradient(to bottom, #000 56%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(to bottom, #000 56%, transparent 100%)",
+              maskImage: "linear-gradient(to bottom, #000 92%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, #000 92%, transparent 100%)",
             }}
           >
             <Image
-              src="/points/banner-2026.webp"
+              src="/points/banner-2026-main.webp"
               alt="เทศกาลแลกแต้ม สามหนึ่งพานิช 2026"
               fill
               priority
-              sizes="(max-width: 1024px) 100vw, 1024px"
+              sizes="(max-width: 768px) 100vw, 768px"
               className="object-cover"
             />
           </div>
         </div>
       </section>
 
-      {/* วิธีสะสม — overlaps the banner's faded bottom edge */}
-      <section className="container mx-auto px-4 -mt-20 md:-mt-28 relative z-10">
+      {/* วิธีสะสม — tucks just under the banner's faded bottom edge */}
+      <section className="container mx-auto px-4 -mt-8 md:-mt-10 relative z-10">
         <HowToCollect />
       </section>
 
       {/* รางวัล */}
       <section className="container mx-auto px-4 py-16">
+        {/* nowrap spans = control the Thai line break on real phones
+            (browsers break mid-word there even though DevTools doesn't) */}
         <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-b from-white to-purple-300 bg-clip-text text-transparent">
-          รางวัลล็อตแรกพร้อมให้แลกวันนี้!
+          <span className="whitespace-nowrap">ของใหม่สุดอลังการ</span>{" "}
+          <span className="whitespace-nowrap">ให้แลกได้แล้ววันนี้</span>
         </h2>
         <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-fuchsia-500 mx-auto mt-3 mb-10 rounded-full" />
 
