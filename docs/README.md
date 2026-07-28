@@ -43,7 +43,17 @@ Single source of truth for how this codebase fits together. **AI sessions: start
 
 ### 2026-07-28
 - **หน้าแลกแต้ม `/points` ของใหม่ 3 รายการ** (v2.1.27 → 2.1.28): เลื่อยโซ่ PITA 21V 300 แต้ม / เครื่องเชื่อม APOLLO 120A T 250 แต้ม / เครื่องเจียร EUROX 750W 150 แต้ม — วางบนสุดของกริด + หัวข้อเปลี่ยนเป็น "ของใหม่สุดอลังการ ให้แลกได้แล้ววันนี้". **Hero เปลี่ยนเป็น `banner-2026-main.webp`** (poster เกือบจัตุรัส 1400×1273, โลโก้อยู่ล่าง) จึงต้องปรับ frame ตาม: `aspect-[16/9]`→`aspect-[1400/1273]`, mask fade `56%`→`92%` (fade เดิมลึกเกิน จะลบโลโก้ทิ้ง), `max-w-5xl`→`max-w-3xl` (เท่า `HowToCollect` พอดี), overlap `-mt-20/-28`→`-mt-8/-10`. ⚠ ถ้าเปลี่ยน hero กลับเป็นแบนเนอร์ 16:9 ที่โลโก้อยู่**บน** ต้องคืนค่าทั้ง 4 ตัวนี้พร้อมกัน — `banner-2026.webp` ตัวเดิมยังอยู่ใน `public/points/`
-- **ของรางวัลมี 3 ที่ที่ต้องแก้พร้อมกัน** (ยังไม่มี single source of truth): `app/(shop)/points/page.tsx` (กริดเต็ม) · `components/home/RewardsCarousel.tsx` (5 ใบเด่นบนหน้าแรก + ข้อความ "อีก N+ รายการ") · `data/knowledge/points.txt` (AI chat ตอบเรื่องแต้ม — อ่านจากไฟล์ ไม่ใช่ Redis จึง push แล้วมีผลทันที)
+- **RewardsCarousel หน้าแรกตามของใหม่** (v2.1.29): เพิ่ม 300/250/150 ไว้บนสุดเรียงเหมือนหน้า `/points` — carousel โชว์ 8 ใบจากทั้งหมด 12 (ยังไม่รวม cooker + zootopia ที่อยู่โซนโปรโมชั่นแล้ว) และ "อีก N+ รายการ" = 4
+- **⚠ ของรางวัล 1 รายการ = ต้องแก้ 3 ไฟล์พร้อมกัน** (ยังไม่มี single source of truth):
+
+  | ไฟล์ | บทบาท |
+  |---|---|
+  | `app/(shop)/points/page.tsx` | กริดเต็มหน้า `/points` — **รายการหลัก นับจำนวนจากที่นี่** |
+  | `components/home/RewardsCarousel.tsx` | 8 ใบเด่นบนหน้าแรก + ตัวเลข **hardcode** ในการ์ด "อีก N+ รายการ" (N = จำนวนในหน้า `/points` − จำนวนใบใน carousel) |
+  | `data/knowledge/points.txt` | AI chat ตอบคำถามเรื่องแต้ม — อ่านจาก **filesystem ไม่ใช่ Redis** จึง push แล้วมีผลทันที ไม่ต้องแก้ผ่าน admin |
+
+  เลข "อีก N+" หลุดมาแล้ว 2 รอบใน session เดียว ถ้าจะแตะโซนนี้บ่อย ควรยุบเป็น `lib/rewards.ts` แหล่งเดียวแบบ `lib/categories.ts` แล้วให้ทั้งสองหน้า import + คำนวณ N เอง (ต้องมี field `shortName` เพราะ carousel ใช้ชื่อสั้นกว่าหน้า `/points`)
+- **ภาพรางวัลห้าม crop 1:1** — ตัวหนังสือไทย + จำนวนแต้มฝังอยู่ในภาพ ถ้า crop จะกินตัวอักษรริมซ้าย-ขวา · ของจริงทุกใบเป็น **600×546 คงสัดส่วนเดิม** แล้วปล่อยให้ `object-cover` ในการ์ดครอปเอง · ⚠ reMAGE preset "Reward" ยังตั้ง `max_w=400, crop="1:1"` ซึ่งไม่ตรงกับของจริง — แก้สเป็คใน `admin_files/IMAGE_SPEC.md` แล้ว แต่ตัว preset ในโค้ดยังไม่ได้แก้
 - **ระบบใบสั่งงาน `/admin/tasks`** (adminVersion 1.10.0 → 1.11.0): พนักงานหน้าร้านสั่งงานทีมทำสื่อ — การ์ดละ 1 โปร ผูกสินค้าจาก DB แนบรูปต้นฉบับ ติดตามสถานะ รอทำ/กำลังทำ/เสร็จแล้ว + เครื่องมือดาวน์โหลดรูปทั้งหมด/ตั้งชื่อไฟล์อัตโนมัติ/คัดลอกบรีฟ → [`task-board.md`](./task-board.md)
 - **`/api/upload/sign` รับ flag `keepOriginal`**: ข้ามการบังคับ `format=webp` เพื่อเก็บภาพต้นฉบับเต็มความละเอียด (backward compatible — reels/products ไม่ส่ง flag จึงได้ webp เหมือนเดิม) · ตอนแสดงผลต้องมี `f_auto` เสมอ ไม่งั้น HEIC จาก iPhone เปิดไม่ขึ้นบน Android
 - **`components/admin/ui/TextInput.tsx` → `text-base md:text-sm`**: input ทั้ง admin เลิก auto-zoom บน iOS (แก้จุดเดียวมีผลทุกหน้า)

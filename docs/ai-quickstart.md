@@ -40,6 +40,7 @@ python verify.py          # ONLY when touching env vars / auth
 | แก้คำตอบ "ร้านอยู่ไหน" / landmark ร้าน | `STORE_LANDMARK` ใน `web/lib/store-config.ts` — แก้แล้วต้องรัน `node scripts/gen-tts-cache.mjs` เพื่อ regen WAV cache |
 | เพิ่ม/แก้ TTS static cache (เสียงตอบสำเร็จรูป) | `web/lib/tts-cache.ts` (map) + `web/scripts/gen-tts-cache.mjs` (generator) + `web/public/audio/tts/*.wav` (assets) |
 | Edit the 15 product categories | `web/lib/categories.ts` (single source of truth) |
+| เพิ่ม/แก้ของรางวัลแลกแต้ม | ⚠ **ไม่มี single source of truth — ต้องแก้ 3 ไฟล์พร้อมกัน**: `app/(shop)/points/page.tsx` (กริดเต็ม = รายการหลัก) · `components/home/RewardsCarousel.tsx` (ใบเด่นหน้าแรก + เลข **hardcode** "อีก N+ รายการ") · `data/knowledge/points.txt` (AI chat — อ่านจาก filesystem ไม่ใช่ Redis) · ภาพ: 600×546 **ห้าม crop 1:1** (ตัวหนังสือ+แต้มฝังในภาพ) ลง `public/points/` |
 | Change shop contact info (phone, LINE, hours) | `web/lib/store-config.ts` |
 | Change a JSON data file (products, coupons, promotions) | `web/data/*.json` — but in production these live in Upstash Redis (see `lib/blob-store.ts`). ⚠ Local file/seed edits do NOT reach production once Redis has the key — update via admin UI/API (see debugging.md "Redis seed drift") |
 | Add a new API route | `web/app/api/...` — wrap in try-catch, return `NextResponse.json({error}, {status: 500})` |
