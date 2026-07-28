@@ -562,23 +562,27 @@ function TaskItemRow({
 /** แถวสินค้า 1 ชิ้น — 40×40 + ชื่อ + SKU · ราคา + note */
 function ProductRow({ product }: { product: TaskProductRef }) {
   const [imgError, setImgError] = useState(false)
+  // สินค้านอกระบบ (พนักงานพิมพ์ชื่อเอง) ไม่มีรูป/SKU/ราคา — อย่าวาดกรอบเปล่าหรือ "· ฿0"
+  // ค้างไว้ เพราะดูเหมือนรูปโหลดไม่ขึ้น ทั้งที่ต้นฉบับจริงอยู่ในรูปแนบด้านล่างแล้ว
+  // (กฎเดียวกับ formatTaskBrief)
+  const showThumb = Boolean(product.image) && !imgError
+  const metaParts = [product.sku.trim(), product.price > 0 ? fmtBaht(product.price) : ""].filter(Boolean)
+
   return (
     <div className="flex items-center gap-2 flex-1 min-w-0">
-      {!imgError && product.image ? (
+      {showThumb && (
         <img
           src={cldThumb(product.image, 120)}
           alt=""
           className="w-12 h-12 rounded object-cover bg-[#1e1e2e] border border-white/10 shrink-0"
           onError={() => setImgError(true)}
         />
-      ) : (
-        <div className="w-12 h-12 rounded bg-[#1e1e2e] border border-white/10 shrink-0" />
       )}
       <div className="min-w-0 flex-1">
         <div className="text-[15px] text-white truncate">{product.name}</div>
-        <div className="text-[13px] text-[#64748b] truncate">
-          {product.sku} · {fmtBaht(product.price)}
-        </div>
+        {metaParts.length > 0 && (
+          <div className="text-[13px] text-[#64748b] truncate">{metaParts.join(" · ")}</div>
+        )}
         {product.note && <div className="text-[13px] text-[#94a3b8] truncate">{product.note}</div>}
       </div>
     </div>

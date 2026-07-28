@@ -207,7 +207,9 @@ function ProductRefCard({
   // ค้างใน state ภายในไปโผล่ผิดใบ (โชว์ราคาผิดให้พนักงานเห็น)
   return (
     <div className="bg-[#1e1e2e] border border-white/10 rounded-lg p-2 flex gap-2">
-      <ProductThumb image={p.image} name={p.name} />
+      {/* สินค้านอกระบบไม่มีรูปและจะไม่มีวันมี — ไม่ต้องกันที่ไว้ให้กรอบเปล่า
+          (ในรายการผลค้นหายังกันที่ไว้ เพราะช่วยให้กวาดตาดูเป็นแนวเดียวกัน) */}
+      {p.image && <ProductThumb image={p.image} name={p.name} />}
       <div className="flex-1 min-w-0 space-y-1.5">
         {isCustom ? (
           <>
