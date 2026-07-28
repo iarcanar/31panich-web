@@ -38,8 +38,11 @@ Next.js App Router. Two route groups, plus the API tree.
 | `admin/products/` | Product CRUD + AI enrich | `page.tsx` (large — Phase 4 refactor planned; see memory `project_active_improvement_plan`) |
 | `admin/coupons/` | Coupon CRUD | `page.tsx` |
 | `admin/settings/` | Edit AI system prompt + view hosting/links | `page.tsx` |
+| `admin/tasks/` | ระบบใบสั่งงาน — พนักงานสั่งงานให้ทีมทำสื่อ (list + การ์ดใบงาน) | `page.tsx` |
 | `admin/analytics/`, `ai-logs/`, `test-claim/` | Admin views — `ai-logs` = AI Back-end (chat logs + AI prompt + วันหยุด) | `page.tsx` each |
 | `api/admin/` | Admin-only API routes | All require `getSessionUser()` admin check |
+| `api/admin/tasks/` | ใบสั่งงาน CRUD + คอมเมนต์ | `route.ts`, `[id]/route.ts`, `[id]/comments/route.ts` — flat permission (admin/manager เท่ากัน) |
+| `api/admin/product-search/` | ค้นสินค้าสำหรับผูกกับใบงาน | `route.ts` — GET `?q=` คืน max 20 รายการ |
 | `api/ai/chat/` | Customer chat (multi-pipeline A/A2a/A2b/A3/C/D deterministic + B Gemini) | `route.ts` — public, no auth |
 | `api/ai/tts/` | Text-to-speech for chat replies (Gemini TTS, rate-limited per IP) | `route.ts` — public; static cache hits skip this entirely |
 | `api/admin/campaigns/` | โปรพิเศษ/โครงการรัฐ CRUD (Pipeline D data) | `route.ts` — GET/PUT |
@@ -62,6 +65,7 @@ Organized by domain, not by component type.
 | `coupon/` | `CouponCard`, `CouponClaimModal`, `CouponGrid` |
 | `points/` | `HowToCollect` (loyalty program explainer) |
 | `admin/` | `AdminModeProvider`, `AiEnrichButton`, `ImageCropPicker` |
+| `admin/tasks/` | ระบบใบสั่งงาน — `TaskCard` / `TaskEditor` / `TaskItemEditor` / `TaskProductPicker` / `TaskAttachmentUploader` + `status.ts` (คำไทย+สีสถานะ+Cloudinary URL helper — แหล่งเดียว) |
 | `layout/` | `Header`, `Footer`, `FloatingOrderButton` (cross-page chrome) |
 | `ui/` | Generic primitives: `ScrollToTop`, `ContactLink` (**ปุ่มโทร/LINE พร้อม guard เวลาทำการ+วันหยุด** — ทุกปุ่มต้องใช้ component นี้ รองรับ `openClassName` สำหรับ effect ที่ active เฉพาะตอนเปิด), `SectionHeading`, `PromoPopup` + `PromoPopupLazy` (popup banner config-driven), `DriftSphereOverlay` (canvas dot-cluster bg overlay, 3 sizes + ambient variant, drift-area bounds, blend-mode, reveal delay) |
 | `util/` | `ImageContextGuard` — site-wide `contextmenu` suppression on `<img>` targets only (casual "save image" deterrent, F12/text right-click unaffected). Mounted once in root `layout.tsx` |
@@ -101,6 +105,7 @@ All business logic. No JSX in here.
 | `structured-data.ts` | `localBusinessSchema` | JSON-LD for SEO (LocalBusiness schema injected on home) |
 | `reels.ts` | `getReels`, `getActiveReels`, `getReelById`, `createReel`, `updateReel`, `deleteReel`, `reorderReels` | Facebook Reels CRUD — wraps `reels.json` with `withLock`. DB record only — Cloudinary files handled separately by `cloudinary-delete.ts` |
 | `cloudinary-delete.ts` | `destroyCloudinaryAsset(url, resourceType)`, `publicIdFromUrl(url)` | **Hard-deletes Cloudinary assets.** Parses `CLOUDINARY_URL` env → extracts publicId from URL → calls `uploader.destroy({ invalidate: true })`. Used by reel DELETE/PUT routes to prevent orphan storage. Silent on failure (logs only) |
+| `tasks.ts` | `getTasks`, `getTaskById`, `createTask`, `updateTask`, `deleteTask`, `addComment`, `collectAttachmentUrls` | ใบสั่งงานภายใน — wraps `tasks.json` with `withLock`, flat permission (ไม่มี `isAdmin` check) |
 
 ## `web/data/`
 
@@ -118,6 +123,7 @@ JSON data files. In dev these are read/written directly. In production they live
 | `campaigns.json` | `Campaign[]` | โปรพิเศษ/โครงการรัฐ (chipLabel, answer, answerDetail, start/endDate) — Pipeline D |
 | `runtime-errors.json` | `ErrorRecord[]` | Recent runtime errors (written by `lib/error-log.ts`) |
 | `chat-logs.json` | `ChatLog[]` | Logger disabled, file kept for shape |
+| `tasks.json` | `Task[]` | ใบสั่งงานภายใน (ไม่กระทบหน้าเว็บลูกค้า) |
 | `knowledge/points.txt` | plain text | Loyalty program info injected into chat when triggered |
 
 ## `web/public/`

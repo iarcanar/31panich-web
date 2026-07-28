@@ -1,0 +1,258 @@
+"use client"
+
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { Task, TaskItem, TaskPriority, TaskType } from "@/types/task"
+import { MAX_ITEMS_PER_TASK } from "@/types/task"
+import { TYPE_META, TYPE_ORDER, PRIORITY_META } from "./status"
+import { FieldLabel, TextInput } from "@/components/admin/ui"
+import { TaskItemEditor } from "./TaskItemEditor"
+import { UploadStatusContext } from "./TaskAttachmentUploader"
+
+function makeEmptyItem(): TaskItem {
+  return { id: crypto.randomUUID(), title: "", detail: "", products: [], attachments: [] }
+}
+
+const PRIORITY_ORDER: TaskPriority[] = ["normal", "urgent"]
+
+export default function TaskEditor({
+  task,
+  onClose,
+  onSaved,
+}: {
+  task: Task | null
+  onClose: () => void
+  onSaved: (t: Task) => void
+}) {
+  const [title, setTitle] = useState(task?.title ?? "")
+  const [type, setType] = useState<TaskType>(task?.type ?? "general")
+  const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? "normal")
+  const [dueDate, setDueDate] = useState(task?.dueDate ?? "")
+  const [description, setDescription] = useState(task?.description ?? "")
+  const [items, setItems] = useState<TaskItem[]>(() =>
+    task && task.items.length > 0 ? task.items : [makeEmptyItem()]
+  )
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Full body-scroll-lock recipe (mobile fixed-overlay pattern used across admin)
+  useEffect(() => {
+    const scrollY = window.scrollY
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = "100%"
+    return () => {
+      document.body.style.position = ""
+      document.body.style.top = ""
+      document.body.style.width = ""
+      window.scrollTo(0, scrollY)
+    }
+  }, [])
+
+  // Bubble "is any nested TaskAttachmentUploader mid-upload" up to disable Save,
+  // without widening the locked TaskItemEditor/TaskAttachmentUploader props.
+  const uploadingSetRef = useRef<Set<string>>(new Set())
+  const [anyUploading, setAnyUploading] = useState(false)
+  const reportUploading = useCallback((id: string, busy: boolean) => {
+    const set = uploadingSetRef.current
+    if (busy) set.add(id)
+    else set.delete(id)
+    setAnyUploading(set.size > 0)
+  }, [])
+
+  function addItem() {
+    setItems((prev) => (prev.length >= MAX_ITEMS_PER_TASK ? prev : [...prev, makeEmptyItem()]))
+  }
+
+  function updateItem(idx: number, next: TaskItem) {
+    setItems((prev) => prev.map((it, i) => (i === idx ? next : it)))
+  }
+
+  function removeItem(idx: number) {
+    setItems((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  async function handleSave() {
+    if (!title.trim()) {
+      setError("ใส่ชื่องานก่อน")
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      const payload = {
+        title: title.trim(),
+        type,
+        priority,
+        dueDate: dueDate || undefined,
+        description,
+        items: items.map((it, i) => ({ ...it, title: it.title.trim() || `รายการ ${i + 1}` })),
+      }
+      const url = task ? `/api/admin/tasks/${task.id}` : "/api/admin/tasks"
+      const method = task ? "PUT" : "POST"
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const saved: Task = await res.json()
+      onSaved(saved)
+      onClose()
+    } catch {
+      setError("บันทึกไม่สำเร็จ ลองอีกครั้ง")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ปิดโดยไม่ตั้งใจ = บรีฟที่พิมพ์มาทั้งหน้าหายหมด — ถามก่อนถ้ากรอกอะไรไว้แล้ว
+  function requestClose() {
+    const dirty =
+      title.trim() !== "" ||
+      description.trim() !== "" ||
+      items.some((it) => it.title.trim() || it.detail.trim() || it.products.length > 0 || it.attachments.length > 0)
+    if (dirty && !confirm("ปิดหน้าต่างนี้? ข้อมูลที่กรอกไว้จะหายไป")) return
+    onClose()
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 md:items-center md:p-4"
+      onClick={requestClose}
+    >
+      <div
+        className="bg-[#13131d] w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-xl md:border md:border-white/10 overflow-y-auto overscroll-contain"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 bg-[#13131d] border-b border-white/10 px-4 py-3 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-white">
+            {task ? `แก้ไขใบงาน ${task.code}` : "สั่งงานใหม่"}
+          </h2>
+          <button
+            onClick={requestClose}
+            className="text-[#64748b] hover:text-white text-lg leading-none cursor-pointer"
+            aria-label="close"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="px-4 py-4 space-y-4">
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-xs px-3 py-2 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <FieldLabel required>ชื่องาน</FieldLabel>
+            <TextInput value={title} onChange={setTitle} placeholder="เช่น จัดโปรแลกแต้มเดือนนี้" />
+          </div>
+
+          <div>
+            <FieldLabel>ประเภทงาน</FieldLabel>
+            <div className="flex gap-2">
+              {TYPE_ORDER.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setType(t)}
+                  className={`flex-1 h-10 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    type === t
+                      ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
+                      : "bg-[#1a1a28] text-[#94a3b8] border border-white/10"
+                  }`}
+                >
+                  {TYPE_META[t].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FieldLabel>ความเร่งด่วน</FieldLabel>
+              <div className="flex gap-2">
+                {PRIORITY_ORDER.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPriority(p)}
+                    className={`flex-1 h-10 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                      priority === p
+                        ? p === "urgent"
+                          ? "bg-red-500/15 text-red-300 ring-1 ring-red-500/30"
+                          : "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
+                        : "bg-[#1a1a28] text-[#94a3b8] border border-white/10"
+                    }`}
+                  >
+                    {PRIORITY_META[p].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <FieldLabel>ต้องการภายใน</FieldLabel>
+              <TextInput type="date" value={dueDate} onChange={setDueDate} />
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>รายละเอียดงาน</FieldLabel>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              placeholder="อธิบายงานที่ต้องการ..."
+              className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base md:text-sm transition-colors duration-150 focus:border-[#94a3b8] outline-none resize-y"
+            />
+          </div>
+
+          <div>
+            <FieldLabel>รายการ</FieldLabel>
+            <UploadStatusContext.Provider value={reportUploading}>
+              <div className="space-y-3">
+                {items.map((item, i) => (
+                  <TaskItemEditor
+                    key={item.id}
+                    item={item}
+                    index={i}
+                    type={type}
+                    onChange={(next) => updateItem(i, next)}
+                    onRemove={() => removeItem(i)}
+                  />
+                ))}
+              </div>
+            </UploadStatusContext.Provider>
+            <button
+              type="button"
+              onClick={addItem}
+              disabled={items.length >= MAX_ITEMS_PER_TASK}
+              className="mt-2 h-9 px-3 rounded-lg bg-[#1a1a28] border border-white/10 hover:border-amber-500/40 text-[#94a3b8] hover:text-amber-300 text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/10 disabled:hover:text-[#94a3b8] whitespace-nowrap"
+            >
+              + เพิ่มรายการ
+            </button>
+          </div>
+        </div>
+
+        {/* pb ต้องบวกกับ padding เดิม ไม่ใช่แทนที่ — ไม่งั้นเครื่องที่ไม่มีรอยบาก (env=0)
+            ปุ่มจะติดขอบล่างจอ */}
+        <div className="sticky bottom-0 bg-[#13131d] border-t border-white/10 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-end gap-2">
+          <button
+            onClick={requestClose}
+            className="h-9 px-4 text-xs text-[#94a3b8] hover:text-white transition-colors cursor-pointer"
+          >
+            ยกเลิก
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || anyUploading}
+            className="h-9 px-5 bg-amber-600 hover:bg-amber-500 disabled:bg-[#2a2a3a] disabled:text-[#64748b] text-white text-xs font-medium rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+          >
+            {saving ? "กำลังบันทึก..." : "บันทึก"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -8,7 +8,7 @@ cloudinary.config({ secure: true })
  */
 export async function POST(req: NextRequest) {
   try {
-    const { folder, transformation, resourceType = "image", eager } = await req.json()
+    const { folder, transformation, resourceType = "image", eager, keepOriginal } = await req.json()
 
     const timestamp = Math.round(Date.now() / 1000)
 
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       folder: `31-PANICH/${folder || "products"}`,
     }
 
-    if (resourceType === "image") {
+    if (resourceType === "image" && !keepOriginal) {
       params.format = "webp"
     }
     if (transformation) params.transformation = transformation

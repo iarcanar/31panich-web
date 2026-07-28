@@ -26,6 +26,7 @@ const NAV = [
   { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/ai-logs", label: "AI Back-end", adminOnly: true },
   { href: "/admin/settings", label: "ตั้งค่า", adminOnly: true },
+  { href: "/admin/tasks", label: "งาน", wide: true },
 ]
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
@@ -39,6 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loggingOut, setLoggingOut] = useState(false)
   const [user, setUser] = useState<AdminUser | null>(null)
   const [quotaStatus, setQuotaStatus] = useState<QuotaStatus | null>(null)
+  const [openTasks, setOpenTasks] = useState(0)
 
   useEffect(() => {
     if (pathname === "/admin/login") return
@@ -94,6 +96,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [pathname, user])
 
+  // Badge count for "งาน" nav item — fetch once on mount only, never tied to
+  // pathname and never polled. Cache in sessionStorage (TTL 5 min) so repeat
+  // visits within a session skip the fetch entirely.
+  useEffect(() => {
+    if (pathname === "/admin/login") return
+
+    try {
+      const cached = sessionStorage.getItem("tasks:open")
+      if (cached) {
+        const { open, ts } = JSON.parse(cached) as { open: number; ts: number }
+        if (Date.now() - ts < 5 * 60 * 1000) {
+          setOpenTasks(open)
+          return
+        }
+      }
+    } catch {
+      // sessionStorage may be disabled
+    }
+
+    fetch("/api/admin/tasks?count=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { open: number } | null) => {
+        if (!data) return
+        setOpenTasks(data.open)
+        try {
+          sessionStorage.setItem("tasks:open", JSON.stringify({ open: data.open, ts: Date.now() }))
+        } catch {
+          // ignore
+        }
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ไม่แสดง nav bar ในหน้า login
   if (pathname === "/admin/login") {
     return <>{children}</>
@@ -126,17 +162,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {NAV.map((item) => {
                   const active = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href)
                   const restricted = "adminOnly" in item && item.adminOnly && !isAdmin
+                  const wide = "wide" in item && item.wide
                   const showQuotaDot =
                     item.href === "/admin/settings" &&
                     !restricted &&
                     quotaStatus !== null &&
                     quotaStatus !== "ok"
+                  const showTaskBadge = item.href === "/admin/tasks" && openTasks > 0
                   return (
                     <Link
                       key={item.href}
                       href={restricted ? "#" : item.href}
                       onClick={restricted ? (e) => e.preventDefault() : undefined}
                       className={`relative flex items-center justify-center text-center whitespace-nowrap px-2 py-2 md:px-3 md:py-1.5 rounded-lg text-[11px] md:text-xs font-medium transition-colors ${
+                        wide ? "col-span-3 md:col-span-1" : ""
+                      } ${
                         restricted
                           ? "text-[#475569] cursor-not-allowed bg-[#0f0f18] md:bg-transparent"
                           : active
@@ -152,6 +192,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       }
                     >
                       {item.label}
+                      {showTaskBadge && (
+                        <span
+                          className="absolute -top-1 -right-1 flex items-center justify-center bg-amber-500 text-black text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1"
+                          aria-label={`${openTasks} งานค้าง`}
+                        >
+                          {openTasks}
+                        </span>
+                      )}
                       {showQuotaDot && (
                         <span
                           className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${
