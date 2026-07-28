@@ -17,9 +17,14 @@ interface SearchResult {
 export function TaskProductPicker({
   value,
   onChange,
+  searchPlaceholder = "พิมพ์ชื่อ หรือรหัสสินค้า",
+  notePlaceholder = "เช่น ใช้ 150 แต้ม / ราคาชุด 1,290",
 }: {
   value: TaskProductRef[]
   onChange: (v: TaskProductRef[]) => void
+  /** คำใบ้ที่เปลี่ยนตามประเภทงาน — ส่งมาจาก TYPE_META เพื่อให้ภาษาตรงกับสิ่งที่กำลังทำ */
+  searchPlaceholder?: string
+  notePlaceholder?: string
 }) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
@@ -95,7 +100,7 @@ export function TaskProductPicker({
 
   return (
     <div className="space-y-2">
-      <TextInput value={query} onChange={setQuery} placeholder="พิมพ์ชื่อ หรือรหัสสินค้า" />
+      <TextInput value={query} onChange={setQuery} placeholder={searchPlaceholder} />
 
       {query.trim().length >= 2 && (
         <div className="space-y-1">
@@ -124,13 +129,15 @@ export function TaskProductPicker({
 
           {!searching && searched && results.length === 0 && (
             <div className="px-1 py-2">
-              <p className="text-[11px] text-[#64748b] mb-2">ไม่เจอในระบบ — พิมพ์ชื่อเองได้เลย</p>
+              <p className="text-[11px] text-[#64748b] mb-2">ไม่เจอในระบบ</p>
+              {/* echo คำที่พิมพ์กลับไป ให้เห็นชัดว่าไม่ได้พิมพ์ทิ้ง — และปุ่มนี้เป็น secondary
+                  เพราะทั้งฟอร์มสงวนปุ่มทึบสีส้มไว้ให้ "ส่งใบงาน" ปุ่มเดียว */}
               <button
                 type="button"
                 onClick={addCustom}
-                className="h-9 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+                className="h-9 px-3 max-w-full rounded-lg bg-teal-500/10 border border-teal-500/25 hover:bg-teal-500/20 text-teal-300 text-xs font-medium transition-colors cursor-pointer truncate"
               >
-                + ใส่ชื่อสินค้าเอง
+                + ใช้ชื่อ &quot;{query.trim()}&quot; เลย
               </button>
             </div>
           )}
@@ -152,7 +159,7 @@ export function TaskProductPicker({
                     </span>
                   </div>
                 )}
-                <ProductRefCard p={p} onUpdate={(patch) => updateRef(i, patch)} onRemove={() => removeRef(i)} />
+                <ProductRefCard p={p} notePlaceholder={notePlaceholder} onUpdate={(patch) => updateRef(i, patch)} onRemove={() => removeRef(i)} />
               </div>
             ))}
             <div className="text-[11px] text-[#94a3b8] pt-1 border-t border-white/5">ปกติ {fmtBaht(total)}</div>
@@ -160,7 +167,7 @@ export function TaskProductPicker({
         ) : (
           <div className="space-y-2">
             {value.map((p, i) => (
-              <ProductRefCard key={i} p={p} onUpdate={(patch) => updateRef(i, patch)} onRemove={() => removeRef(i)} />
+              <ProductRefCard key={i} p={p} notePlaceholder={notePlaceholder} onUpdate={(patch) => updateRef(i, patch)} onRemove={() => removeRef(i)} />
             ))}
           </div>
         ))}
@@ -185,10 +192,12 @@ function ProductThumb({ image, name }: { image: string; name: string }) {
 
 function ProductRefCard({
   p,
+  notePlaceholder,
   onUpdate,
   onRemove,
 }: {
   p: TaskProductRef
+  notePlaceholder: string
   onUpdate: (patch: Partial<TaskProductRef>) => void
   onRemove: () => void
 }) {
@@ -221,13 +230,13 @@ function ProductRefCard({
         <TextInput
           value={p.note || ""}
           onChange={(v) => onUpdate({ note: v })}
-          placeholder="เช่น ใช้ 150 แต้ม / ราคาชุด 1,290"
+          placeholder={notePlaceholder}
         />
       </div>
       <button
         type="button"
         onClick={onRemove}
-        className="shrink-0 w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 text-[#64748b] hover:text-red-300 transition-colors cursor-pointer flex items-center justify-center"
+        className="shrink-0 w-9 h-9 rounded-lg bg-white/5 hover:bg-red-500/20 text-[#64748b] hover:text-red-300 transition-colors cursor-pointer flex items-center justify-center"
         aria-label="เอาออก"
       >
         ×

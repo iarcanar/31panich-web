@@ -53,21 +53,43 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
 export const STATUS_ORDER: TaskStatus[] = ["requested", "in_progress", "done"]
 
 // ─── ประเภทงาน ───────────────────────────────────────────
-export const TYPE_META: Record<TaskType, { label: string; hint: string; itemPlaceholder: string }> = {
+// hint  = แสดงครั้งเดียวใต้หัวข้อโซน "รายการ" (ไม่ใช่ซ้ำทุกการ์ด)
+// cardWord = คำเรียกการ์ด ใช้ทั้งหัวการ์ดและปุ่มเพิ่ม ให้ภาษาตรงกับงานจริง
+export const TYPE_META: Record<
+  TaskType,
+  {
+    label: string
+    hint: string
+    cardWord: string
+    searchPlaceholder: string
+    notePlaceholder: string
+    /** ใช้เฉพาะ type ที่ไม่ได้เริ่มจากสินค้า (general) */
+    titlePlaceholder: string
+  }
+> = {
   points_reward: {
     label: "โปรแลกแต้ม",
-    hint: "ใส่ชื่อสินค้า + จำนวนแต้มที่ใช้แลก แล้วแนบรูปสินค้า",
-    itemPlaceholder: "เช่น เครื่องเจีย EUROX 750W ใช้ 150 แต้ม",
+    hint: "การ์ดละ 1 ของรางวัล — ใส่สินค้า จำนวนแต้ม และรูป จบในการ์ดเดียว",
+    cardWord: "ของรางวัล",
+    searchPlaceholder: "พิมพ์ชื่อสินค้า หรือรหัสสินค้า",
+    notePlaceholder: "ใช้กี่แต้ม? เช่น 150 แต้ม",
+    titlePlaceholder: "ชื่อของรางวัล",
   },
   bundle_promo: {
     label: "ขายคู่",
-    hint: "เลือกสินค้าที่จะขายเป็นชุด แล้วใส่ราคาพิเศษในช่องหมายเหตุ",
-    itemPlaceholder: "เช่น สีทาบ้าน + แปรงทาสี ขายเป็นชุด",
+    hint: "การ์ดละ 1 ชุด — ใส่สินค้าที่ขายคู่กัน ราคาพิเศษ และรูป จบในการ์ดเดียว",
+    cardWord: "ชุดขายคู่",
+    searchPlaceholder: "พิมพ์ชื่อสินค้า หรือรหัสสินค้า",
+    notePlaceholder: "ราคาพิเศษ? เช่น ราคาชุด 1,290",
+    titlePlaceholder: "ชื่อชุด",
   },
   general: {
     label: "อื่นๆ",
-    hint: "อธิบายงานที่ต้องการ แนบรูปหรือสินค้าประกอบได้",
-    itemPlaceholder: "ชื่อรายการ (ไม่บังคับ)",
+    hint: "การ์ดละ 1 เรื่อง — เขียนสิ่งที่ต้องการ แนบรูปหรือสินค้าประกอบได้",
+    cardWord: "รายการ",
+    searchPlaceholder: "พิมพ์ชื่อสินค้า หรือรหัสสินค้า (ถ้ามี)",
+    notePlaceholder: "หมายเหตุ เช่น ใช้ 150 แต้ม / ราคาชุด 1,290",
+    titlePlaceholder: "เรื่องที่ต้องการ เช่น ทำป้ายเปิดร้านปีใหม่",
   },
 }
 

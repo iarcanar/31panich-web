@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useId, useRef, useState } from "react"
 import type { TaskAttachment } from "@/types/task"
 import { MAX_ATTACHMENTS_PER_ITEM, MAX_ATTACHMENT_MB } from "@/types/task"
-import { cldThumb, cldOriginal } from "./status"
+import { cldThumb } from "./status"
+import { attachmentFilename, downloadOne } from "./download"
 
 /** Lets a nested uploader report its busy state up to TaskEditor so the save
  *  button can disable while any image (in any item) is mid-upload — without
@@ -51,9 +52,13 @@ function uploadWithProgress(
 export function TaskAttachmentUploader({
   value,
   onChange,
+  nameContext,
 }: {
   value: TaskAttachment[]
   onChange: (v: TaskAttachment[]) => void
+  /** ให้ปุ่ม "โหลดต้นฉบับ" ตั้งชื่อไฟล์ให้ทีมทำสื่อรู้ว่าไฟล์เป็นของใบงาน/การ์ดไหน
+   *  ไม่ใส่ (standalone) = fallback ไปใช้ชื่อไฟล์เดิมตอนอัปโหลด */
+  nameContext?: { taskCode: string; taskTitle: string; itemIndex: number }
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -168,7 +173,13 @@ export function TaskAttachmentUploader({
       {value.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {value.map((a, i) => (
-            <AttachmentThumb key={`${a.url}-${i}`} a={a} onRemove={() => removeAt(i)} />
+            <AttachmentThumb
+              key={`${a.url}-${i}`}
+              a={a}
+              index={i}
+              nameContext={nameContext}
+              onRemove={() => removeAt(i)}
+            />
           ))}
         </div>
       )}
@@ -190,13 +201,23 @@ export function TaskAttachmentUploader({
         </div>
       )}
 
-      {!atLimit && (
+      {atLimit ? (
+        <p className="text-[11px] text-[#94a3b8]">
+          ครบ {MAX_ATTACHMENTS_PER_ITEM} รูปแล้ว — ลบรูปที่ไม่ใช้ก่อนจึงเพิ่มได้
+        </p>
+      ) : (
         <label
-          className={`inline-block h-9 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-            uploading ? "bg-[#2a2a3a] text-[#64748b] cursor-not-allowed" : "bg-amber-600 hover:bg-amber-500 text-white"
+          className={`inline-block h-9 px-3 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap ${
+            uploading
+              ? "bg-[#2a2a3a] border-white/10 text-[#64748b] cursor-not-allowed"
+              : "bg-white/5 border-white/10 text-[#e2e8f0] hover:border-teal-400/40 cursor-pointer"
           }`}
         >
-          + แนบรูป (เลือกได้หลายรูป)
+          {uploading
+            ? "รอรูปอัปเสร็จ..."
+            : value.length > 0
+              ? `+ เพิ่มรูปอีก (${value.length}/${MAX_ATTACHMENTS_PER_ITEM})`
+              : "+ แนบรูปของการ์ดนี้ (เลือกหลายรูปพร้อมกันได้)"}
           <input
             ref={inputRef}
             type="file"
@@ -213,10 +234,40 @@ export function TaskAttachmentUploader({
   )
 }
 
-function AttachmentThumb({ a, onRemove }: { a: TaskAttachment; onRemove: () => void }) {
+function AttachmentThumb({
+  a,
+  index,
+  nameContext,
+  onRemove,
+}: {
+  a: TaskAttachment
+  index: number
+  nameContext?: { taskCode: string; taskTitle: string; itemIndex: number }
+  onRemove: () => void
+}) {
   const [broken, setBroken] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const mb = a.bytes ? (a.bytes / 1024 / 1024).toFixed(1) : null
   const dims = a.width && a.height ? `${a.width}×${a.height}` : ""
+
+  async function handleDownload() {
+    if (downloading) return
+    setDownloading(true)
+    try {
+      const filename = nameContext
+        ? attachmentFilename({
+            taskCode: nameContext.taskCode,
+            taskTitle: nameContext.taskTitle,
+            itemIndex: nameContext.itemIndex,
+            imageIndex: index,
+            attachment: a,
+          })
+        : a.name
+      await downloadOne(a.url, filename)
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   return (
     <div className="min-w-0">
@@ -246,14 +297,14 @@ function AttachmentThumb({ a, onRemove }: { a: TaskAttachment; onRemove: () => v
         {dims}
         {mb ? `${dims ? " · " : ""}${mb}MB` : ""}
       </div>
-      <a
-        href={cldOriginal(a.url)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-[10px] text-cyan-400 hover:text-cyan-300 truncate block w-20"
+      <button
+        type="button"
+        onClick={handleDownload}
+        disabled={downloading}
+        className="text-[10px] text-teal-300 hover:text-teal-200 truncate block w-20 text-left transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        โหลดต้นฉบับ
-      </a>
+        {downloading ? "กำลังโหลด..." : "โหลดต้นฉบับ"}
+      </button>
     </div>
   )
 }

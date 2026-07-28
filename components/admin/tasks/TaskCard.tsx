@@ -1,18 +1,46 @@
 "use client"
 
 import { useState } from "react"
-import type { Task, TaskItem, TaskProductRef, TaskStatus } from "@/types/task"
+import type { Task, TaskItem, TaskProductRef, TaskStatus, TaskAttachment } from "@/types/task"
 import {
   STATUS_META,
   STATUS_ORDER,
   PRIORITY_META,
+  TYPE_META,
   cldThumb,
-  cldOriginal,
   relativeThai,
   fmtDueDate,
   isOverdue,
   fmtBaht,
 } from "./status"
+import { attachmentFilename, downloadOne, downloadAll } from "./download"
+
+/** ข้อความบรีฟสำหรับวางใน Photoshop/LINE/โปรแกรมออกแบบ — ให้พี่ธีอ่านรู้เรื่องทันทีไม่ต้องเปิดระบบ */
+function formatTaskBrief(task: Task): string {
+  const metaParts = [TYPE_META[task.type].label]
+  if (task.priority === "urgent") metaParts.push(PRIORITY_META.urgent.label)
+  if (task.dueDate) metaParts.push(`ต้องการภายใน ${fmtDueDate(task.dueDate)}`)
+
+  const lines = [`[${task.code}] ${task.title}`, `ประเภท: ${metaParts.join(" · ")}`, ""]
+
+  task.items.forEach((item, i) => {
+    lines.push(`${i + 1}. ${item.title || `รายการ ${i + 1}`}`)
+    item.products.forEach((p) => {
+      // สินค้านอกระบบไม่มี SKU/ราคา — อย่าให้เหลือ "( ) ฿0" ค้างในบรีฟที่พี่ธีจะก๊อปไปใช้
+      const parts = [p.name]
+      if (p.sku.trim()) parts.push(`(${p.sku.trim()})`)
+      if (p.price > 0) parts.push(fmtBaht(p.price))
+      if (p.note && p.note.trim()) parts.push(`— ${p.note.trim()}`)
+      lines.push(`   - ${parts.join(" ")}`)
+    })
+    if (item.detail.trim()) lines.push(`   หมายเหตุ: ${item.detail.trim()}`)
+    if (item.attachments.length > 0) {
+      lines.push(`   รูป ${item.attachments.length} ใบ`)
+    }
+  })
+
+  return lines.join("\n")
+}
 
 export function TaskCard({
   task,
@@ -31,6 +59,8 @@ export function TaskCard({
   const [commentText, setCommentText] = useState("")
   const [sendingComment, setSendingComment] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [taskDownload, setTaskDownload] = useState<{ done: number; total: number } | null>(null)
+  const [briefCopied, setBriefCopied] = useState(false)
 
   const meta = STATUS_META[task.status]
   const overdue = isOverdue(task.dueDate, task.status)
@@ -40,6 +70,33 @@ export function TaskCard({
   const allAttachments = task.items.flatMap((it) => it.attachments)
   const thumbCount = allAttachments.length
   const itemsCount = task.items.length
+
+  /** ไฟล์ทั้งหมดของใบงาน เรียงตามลำดับรายการ/รูปจริง — ใช้กับปุ่ม "โหลดรูปทั้งหมด" */
+  const downloadableFiles = task.items.flatMap((item, itemIndex) =>
+    item.attachments.map((attachment, imageIndex) => ({
+      url: attachment.url,
+      filename: attachmentFilename({ taskCode: task.code, taskTitle: task.title, itemIndex, imageIndex, attachment }),
+    }))
+  )
+
+  async function handleDownloadAllImages() {
+    if (taskDownload || downloadableFiles.length === 0) return
+    setTaskDownload({ done: 0, total: downloadableFiles.length })
+    await downloadAll(downloadableFiles, (done, total) => setTaskDownload({ done, total }))
+    setTaskDownload(null)
+  }
+
+  async function handleCopyBrief() {
+    const text = formatTaskBrief(task)
+    try {
+      if (!navigator.clipboard) throw new Error("no clipboard")
+      await navigator.clipboard.writeText(text)
+      setBriefCopied(true)
+      setTimeout(() => setBriefCopied(false), 2000)
+    } catch {
+      alert("คัดลอกไม่สำเร็จ ลองเลือกข้อความในใบงานแล้วคัดลอกเอง")
+    }
+  }
 
   async function putStatus(next: TaskStatus) {
     setBusy(true)
@@ -191,11 +248,48 @@ export function TaskCard({
           {/* description */}
           {task.description && <p className="text-xs text-[#94a3b8] whitespace-pre-wrap">{task.description}</p>}
 
+          {/* แถบเครื่องมือทีมทำสื่อ — teal สื่อว่าเป็นเครื่องมือ ไม่ใช่การกระทำเปลี่ยนข้อมูล */}
+          <div className="bg-teal-500/5 border border-teal-500/20 rounded-lg p-2 space-y-1.5">
+            <div className="flex flex-col sm:flex-row gap-2">
+              {thumbCount > 0 && (
+                <button
+                  type="button"
+                  disabled={!!taskDownload}
+                  onClick={handleDownloadAllImages}
+                  className="w-full sm:w-auto h-9 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 text-xs font-medium transition-colors cursor-pointer disabled:opacity-60 whitespace-nowrap"
+                >
+                  {taskDownload
+                    ? `กำลังโหลด ${taskDownload.done}/${taskDownload.total}...`
+                    : `โหลดรูปทั้งหมด (${thumbCount} รูป)`}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleCopyBrief}
+                className="w-full sm:w-auto h-9 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+              >
+                {briefCopied ? "คัดลอกแล้ว ✓" : "คัดลอกบรีฟ"}
+              </button>
+            </div>
+            {thumbCount > 0 && (
+              <p className="text-[10px] text-[#64748b]">
+                เบราว์เซอร์อาจถามอนุญาตดาวน์โหลดหลายไฟล์ — กดอนุญาตครั้งเดียว
+              </p>
+            )}
+          </div>
+
           {/* รายการ (items) */}
           {task.items.length > 0 && (
             <div className="space-y-2">
               {task.items.map((item, i) => (
-                <TaskItemRow key={item.id} item={item} index={i} onImageClick={setLightboxUrl} />
+                <TaskItemRow
+                  key={item.id}
+                  item={item}
+                  index={i}
+                  taskCode={task.code}
+                  taskTitle={task.title}
+                  onImageClick={setLightboxUrl}
+                />
               ))}
             </div>
           )}
@@ -271,26 +365,73 @@ function StatusStepper({ status }: { status: TaskStatus }) {
 function TaskItemRow({
   item,
   index,
+  taskCode,
+  taskTitle,
   onImageClick,
 }: {
   item: TaskItem
   index: number
+  taskCode: string
+  taskTitle: string
   onImageClick: (url: string) => void
 }) {
   const [open, setOpen] = useState(false)
+  const [itemDownloading, setItemDownloading] = useState(false)
+  const [downloadingIdx, setDownloadingIdx] = useState<Set<number>>(new Set())
   const isBundle = item.products.length >= 2
   const totalPrice = item.products.reduce((sum, p) => sum + (p.price || 0), 0)
   const bundleNote = item.products.find((p) => p.note && p.note.trim())?.note
 
+  async function handleDownloadImage(ai: number, attachment: TaskAttachment) {
+    if (downloadingIdx.has(ai)) return
+    setDownloadingIdx((prev) => new Set(prev).add(ai))
+    try {
+      await downloadOne(
+        attachment.url,
+        attachmentFilename({ taskCode, taskTitle, itemIndex: index, imageIndex: ai, attachment })
+      )
+    } finally {
+      setDownloadingIdx((prev) => {
+        const next = new Set(prev)
+        next.delete(ai)
+        return next
+      })
+    }
+  }
+
+  async function handleDownloadItemImages() {
+    if (itemDownloading || item.attachments.length === 0) return
+    setItemDownloading(true)
+    try {
+      await downloadAll(
+        item.attachments.map((attachment, ai) => ({
+          url: attachment.url,
+          filename: attachmentFilename({ taskCode, taskTitle, itemIndex: index, imageIndex: ai, attachment }),
+        }))
+      )
+    } finally {
+      setItemDownloading(false)
+    }
+  }
+
   return (
     <div className="bg-[#1a1a28] border border-white/10 rounded-lg p-2.5">
-      <button
-        type="button"
+      {/* หัวรายการ — เป็น div (ไม่ใช่ button) เพราะมีปุ่ม "โหลด N รูป" ซ้อนอยู่ข้างใน
+          (button ซ้อน button ผิด HTML spec, browser จะตัด DOM ให้เอง) */}
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            setOpen((v) => !v)
+          }
+        }}
         className="w-full min-h-[36px] flex items-center justify-between gap-2 text-left cursor-pointer"
       >
         <span className="text-xs font-medium text-white truncate min-w-0">
-          รายการ {index + 1} · {item.title}
+          {item.title || `รายการ ${index + 1}`}
         </span>
         <span className="shrink-0 flex items-center gap-1.5">
           {item.products.length > 0 && (
@@ -299,9 +440,22 @@ function TaskItemRow({
             </span>
           )}
           {item.attachments.length > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[#94a3b8] whitespace-nowrap">
-              {item.attachments.length} รูป
-            </span>
+            <>
+              <button
+                type="button"
+                disabled={itemDownloading}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDownloadItemImages()
+                }}
+                className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 whitespace-nowrap cursor-pointer disabled:opacity-60"
+              >
+                {itemDownloading ? "กำลังโหลด..." : `โหลด ${item.attachments.length} รูป`}
+              </button>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[#94a3b8] whitespace-nowrap">
+                {item.attachments.length} รูป
+              </span>
+            </>
           )}
           <svg
             className={`w-3.5 h-3.5 text-[#64748b] transition-transform ${open ? "rotate-180" : ""}`}
@@ -313,7 +467,7 @@ function TaskItemRow({
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
           </svg>
         </span>
-      </button>
+      </div>
 
       {open && (
         <div className="mt-2 space-y-2.5">
@@ -362,15 +516,14 @@ function TaskItemRow({
                       }}
                     />
                   </button>
-                  <a
-                    href={cldOriginal(a.url)}
-                    download
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-cyan-400 hover:text-cyan-300 whitespace-nowrap cursor-pointer"
+                  <button
+                    type="button"
+                    disabled={downloadingIdx.has(ai)}
+                    onClick={() => handleDownloadImage(ai, a)}
+                    className="text-[10px] text-cyan-400 hover:text-cyan-300 whitespace-nowrap cursor-pointer disabled:opacity-50"
                   >
-                    โหลดต้นฉบับ
-                  </a>
+                    {downloadingIdx.has(ai) ? "กำลังโหลด..." : "โหลดต้นฉบับ"}
+                  </button>
                 </div>
               ))}
             </div>
