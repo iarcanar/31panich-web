@@ -145,17 +145,19 @@ export default function TaskEditor({
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 md:items-center md:p-4"
       onClick={requestClose}
     >
+      {/* task-ui = ขยายฟอนต์ของ <TextInput>/<FieldLabel> ที่ใช้ร่วมกับหน้า admin อื่น
+          (ดู .task-ui ใน globals.css) */}
       <div
-        className="bg-[#13131d] w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-xl md:border md:border-white/10 overflow-y-auto overscroll-contain"
+        className="task-ui bg-[#13131d] w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-xl md:border md:border-white/10 overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 bg-[#13131d] border-b border-white/10 px-4 py-3 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-white">
+          <h2 className="text-[17px] font-bold text-white">
             {task ? `แก้ไขใบงาน ${task.code}` : "สั่งงานใหม่"}
           </h2>
           <button
             onClick={requestClose}
-            className="text-[#64748b] hover:text-white text-lg leading-none cursor-pointer"
+            className="text-[#64748b] hover:text-white text-2xl leading-none cursor-pointer"
             aria-label="close"
           >
             ×
@@ -164,7 +166,7 @@ export default function TaskEditor({
 
         <div className="px-4 py-4 space-y-6">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-xs px-3 py-2 rounded-lg">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-[15px] px-3 py-2 rounded-lg">
               {error}
             </div>
           )}
@@ -172,10 +174,10 @@ export default function TaskEditor({
           {/* โซน 1 — ข้อมูลงาน (accent สีฟ้า) */}
           <div className="border-l-2 border-l-sky-400/60 pl-3 space-y-4">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 shrink-0 rounded-full bg-sky-500/15 text-sky-300 text-[10px] flex items-center justify-center">
+              <span className="w-6 h-6 shrink-0 rounded-full bg-sky-500/15 text-sky-300 text-[13px] flex items-center justify-center">
                 1
               </span>
-              <h3 className="text-sky-300 text-xs font-semibold">ข้อมูลงาน</h3>
+              <h3 className="text-sky-300 text-[15px] font-semibold">ข้อมูลงาน</h3>
             </div>
 
             <div>
@@ -191,7 +193,7 @@ export default function TaskEditor({
                     key={t}
                     type="button"
                     onClick={() => setType(t)}
-                    className={`flex-1 h-10 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`flex-1 h-10 rounded-lg text-[15px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       type === t
                         ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
                         : "bg-[#1a1a28] text-[#94a3b8] border border-white/10"
@@ -212,7 +214,7 @@ export default function TaskEditor({
                       key={p}
                       type="button"
                       onClick={() => setPriority(p)}
-                      className={`flex-1 h-10 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                      className={`flex-1 h-10 rounded-lg text-[15px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
                         priority === p
                           ? p === "urgent"
                             ? "bg-red-500/15 text-red-300 ring-1 ring-red-500/30"
@@ -239,7 +241,7 @@ export default function TaskEditor({
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   placeholder="อธิบายงานที่ต้องการ..."
-                  className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base md:text-sm transition-colors duration-150 focus:border-[#94a3b8] outline-none resize-y"
+                  className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base transition-colors duration-150 focus:border-[#94a3b8] outline-none resize-y"
                 />
               </div>
             )}
@@ -248,12 +250,12 @@ export default function TaskEditor({
           {/* โซน 2 — รายการ (accent สีเขียวอมฟ้า) */}
           <div className="border-l-2 border-l-teal-400/60 pl-3 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 shrink-0 rounded-full bg-teal-500/15 text-teal-300 text-[10px] flex items-center justify-center">
+              <span className="w-6 h-6 shrink-0 rounded-full bg-teal-500/15 text-teal-300 text-[13px] flex items-center justify-center">
                 2
               </span>
-              <h3 className="text-teal-300 text-xs font-semibold">รายการ</h3>
+              <h3 className="text-teal-300 text-[15px] font-semibold">รายการ</h3>
             </div>
-            <p className="text-[11px] text-[#64748b]">{TYPE_META[type].hint}</p>
+            <p className="text-[14px] text-[#64748b]">{TYPE_META[type].hint}</p>
 
             <UploadStatusContext.Provider value={reportUploading}>
               <div className="space-y-3">
@@ -276,7 +278,7 @@ export default function TaskEditor({
               type="button"
               onClick={addItem}
               disabled={atMaxItems}
-              className="h-11 w-full border border-dashed border-teal-500/40 rounded-lg text-teal-300 hover:bg-teal-500/10 text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent whitespace-nowrap"
+              className="h-11 w-full border border-dashed border-teal-500/40 rounded-lg text-teal-300 hover:bg-teal-500/10 text-[15px] font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent whitespace-nowrap"
             >
               {atMaxItems
                 ? `ครบ 10 ${TYPE_META[type].cardWord}ต่อใบแล้ว`
@@ -290,14 +292,14 @@ export default function TaskEditor({
         <div className="sticky bottom-0 bg-[#13131d] border-t border-white/10 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-end gap-2">
           <button
             onClick={requestClose}
-            className="h-9 px-4 text-xs text-[#94a3b8] hover:text-white transition-colors cursor-pointer"
+            className="h-10 px-4 text-[15px] text-[#94a3b8] hover:text-white transition-colors cursor-pointer"
           >
             ยกเลิก
           </button>
           <button
             onClick={handleSave}
             disabled={saving || anyUploading}
-            className="h-9 px-5 bg-amber-600 hover:bg-amber-500 disabled:bg-[#2a2a3a] disabled:text-[#64748b] text-white text-xs font-medium rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+            className="h-10 px-5 bg-amber-600 hover:bg-amber-500 disabled:bg-[#2a2a3a] disabled:text-[#64748b] text-white text-[15px] font-medium rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             {saveLabel}
           </button>

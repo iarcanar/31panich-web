@@ -26,6 +26,15 @@ body {
 /* Prevent Thai text from wrapping letter-by-letter when columns get squeezed */
 .th-text { word-break: keep-all; overflow-wrap: break-word; line-break: strict; }
 
+/* ===== ระบบใบสั่งงาน (/admin/tasks) — ฟอนต์ใหญ่กว่าหน้า admin อื่น =====
+   ฟอร์มสั่งงานใช้ <TextInput>/<FieldLabel> ร่วมกับหน้า admin ทุกหน้า จะไปแก้ขนาด
+   ในคอมโพเนนต์กลางไม่ได้ (หน้าอื่นจะโตตาม) — จึงคุมจากตรงนี้ผ่าน .task-ui ที่ครอบ
+   เฉพาะ modal สั่งงาน  ·  input ต้อง >=16px เสมอ ไม่งั้น iOS Safari zoom เองตอน focus */
+.task-ui input,
+.task-ui textarea { font-size: 16px; }
+/* FieldLabel เท่านั้น (label.block) — ปุ่มแนบรูปก็เป็น <label> แต่เป็น inline-flex */
+.task-ui label.block { font-size: 15px; }
+
 /* ===== Liquid glass surfaces (frosted, GPU path) =====
    Dark-purple re-tint of the iOS-27 liquid-glass reference. Use these for
    any surface that does NOT need lens refraction (which is reserved for the

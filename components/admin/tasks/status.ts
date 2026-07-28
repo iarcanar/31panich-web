@@ -12,6 +12,14 @@ interface StatusMeta {
   label: string
   /** class ของ pill สถานะ */
   pill: string
+  /** สีแถบของ "ขั้นที่กำลังอยู่" ใน StatusTrack */
+  bar: string
+  /** สีแถบของ "ขั้นที่ผ่านมาแล้ว" — จางกว่า bar เพื่อให้ขั้นปัจจุบันเด่นที่สุด */
+  barSoft: string
+  /** เงาเรืองใต้แถบขั้นปัจจุบัน — ตัวชี้สายตาว่า "ตอนนี้อยู่ตรงนี้" */
+  glow: string
+  /** สีตัวอักษรของ label ขั้นปัจจุบัน */
+  text: string
   /** สถานะถัดไปเมื่อกดปุ่มเดินหน้า — null = จบแล้ว */
   next: TaskStatus | null
   /** label ของปุ่มเดินหน้า (กริยา บอกผลชัด) */
@@ -26,6 +34,10 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
   requested: {
     label: "รอทำ",
     pill: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+    bar: "bg-amber-400",
+    barSoft: "bg-amber-400/35",
+    glow: "shadow-[0_0_10px_-1px_#fbbf24]",
+    text: "text-amber-300",
     next: "in_progress",
     nextLabel: "เริ่มทำงานนี้",
     nextBtn: "bg-cyan-600 hover:bg-cyan-500 text-white",
@@ -34,6 +46,10 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
   in_progress: {
     label: "กำลังทำ",
     pill: "bg-cyan-500/10 text-cyan-300 border-cyan-500/30",
+    bar: "bg-cyan-400",
+    barSoft: "bg-cyan-400/35",
+    glow: "shadow-[0_0_10px_-1px_#22d3ee]",
+    text: "text-cyan-300",
     next: "done",
     nextLabel: "ทำเสร็จแล้ว",
     nextBtn: "bg-emerald-600 hover:bg-emerald-500 text-white",
@@ -42,6 +58,10 @@ export const STATUS_META: Record<TaskStatus, StatusMeta> = {
   done: {
     label: "เสร็จแล้ว",
     pill: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    bar: "bg-emerald-400",
+    barSoft: "bg-emerald-400/35",
+    glow: "shadow-[0_0_10px_-1px_#34d399]",
+    text: "text-emerald-400",
     next: null,
     nextLabel: null,
     nextBtn: null,

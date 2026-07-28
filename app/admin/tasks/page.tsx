@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import type { Task, TaskStatus } from "@/types/task"
 import { STATUS_META, STATUS_ORDER } from "@/components/admin/tasks/status"
 import { TaskCard } from "@/components/admin/tasks/TaskCard"
+import { useAuth } from "../layout"
 
 const TaskEditor = dynamic(() => import("@/components/admin/tasks/TaskEditor"), { ssr: false })
 
@@ -25,6 +26,8 @@ function useIsDevHost(): boolean {
 
 export default function AdminTasksPage() {
   const isDev = useIsDevHost()
+  // สั่งงาน/แก้ไข/ลบ = ทุก role · เดินสถานะ = admin (ทีมทำสื่อ) เท่านั้น
+  const { isAdmin } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -105,13 +108,13 @@ export default function AdminTasksPage() {
 
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <h1 className="text-lg md:text-xl font-bold text-white">สั่งงาน</h1>
-          <p className="text-[11px] md:text-xs text-[#64748b] mt-0.5">ส่งงานให้ทีมทำสื่อ · ตามสถานะได้ที่นี่</p>
+          <h1 className="text-[22px] md:text-[26px] font-bold text-white">สั่งงาน</h1>
+          <p className="text-[14px] md:text-[15px] text-[#64748b] mt-0.5">ส่งงานให้ทีมทำสื่อ · ตามสถานะได้ที่นี่</p>
         </div>
         <button
           type="button"
           onClick={openNew}
-          className="shrink-0 h-9 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+          className="shrink-0 h-10 px-3.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-[15px] font-medium transition-colors cursor-pointer whitespace-nowrap"
         >
           + สั่งงานใหม่
         </button>
@@ -131,29 +134,29 @@ export default function AdminTasksPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-[#64748b] text-sm">กำลังโหลด...</div>
+        <div className="text-center py-12 text-[#64748b] text-[17px]">กำลังโหลด...</div>
       ) : loadError ? (
         <button
           type="button"
           onClick={load}
-          className="w-full bg-[#13131d] border border-dashed border-red-500/30 rounded-xl p-8 text-center text-red-300 text-sm cursor-pointer"
+          className="w-full bg-[#13131d] border border-dashed border-red-500/30 rounded-xl p-8 text-center text-red-300 text-[17px] cursor-pointer"
         >
           โหลดไม่สำเร็จ — แตะเพื่อลองใหม่
         </button>
       ) : filtered.length === 0 ? (
         tasks.length === 0 ? (
           <div className="bg-[#13131d] border border-dashed border-[#2a2a3a] rounded-xl p-8 text-center">
-            <div className="text-[#64748b] text-sm mb-3">ยังไม่มีใบงาน</div>
+            <div className="text-[#64748b] text-[17px] mb-3">ยังไม่มีใบงาน</div>
             <button
               type="button"
               onClick={openNew}
-              className="h-9 px-4 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition-colors cursor-pointer"
+              className="h-10 px-4 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-[15px] font-medium transition-colors cursor-pointer"
             >
               สั่งงานแรกเลย
             </button>
           </div>
         ) : (
-          <div className="text-center py-12 text-[#64748b] text-sm">ไม่มีใบงานในสถานะนี้</div>
+          <div className="text-center py-12 text-[#64748b] text-[17px]">ไม่มีใบงานในสถานะนี้</div>
         )
       ) : (
         <div className="space-y-3">
@@ -161,6 +164,7 @@ export default function AdminTasksPage() {
             <TaskCard
               key={t.id}
               task={t}
+              canChangeStatus={isAdmin}
               onChanged={handleChanged}
               onEdit={() => openEdit(t)}
               onDelete={() => handleDelete(t)}
@@ -179,7 +183,7 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 h-8 px-3 rounded-lg text-xs whitespace-nowrap transition-colors cursor-pointer ${
+      className={`shrink-0 h-10 px-3.5 rounded-lg text-[15px] whitespace-nowrap transition-colors cursor-pointer ${
         active
           ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
           : "bg-[#1a1a28] text-[#94a3b8] border border-white/10"
@@ -202,8 +206,8 @@ function DevWarningBanner() {
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-bold text-amber-300 text-sm">คุณกำลังใช้ Dev (localhost)</div>
-          <p className="text-amber-200/80 mt-0.5 th-text text-xs">
+          <div className="font-bold text-amber-300 text-[17px]">คุณกำลังใช้ Dev (localhost)</div>
+          <p className="text-amber-200/80 mt-0.5 th-text text-[15px]">
             ใบงานที่สั่งที่นี่ <strong>จะไม่ถึงทีมทำสื่อจริง</strong> — data เขียนลง local JSON เท่านั้น
             ไม่เข้า production Redis
           </p>
@@ -211,14 +215,14 @@ function DevWarningBanner() {
             href={PROD_ADMIN_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 mt-2 h-8 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold transition-colors cursor-pointer whitespace-nowrap text-xs"
+            className="inline-flex items-center gap-1.5 mt-2 h-9 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold transition-colors cursor-pointer whitespace-nowrap text-[15px]"
           >
             เปิดหน้า Admin จริง
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           </a>
-          <div className="text-[10px] text-amber-200/50 mt-1.5 font-mono">{PROD_ADMIN_URL}</div>
+          <div className="text-[13px] text-amber-200/50 mt-1.5 font-mono">{PROD_ADMIN_URL}</div>
         </div>
       </div>
     </div>

@@ -165,7 +165,7 @@ export function TaskAttachmentUploader({
   return (
     <div className="space-y-2">
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-xs px-3 py-2 rounded-lg">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-[15px] px-3 py-2 rounded-lg">
           {error}
         </div>
       )}
@@ -187,10 +187,10 @@ export function TaskAttachmentUploader({
       {uploading && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-amber-300 font-medium whitespace-nowrap">
+            <span className="text-[15px] text-amber-300 font-medium whitespace-nowrap">
               กำลังอัปโหลด {Math.min(step.done + 1, step.total)}/{step.total}...
             </span>
-            <span className="text-[11px] text-amber-300 font-mono">{progress}%</span>
+            <span className="text-[14px] text-amber-300 font-mono">{progress}%</span>
           </div>
           <div className="h-1.5 bg-[#1a1a28] rounded-full overflow-hidden">
             <div
@@ -202,12 +202,14 @@ export function TaskAttachmentUploader({
       )}
 
       {atLimit ? (
-        <p className="text-[11px] text-[#94a3b8]">
+        <p className="text-[14px] text-[#94a3b8]">
           ครบ {MAX_ATTACHMENTS_PER_ITEM} รูปแล้ว — ลบรูปที่ไม่ใช้ก่อนจึงเพิ่มได้
         </p>
       ) : (
+        /* ฟอนต์ใหญ่ขึ้นแล้วข้อความปุ่มยาวกว่าความกว้างการ์ดบนมือถือ —
+           ปล่อยให้ตัดบรรทัดได้ (min-h แทน h ตายตัว) ไม่งั้นข้อความล้นออกนอกกรอบ */
         <label
-          className={`inline-block h-9 px-3 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap ${
+          className={`inline-flex items-center min-h-[44px] max-w-full px-3 py-2 rounded-lg border text-[15px] font-medium leading-snug transition-colors th-text ${
             uploading
               ? "bg-[#2a2a3a] border-white/10 text-[#64748b] cursor-not-allowed"
               : "bg-white/5 border-white/10 text-[#e2e8f0] hover:border-teal-400/40 cursor-pointer"
@@ -229,7 +231,7 @@ export function TaskAttachmentUploader({
           />
         </label>
       )}
-      <p className="text-[10px] text-[#64748b]">เก็บรูปคมชัดเต็มขนาด ไม่ย่อไฟล์</p>
+      <p className="text-[13px] text-[#64748b]">เก็บรูปคมชัดเต็มขนาด ไม่ย่อไฟล์</p>
     </div>
   )
 }
@@ -273,7 +275,7 @@ function AttachmentThumb({
     <div className="min-w-0">
       <div className="relative w-20 h-20">
         {broken || !a.url ? (
-          <div className="w-20 h-20 rounded-lg bg-[#1e1e2e] border border-white/10 flex items-center justify-center text-[#64748b] text-[10px] text-center px-1">
+          <div className="w-20 h-20 rounded-lg bg-[#1e1e2e] border border-white/10 flex items-center justify-center text-[#64748b] text-[13px] text-center px-1">
             รูปหาย
           </div>
         ) : (
@@ -287,13 +289,13 @@ function AttachmentThumb({
         <button
           type="button"
           onClick={onRemove}
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-400 text-white text-[11px] leading-none flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-400 text-white text-[14px] leading-none flex items-center justify-center transition-colors cursor-pointer"
           aria-label="เอาออก"
         >
           ×
         </button>
       </div>
-      <div className="text-[10px] text-[#64748b] truncate w-20">
+      <div className="text-[13px] text-[#64748b] truncate w-20">
         {dims}
         {mb ? `${dims ? " · " : ""}${mb}MB` : ""}
       </div>
@@ -301,7 +303,7 @@ function AttachmentThumb({
         type="button"
         onClick={handleDownload}
         disabled={downloading}
-        className="text-[10px] text-teal-300 hover:text-teal-200 truncate block w-20 text-left transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="text-[13px] text-teal-300 hover:text-teal-200 truncate block w-20 text-left transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {downloading ? "กำลังโหลด..." : "โหลดต้นฉบับ"}
       </button>

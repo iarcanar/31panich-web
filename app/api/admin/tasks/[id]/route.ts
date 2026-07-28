@@ -13,6 +13,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!existing) return NextResponse.json({ error: "not found" }, { status: 404 })
 
     const body = await req.json()
+
+    // สิทธิ์: ทุก role สั่งงาน/แก้ไข/ลบได้เท่ากัน (แบนราบตามเดิม) ยกเว้น "เดินสถานะ"
+    // ซึ่งเป็นงานของทีมทำสื่อ — manager รายงานความคืบหน้าแทนกันไม่ได้
+    if (Object.prototype.hasOwnProperty.call(body, "status") && user.role !== "admin") {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 })
+    }
+
     // destroy Cloudinary เฉพาะเมื่อ body มี key "items" เท่านั้น — ไม่งั้น PUT แค่ {status:"done"}
     // จะไป diff attachment แล้วลบรูปทิ้งทั้งใบ
     const hasItems = Object.prototype.hasOwnProperty.call(body, "items")

@@ -104,7 +104,7 @@ export function TaskProductPicker({
 
       {query.trim().length >= 2 && (
         <div className="space-y-1">
-          {searching && <div className="text-[11px] text-[#64748b] px-1">กำลังค้นหา...</div>}
+          {searching && <div className="text-[14px] text-[#64748b] px-1">กำลังค้นหา...</div>}
 
           {!searching && results.length > 0 && (
             <div className="space-y-1">
@@ -117,8 +117,8 @@ export function TaskProductPicker({
                 >
                   <ProductThumb image={p.image} name={p.name} />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white truncate">{p.name}</div>
-                    <div className="text-[11px] text-[#64748b] truncate">
+                    <div className="text-[17px] text-white truncate">{p.name}</div>
+                    <div className="text-[14px] text-[#64748b] truncate">
                       {p.sku} · {fmtBaht(p.price)}
                     </div>
                   </div>
@@ -129,13 +129,13 @@ export function TaskProductPicker({
 
           {!searching && searched && results.length === 0 && (
             <div className="px-1 py-2">
-              <p className="text-[11px] text-[#64748b] mb-2">ไม่เจอในระบบ</p>
+              <p className="text-[14px] text-[#64748b] mb-2">ไม่เจอในระบบ</p>
               {/* echo คำที่พิมพ์กลับไป ให้เห็นชัดว่าไม่ได้พิมพ์ทิ้ง — และปุ่มนี้เป็น secondary
                   เพราะทั้งฟอร์มสงวนปุ่มทึบสีส้มไว้ให้ "ส่งใบงาน" ปุ่มเดียว */}
               <button
                 type="button"
                 onClick={addCustom}
-                className="h-9 px-3 max-w-full rounded-lg bg-teal-500/10 border border-teal-500/25 hover:bg-teal-500/20 text-teal-300 text-xs font-medium transition-colors cursor-pointer truncate"
+                className="h-10 px-3 max-w-full rounded-lg bg-teal-500/10 border border-teal-500/25 hover:bg-teal-500/20 text-teal-300 text-[15px] font-medium transition-colors cursor-pointer truncate"
               >
                 + ใช้ชื่อ &quot;{query.trim()}&quot; เลย
               </button>
@@ -147,14 +147,14 @@ export function TaskProductPicker({
       {value.length > 0 &&
         (isBundle ? (
           <div className="bg-[#1a1a28] border border-violet-500/25 border-l-2 border-l-violet-500/60 rounded-lg p-2.5 space-y-2">
-            <span className="bg-violet-500/15 text-violet-300 text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap inline-block">
+            <span className="bg-violet-500/15 text-violet-300 text-[13px] px-1.5 py-0.5 rounded whitespace-nowrap inline-block">
               ขายเป็นชุด · {value.length} ชิ้น
             </span>
             {value.map((p, i) => (
               <div key={i}>
                 {i > 0 && (
                   <div className="flex justify-center py-0.5">
-                    <span className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-300 text-xs flex items-center justify-center">
+                    <span className="w-6 h-6 rounded-full bg-violet-500/20 text-violet-300 text-[15px] flex items-center justify-center">
                       ＋
                     </span>
                   </div>
@@ -162,7 +162,7 @@ export function TaskProductPicker({
                 <ProductRefCard p={p} notePlaceholder={notePlaceholder} onUpdate={(patch) => updateRef(i, patch)} onRemove={() => removeRef(i)} />
               </div>
             ))}
-            <div className="text-[11px] text-[#94a3b8] pt-1 border-t border-white/5">ปกติ {fmtBaht(total)}</div>
+            <div className="text-[14px] text-[#94a3b8] pt-1 border-t border-white/5">ปกติ {fmtBaht(total)}</div>
           </div>
         ) : (
           <div className="space-y-2">
@@ -178,13 +178,13 @@ export function TaskProductPicker({
 function ProductThumb({ image, name }: { image: string; name: string }) {
   const [broken, setBroken] = useState(false)
   if (!image || broken) {
-    return <div className="w-10 h-10 rounded bg-[#2a2a3a] shrink-0" />
+    return <div className="w-12 h-12 rounded bg-[#2a2a3a] shrink-0" />
   }
   return (
     <img
-      src={cldThumb(image, 96)}
+      src={cldThumb(image, 120)}
       alt={name}
-      className="w-10 h-10 rounded object-cover shrink-0 bg-[#2a2a3a]"
+      className="w-12 h-12 rounded object-cover shrink-0 bg-[#2a2a3a]"
       onError={() => setBroken(true)}
     />
   )
@@ -221,8 +221,8 @@ function ProductRefCard({
           </>
         ) : (
           <>
-            <div className="text-sm text-white truncate">{p.name}</div>
-            <div className="text-[11px] text-[#64748b] truncate">
+            <div className="text-[17px] text-white truncate">{p.name}</div>
+            <div className="text-[14px] text-[#64748b] truncate">
               {p.sku} · {fmtBaht(p.price)}
             </div>
           </>

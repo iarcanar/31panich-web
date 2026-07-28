@@ -44,11 +44,14 @@ function formatTaskBrief(task: Task): string {
 
 export function TaskCard({
   task,
+  canChangeStatus,
   onChanged,
   onEdit,
   onDelete,
 }: {
   task: Task
+  /** เฉพาะ admin (ทีมทำสื่อ) เท่านั้นที่เดินสถานะได้ — manager สั่งงาน/แก้ไข/ลบได้ตามเดิม */
+  canChangeStatus: boolean
   onChanged: (t: Task) => void
   onEdit: () => void
   onDelete: () => void
@@ -156,35 +159,38 @@ export function TaskCard({
       >
         {/* แถวบน: pill สถานะ + ด่วน + code + กำหนดส่ง */}
         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-          <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded border font-medium whitespace-nowrap ${meta.pill}`}>
+          <span className={`shrink-0 text-[13px] px-1.5 py-0.5 rounded border font-medium whitespace-nowrap ${meta.pill}`}>
             {meta.label}
           </span>
           {isUrgent && (
-            <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded border font-medium whitespace-nowrap bg-red-500/10 text-red-400 border-red-500/30">
+            <span className="shrink-0 text-[13px] px-1.5 py-0.5 rounded border font-medium whitespace-nowrap bg-red-500/10 text-red-400 border-red-500/30">
               {PRIORITY_META.urgent.label}
             </span>
           )}
-          <span className="shrink-0 font-mono text-[11px] text-[#64748b] whitespace-nowrap">{task.code}</span>
+          <span className="shrink-0 font-mono text-[14px] text-[#64748b] whitespace-nowrap">{task.code}</span>
           {task.dueDate && (
-            <span className={`ml-auto shrink-0 whitespace-nowrap text-[11px] ${overdue ? "text-red-400 font-medium" : "text-[#64748b]"}`}>
+            <span className={`ml-auto shrink-0 whitespace-nowrap text-[14px] ${overdue ? "text-red-400 font-medium" : "text-[#64748b]"}`}>
               {overdue ? "เลยกำหนด" : `ต้องการภายใน ${fmtDueDate(task.dueDate)}`}
             </span>
           )}
         </div>
 
         {/* ชื่องาน */}
-        <div className="text-sm font-medium text-white line-clamp-2">{task.title}</div>
+        <div className="text-[17px] font-medium text-white line-clamp-2">{task.title}</div>
+
+        {/* ความคืบหน้า — เห็นตั้งแต่ยังไม่กางว่าใบนี้เดินไปถึงขั้นไหนแล้ว */}
+        <StatusTrack status={task.status} className="mt-1 mb-0.5" />
 
         {/* thumbnail strip + นับ */}
         <div className="flex items-center gap-2 min-w-0">
           {thumbCount > 0 && (
-            <div className="flex -space-x-1.5 shrink-0">
+            <div className="flex -space-x-2 shrink-0">
               {allAttachments.slice(0, 4).map((a, i) => (
                 <img
                   key={i}
                   src={cldThumb(a.url, 96)}
                   alt=""
-                  className="w-8 h-8 rounded object-cover bg-[#1e1e2e] border border-[#13131d]"
+                  className="w-10 h-10 rounded object-cover bg-[#1e1e2e] border border-[#13131d]"
                   onError={(e) => {
                     e.currentTarget.style.visibility = "hidden"
                   }}
@@ -192,18 +198,18 @@ export function TaskCard({
               ))}
             </div>
           )}
-          <span className="text-[11px] text-[#64748b] whitespace-nowrap truncate min-w-0">
+          <span className="text-[14px] text-[#64748b] whitespace-nowrap truncate min-w-0">
             {itemsCount} รายการ{thumbCount > 0 ? ` · ${thumbCount} รูป` : ""}
           </span>
         </div>
 
         {/* meta จาง + ลูกศร */}
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] text-[#64748b] truncate min-w-0">
+          <span className="text-[14px] text-[#64748b] truncate min-w-0">
             โดย {task.createdBy.name} · {relativeThai(task.updatedAt)}
           </span>
           <svg
-            className={`shrink-0 w-4 h-4 text-[#64748b] transition-transform ${expanded ? "rotate-180" : ""}`}
+            className={`shrink-0 w-5 h-5 text-[#64748b] transition-transform ${expanded ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -217,36 +223,46 @@ export function TaskCard({
       {expanded && (
         <div className="mt-3 pt-3 border-t border-white/5 space-y-4">
           {saveError && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-xs px-3 py-2 rounded-lg">{saveError}</div>
+            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-[15px] px-3 py-2 rounded-lg">{saveError}</div>
           )}
 
-          {/* ตัวควบคุมสถานะ */}
+          {/* ตัวควบคุมสถานะ — ปุ่มเดินสถานะโชว์เฉพาะ admin
+              ไม่ใช่ admin ก็ยังเห็นแถบความคืบหน้า แต่บอกเหตุผลไว้ว่าทำไมไม่มีปุ่ม
+              (ห้าม disable เงียบๆ) */}
           <div>
-            <StatusStepper status={task.status} />
-            {meta.next && meta.nextLabel && meta.nextBtn && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => putStatus(meta.next as TaskStatus)}
-                className={`mt-2 h-11 w-full rounded-lg text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 ${meta.nextBtn}`}
-              >
-                {meta.nextLabel}
-              </button>
-            )}
-            {meta.prev && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => putStatus(meta.prev as TaskStatus)}
-                className="mt-1.5 w-full text-center text-[11px] text-[#64748b] hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-              >
-                ย้อนกลับเป็น &quot;{STATUS_META[meta.prev].label}&quot;
-              </button>
+            <StatusTrack status={task.status} />
+            {canChangeStatus ? (
+              <>
+                {meta.next && meta.nextLabel && meta.nextBtn && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => putStatus(meta.next as TaskStatus)}
+                    className={`mt-3 h-12 w-full rounded-lg text-[17px] font-semibold transition-colors cursor-pointer disabled:opacity-50 ${meta.nextBtn}`}
+                  >
+                    {meta.nextLabel}
+                  </button>
+                )}
+                {meta.prev && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => putStatus(meta.prev as TaskStatus)}
+                    className="mt-2 w-full text-center text-[14px] text-[#64748b] hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    ย้อนกลับเป็น &quot;{STATUS_META[meta.prev].label}&quot;
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="mt-3 text-[14px] text-[#64748b] th-text">
+                ความคืบหน้าปรับโดยทีมทำสื่อ (Admin) — สั่งงาน แก้ไข และคุยงานได้ตามปกติ
+              </p>
             )}
           </div>
 
           {/* description */}
-          {task.description && <p className="text-xs text-[#94a3b8] whitespace-pre-wrap">{task.description}</p>}
+          {task.description && <p className="text-[15px] text-[#94a3b8] whitespace-pre-wrap">{task.description}</p>}
 
           {/* แถบเครื่องมือทีมทำสื่อ — teal สื่อว่าเป็นเครื่องมือ ไม่ใช่การกระทำเปลี่ยนข้อมูล */}
           <div className="bg-teal-500/5 border border-teal-500/20 rounded-lg p-2 space-y-1.5">
@@ -256,7 +272,7 @@ export function TaskCard({
                   type="button"
                   disabled={!!taskDownload}
                   onClick={handleDownloadAllImages}
-                  className="w-full sm:w-auto h-9 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 text-xs font-medium transition-colors cursor-pointer disabled:opacity-60 whitespace-nowrap"
+                  className="w-full sm:w-auto h-10 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 text-[15px] font-medium transition-colors cursor-pointer disabled:opacity-60 whitespace-nowrap"
                 >
                   {taskDownload
                     ? `กำลังโหลด ${taskDownload.done}/${taskDownload.total}...`
@@ -266,13 +282,13 @@ export function TaskCard({
               <button
                 type="button"
                 onClick={handleCopyBrief}
-                className="w-full sm:w-auto h-9 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+                className="w-full sm:w-auto h-10 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 text-[15px] font-medium transition-colors cursor-pointer whitespace-nowrap"
               >
                 {briefCopied ? "คัดลอกแล้ว ✓" : "คัดลอกบรีฟ"}
               </button>
             </div>
             {thumbCount > 0 && (
-              <p className="text-[10px] text-[#64748b]">
+              <p className="text-[13px] text-[#64748b]">
                 เบราว์เซอร์อาจถามอนุญาตดาวน์โหลดหลายไฟล์ — กดอนุญาตครั้งเดียว
               </p>
             )}
@@ -308,14 +324,14 @@ export function TaskCard({
             <button
               type="button"
               onClick={onEdit}
-              className="h-9 px-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+              className="h-10 px-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[15px] font-medium transition-colors cursor-pointer whitespace-nowrap"
             >
               แก้ไข
             </button>
             <button
               type="button"
               onClick={onDelete}
-              className="h-9 px-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+              className="h-10 px-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 text-[15px] font-medium transition-colors cursor-pointer whitespace-nowrap"
             >
               ลบ
             </button>
@@ -335,28 +351,35 @@ export function TaskCard({
   )
 }
 
-/** stepper อ่านอย่างเดียว — จุด + เส้นเชื่อม + label ใต้จุด */
-function StatusStepper({ status }: { status: TaskStatus }) {
+/** แถบความคืบหน้าอ่านอย่างเดียว — 3 ช่วงเท่ากัน เติมสีตามสถานะปัจจุบัน
+ *  ขั้นที่ผ่านแล้วติด ✓ สีจาง · ขั้นปัจจุบันสีเข้ม+เรืองแสง · ขั้นที่ยังไม่ถึงเป็นสีเทา
+ *  ใช้ทั้งตอนการ์ดย่อ (เห็นทันทีว่าถึงไหน) และตอนกาง */
+function StatusTrack({ status, className = "" }: { status: TaskStatus; className?: string }) {
   const idx = STATUS_ORDER.indexOf(status)
+  const meta = STATUS_META[status]
   return (
-    <div>
-      <div className="flex items-center">
-        {STATUS_ORDER.map((s, i) => (
-          <div key={s} className="flex items-center flex-1">
-            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${i <= idx ? "bg-amber-400" : "bg-[#2a2a3a] border border-[#3a3a4a]"}`} />
-            {i < STATUS_ORDER.length - 1 && (
-              <div className={`flex-1 h-px mx-1 ${i < idx ? "bg-amber-400" : "bg-[#2a2a3a]"}`} />
-            )}
+    <div className={`flex items-start gap-1.5 w-full ${className}`}>
+      {STATUS_ORDER.map((s, i) => {
+        const passed = i < idx
+        const current = i === idx
+        return (
+          <div key={s} className="flex-1 min-w-0">
+            <div
+              className={`h-1.5 rounded-full transition-colors ${
+                current ? `${meta.bar} ${meta.glow}` : passed ? meta.barSoft : "bg-[#2a2a3a]"
+              }`}
+            />
+            <div
+              className={`mt-1 text-[13px] leading-tight truncate ${
+                current ? `${meta.text} font-semibold` : passed ? "text-[#64748b]" : "text-[#475569]"
+              }`}
+            >
+              {passed ? "✓ " : ""}
+              {STATUS_META[s].label}
+            </div>
           </div>
-        ))}
-      </div>
-      <div className="flex items-center justify-between mt-1">
-        {STATUS_ORDER.map((s, i) => (
-          <span key={s} className={`text-[10px] whitespace-nowrap ${i === idx ? "text-amber-300 font-medium" : "text-[#64748b]"}`}>
-            {STATUS_META[s].label}
-          </span>
-        ))}
-      </div>
+        )
+      })}
     </div>
   )
 }
@@ -428,14 +451,14 @@ function TaskItemRow({
             setOpen((v) => !v)
           }
         }}
-        className="w-full min-h-[36px] flex items-center justify-between gap-2 text-left cursor-pointer"
+        className="w-full min-h-[44px] flex items-center justify-between gap-2 text-left cursor-pointer"
       >
-        <span className="text-xs font-medium text-white truncate min-w-0">
+        <span className="text-[15px] font-medium text-white truncate min-w-0">
           {item.title || `รายการ ${index + 1}`}
         </span>
         <span className="shrink-0 flex items-center gap-1.5">
           {item.products.length > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[#94a3b8] whitespace-nowrap">
+            <span className="text-[13px] px-2 py-0.5 rounded bg-white/5 text-[#94a3b8] whitespace-nowrap">
               {item.products.length} สินค้า
             </span>
           )}
@@ -448,17 +471,19 @@ function TaskItemRow({
                   e.stopPropagation()
                   handleDownloadItemImages()
                 }}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 whitespace-nowrap cursor-pointer disabled:opacity-60"
+                className="text-[13px] px-2 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/25 text-teal-300 whitespace-nowrap cursor-pointer disabled:opacity-60"
               >
                 {itemDownloading ? "กำลังโหลด..." : `โหลด ${item.attachments.length} รูป`}
               </button>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[#94a3b8] whitespace-nowrap">
+              {/* ตัวเลขจำนวนรูปซ้ำกับปุ่มข้างๆ — ฟอนต์ใหญ่ขึ้นแล้วแถวนี้แน่นบนมือถือ
+                  จึงโชว์เฉพาะจอกว้าง ไม่ให้ชื่อรายการโดนบีบจนอ่านไม่ออก */}
+              <span className="hidden sm:inline text-[13px] px-2 py-0.5 rounded bg-white/5 text-[#94a3b8] whitespace-nowrap">
                 {item.attachments.length} รูป
               </span>
             </>
           )}
           <svg
-            className={`w-3.5 h-3.5 text-[#64748b] transition-transform ${open ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-[#64748b] transition-transform ${open ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -471,12 +496,12 @@ function TaskItemRow({
 
       {open && (
         <div className="mt-2 space-y-2.5">
-          {item.detail && <p className="text-[11px] text-[#94a3b8] whitespace-pre-wrap">{item.detail}</p>}
+          {item.detail && <p className="text-[14px] text-[#94a3b8] whitespace-pre-wrap">{item.detail}</p>}
 
           {item.products.length > 0 &&
             (isBundle ? (
               <div className="bg-[#1a1a28] border border-violet-500/25 border-l-2 border-l-violet-500/60 rounded-lg p-2.5">
-                <span className="inline-block bg-violet-500/15 text-violet-300 text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap mb-2">
+                <span className="inline-block bg-violet-500/15 text-violet-300 text-[13px] px-1.5 py-0.5 rounded whitespace-nowrap mb-2">
                   ขายเป็นชุด · {item.products.length} ชิ้น
                 </span>
                 <div className="space-y-1.5">
@@ -484,7 +509,7 @@ function TaskItemRow({
                     <div key={pi} className="flex items-center gap-1.5">
                       <ProductRow product={p} />
                       {pi < item.products.length - 1 && (
-                        <span className="shrink-0 w-5 h-5 rounded-full bg-white/5 text-[#94a3b8] text-[11px] flex items-center justify-center">
+                        <span className="shrink-0 w-6 h-6 rounded-full bg-white/5 text-[#94a3b8] text-[14px] flex items-center justify-center">
                           ＋
                         </span>
                       )}
@@ -493,7 +518,7 @@ function TaskItemRow({
                 </div>
                 {/* หมายเหตุเป็นข้อความอิสระที่พนักงานพิมพ์เอง ("ราคาชุด 1,290" / "ใช้ 150 แต้ม")
                     → แสดงตามที่พิมพ์มา ห้ามเดาว่าเป็นราคาแล้วแปลงเป็น ฿ (จะผิดในเคสแลกแต้ม) */}
-                <div className="mt-2 pt-2 border-t border-white/5 text-[11px] text-[#94a3b8]">
+                <div className="mt-2 pt-2 border-t border-white/5 text-[14px] text-[#94a3b8]">
                   {bundleNote && <span className="text-violet-300">{bundleNote} · </span>}
                   ราคาปกติรวม {fmtBaht(totalPrice)}
                 </div>
@@ -520,7 +545,7 @@ function TaskItemRow({
                     type="button"
                     disabled={downloadingIdx.has(ai)}
                     onClick={() => handleDownloadImage(ai, a)}
-                    className="text-[10px] text-cyan-400 hover:text-cyan-300 whitespace-nowrap cursor-pointer disabled:opacity-50"
+                    className="text-[13px] text-cyan-400 hover:text-cyan-300 whitespace-nowrap cursor-pointer disabled:opacity-50"
                   >
                     {downloadingIdx.has(ai) ? "กำลังโหลด..." : "โหลดต้นฉบับ"}
                   </button>
@@ -541,20 +566,20 @@ function ProductRow({ product }: { product: TaskProductRef }) {
     <div className="flex items-center gap-2 flex-1 min-w-0">
       {!imgError && product.image ? (
         <img
-          src={cldThumb(product.image, 96)}
+          src={cldThumb(product.image, 120)}
           alt=""
-          className="w-10 h-10 rounded object-cover bg-[#1e1e2e] border border-white/10 shrink-0"
+          className="w-12 h-12 rounded object-cover bg-[#1e1e2e] border border-white/10 shrink-0"
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="w-10 h-10 rounded bg-[#1e1e2e] border border-white/10 shrink-0" />
+        <div className="w-12 h-12 rounded bg-[#1e1e2e] border border-white/10 shrink-0" />
       )}
       <div className="min-w-0 flex-1">
-        <div className="text-xs text-white truncate">{product.name}</div>
-        <div className="text-[10px] text-[#64748b] truncate">
+        <div className="text-[15px] text-white truncate">{product.name}</div>
+        <div className="text-[13px] text-[#64748b] truncate">
           {product.sku} · {fmtBaht(product.price)}
         </div>
-        {product.note && <div className="text-[10px] text-[#94a3b8] truncate">{product.note}</div>}
+        {product.note && <div className="text-[13px] text-[#94a3b8] truncate">{product.note}</div>}
       </div>
     </div>
   )
@@ -576,16 +601,16 @@ function TaskComments({
 }) {
   return (
     <div>
-      <div className="text-xs font-medium text-white mb-2">คุยงาน ({task.comments.length})</div>
+      <div className="text-[15px] font-medium text-white mb-2">คุยงาน ({task.comments.length})</div>
       {task.comments.length > 0 && (
         <div className="space-y-2 mb-2 max-h-64 overflow-y-auto">
           {task.comments.map((c) => (
             <div key={c.id} className="bg-[#1a1a28] rounded-lg px-2.5 py-2">
               <div className="flex items-center gap-2 mb-0.5 min-w-0">
-                <span className="text-[11px] font-medium text-white truncate">{c.authorName}</span>
-                <span className="text-[10px] text-[#64748b] shrink-0">{relativeThai(c.createdAt)}</span>
+                <span className="text-[14px] font-medium text-white truncate">{c.authorName}</span>
+                <span className="text-[13px] text-[#64748b] shrink-0">{relativeThai(c.createdAt)}</span>
               </div>
-              <p className="text-xs text-[#cbd5e1] whitespace-pre-wrap">{c.text}</p>
+              <p className="text-[15px] text-[#cbd5e1] whitespace-pre-wrap">{c.text}</p>
             </div>
           ))}
         </div>
@@ -596,13 +621,13 @@ function TaskComments({
           onChange={(e) => setCommentText(e.target.value)}
           placeholder="พิมพ์ถึงกันตรงนี้..."
           rows={2}
-          className="flex-1 min-w-0 px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base md:text-sm focus:border-[#94a3b8] outline-none resize-none"
+          className="flex-1 min-w-0 px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base focus:border-[#94a3b8] outline-none resize-none"
         />
         <button
           type="button"
           disabled={sending || !commentText.trim()}
           onClick={sendComment}
-          className="shrink-0 h-11 md:h-9 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+          className="shrink-0 h-11 md:h-10 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-[15px] font-medium transition-colors cursor-pointer whitespace-nowrap"
         >
           ส่ง
         </button>

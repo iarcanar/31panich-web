@@ -44,7 +44,7 @@ export function TaskItemEditor({
   return (
     <div className="bg-[#1a1a28] border border-white/10 border-l-2 border-l-teal-400/60 rounded-lg p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="bg-teal-500/15 text-teal-300 text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap">
+        <span className="bg-teal-500/15 text-teal-300 text-[13px] px-1.5 py-0.5 rounded whitespace-nowrap">
           {cardWord} {index + 1}
         </span>
         <button
@@ -75,7 +75,7 @@ export function TaskItemEditor({
             onChange={(e) => onChange({ ...item, detail: e.target.value })}
             rows={3}
             placeholder="รายละเอียดเพิ่มเติม..."
-            className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base md:text-sm transition-colors duration-150 focus:border-[#94a3b8] outline-none resize-y"
+            className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base transition-colors duration-150 focus:border-[#94a3b8] outline-none resize-y"
           />
         </>
       )}
@@ -88,7 +88,7 @@ export function TaskItemEditor({
       />
 
       <div>
-        <p className="text-[11px] text-[#94a3b8] mb-1">รูปของการ์ดนี้</p>
+        <p className="text-[14px] text-[#94a3b8] mb-1">รูปของการ์ดนี้</p>
         <TaskAttachmentUploader
           value={item.attachments}
           onChange={(v) => onChange({ ...item, attachments: v })}
@@ -103,13 +103,13 @@ export function TaskItemEditor({
             onChange={(e) => onChange({ ...item, detail: e.target.value })}
             rows={2}
             placeholder="รายละเอียดเพิ่มเติม..."
-            className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base md:text-sm transition-colors duration-150 focus:border-[#94a3b8] outline-none resize-y"
+            className="w-full px-3 py-2 bg-[#1e1e2e] border border-[#2a2a3a] rounded-lg text-[#f1f5f9] placeholder-[#64748b] text-base transition-colors duration-150 focus:border-[#94a3b8] outline-none resize-y"
           />
         ) : (
           <button
             type="button"
             onClick={() => setShowDetail(true)}
-            className="text-xs text-teal-300 hover:text-teal-200 transition-colors cursor-pointer"
+            className="text-[15px] text-teal-300 hover:text-teal-200 transition-colors cursor-pointer"
           >
             + รายละเอียดเพิ่มเติม (ถ้ามี)
           </button>
