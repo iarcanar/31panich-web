@@ -8,7 +8,12 @@ import DriftSphereOverlay from "@/components/ui/DriftSphereOverlay"
 import { useDragScroll } from "@/hooks/useDragScroll"
 
 // ไม่รวม cooker + zootopia เพราะแสดงในโซนโปรโมชั่นแล้ว
+// ⚠ รายการเต็มอยู่ที่ app/(shop)/points/page.tsx — เพิ่มของรางวัลต้องแก้ทั้ง 2 ที่
+//   + data/knowledge/points.txt (AI chat) และเช็คตัวเลข "อีก N+ รายการ" ด้านล่าง
 const REWARDS = [
+  { image: "/points/reward-300-chainsaw.webp", name: "เลื่อยโซ่ไร้สาย PITA 21V CT5-14", points: 300 },
+  { image: "/points/reward-250-welder.webp", name: "เครื่องเชื่อม APOLLO 120A T", points: 250 },
+  { image: "/points/reward-150-grinder.webp", name: "เครื่องเจียร EUROX 750W", points: 150 },
   { image: "/points/reward-200.webp", name: "สว่านกระแทกไร้สาย BOXER 128V 3 ระบบ", points: 200 },
   { image: "/points/reward-50.webp", name: "กล่องตั้งแคมป์ อเนกประสงค์ พับเก็บได้", points: 50 },
   { image: "/points/reward-40-60.webp", name: "เก้าอี้แคมป์ปิ้ง พับเก็บได้", points: 40 },
@@ -155,7 +160,8 @@ export default function RewardsCarousel() {
                   </svg>
                 </div>
                 <p className="text-amber-400 font-bold text-sm">ดูของรางวัลทั้งหมด</p>
-                <p className="text-gray-500 text-xs">อีก 7+ รายการ</p>
+                {/* หน้า /points มี 12 รายการ · carousel โชว์ 8 → เหลืออีก 4 */}
+                <p className="text-gray-500 text-xs">อีก 4+ รายการ</p>
               </div>
             </Link>
           </div>
