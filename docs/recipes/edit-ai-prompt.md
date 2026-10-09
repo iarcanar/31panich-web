@@ -1,6 +1,6 @@
 ---
 title: Recipe — Edit the AI System Prompt
-last_reviewed: 2026-06-10
+last_reviewed: 2026-10-09
 audience: both
 ---
 
@@ -118,3 +118,5 @@ Trigger-based knowledge injection: `web/data/knowledge/points.txt` is read into 
 - **Manager tries to edit AI config** → 403 from middleware. By design — only `admin` role can edit
 - **AI gives the same wrong answer repeatedly** → check if `gemini-cache.ts` is caching it. Chat itself is NOT cached, but if you're calling `cachedGenerateText` from somewhere, the result will stick for 5 min
 - **Changes don't take effect** → make sure you saved via the admin panel (which writes to Redis), not just the local file
+- **Store description goes stale as the catalog grows** → product *search* reads live products, but the "สินค้า:" groups + "แบรนด์:" line in `instructions` are hand-written. Refresh them from `GET /api/products` (count by `brand` / `category`) when many new products land — last refresh 2026-10-09 (154 items). Also re-check the `[ไม่มีในระบบ — ห้ามใช้ SEARCH]` list in `SYSTEM_TEMPLATE`: once a product type gets listed, remove it from there or the AI will refuse to search it
+- **Local AI test returns 503 "API key not valid"** → `.env.local` `GEMINI_API_KEY` is stale (dev only; production key is separate). Either renew it locally or deploy and test against production with 5+ questions (see the AI testing protocol)

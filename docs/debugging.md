@@ -1,6 +1,6 @@
 ---
 title: Debugging Playbook
-last_reviewed: 2026-06-10
+last_reviewed: 2026-10-09
 audience: both
 ---
 
@@ -137,7 +137,7 @@ node -e "fetch('http://localhost:3001/api/ai/chat',{method:'POST',headers:{'Cont
 
 ## ⚠ "แก้ seed/default ในโค้ดแล้ว deploy แต่ production ไม่เปลี่ยน" (Redis seed drift)
 
-**Status**: by design — เจอจริง 2026-06-10 กับ campaign "ไทยช่วยไทย"
+**Status**: by design — เจอจริง 2026-06-10 กับ campaign "ไทยช่วยไทย" · เจอซ้ำ 2026-10-09 กับ `ai-config.json` (production เป็นข้อความ**เก่ากว่า** seed ใน git) → drift ไปได้ทั้งสองทิศ
 
 **Root cause**: `readJSON()` ใน `blob-store.ts` seed จาก local file/default **เฉพาะตอน Redis key ว่าง** (first deploy) เท่านั้น — เมื่อ Redis มีข้อมูลแล้ว การแก้ `web/data/*.json` หรือ default ในโค้ด (เช่น `DEFAULT_CAMPAIGNS` ใน `lib/campaigns.ts`) + deploy จะ**ไม่มีผลใดๆ กับ production** ข้อมูลจริงกับโค้ดจึง drift จากกันเงียบๆ
 
@@ -149,6 +149,23 @@ node -e "fetch('http://localhost:3001/api/ai/chat',{method:'POST',headers:{'Cont
 3. **ห้าม** เขียน Redis ตรงๆ ข้าม validation ของ API route
 
 **วิธีตรวจว่า drift หรือไม่**: `GET /api/admin/<resource>` (production) เทียบกับ seed ในโค้ด — หรือยิงคำถามใส่ production chat API ตรงๆ แล้วเทียบคำตอบ
+
+**ก่อน PUT ด้วย script**: `GET` ของ production มาเป็นฐาน แล้วแก้เฉพาะบรรทัด/field ที่ต้องการ — อย่าเอา seed ใน git ไปทับทั้งก้อน เพราะอาจลบสิ่งที่ admin แก้ผ่าน UI ไว้ · ให้ script เทียบอีกรอบก่อน PUT ว่า production ไม่เปลี่ยนไประหว่างนั้น
+
+**Script gotchas (Windows / Git Bash)**:
+- ภาษาไทยใน URL/body → ใช้ `node` fetch ไม่ใช่ `curl` (curl ส่ง UTF-8 เพี้ยน → 500/คำตอบผิดแบบหลอก)
+- arg ที่ขึ้นต้น `/api/...` ถูก Git Bash แปลงเป็น path Windows → นำหน้าด้วย `MSYS_NO_PATHCONV=1`
+- `npm run sync` เรียก `vercel env pull` (Vercel CLI — CLAUDE.md ห้าม) → ถ้าต้องการข้อมูล production มาทดสอบ ให้ดึงผ่าน `GET /api/products` / `GET /api/admin/<resource>` แทน
+
+## "AI บอกว่าไม่มีสินค้า ทั้งที่มีในระบบ"
+
+**เจอจริง 2026-10-09**: "มีสว่านไร้สาย makita ไหม" → AI ตอบว่าไม่มี ทั้งที่มี "ชุดสว่านไร้สาย Makita CLX228X1"
+
+**Root cause**: `buildChatContextWithProducts()` ส่งให้ Gemini แค่ **top 5** จาก `scoreProducts()` · ภาษาไทยไม่มีเว้นวรรค token "มีสว่านไร้สาย" จึงไม่ตรงชื่อสินค้าตัวไหน → คะแนนมาจากแบรนด์อย่างเดียว สินค้า Makita 7 ตัวได้เท่ากัน (12) และตัวที่ถูกต้องตกไปอันดับ 7
+
+**Fix (v2.1.31)**: `partialNameBonus()` ใน `lib/ai-products.ts` — ให้คะแนนท่อนไทย 3–8 ตัวอักษรของ token ที่เจอในชื่อสินค้า (+1/+2) ใช้เป็น **tie-breaker เฉพาะสินค้าที่มีคะแนนอยู่แล้ว** fallback ตอนคะแนน 0 ทำงานเหมือนเดิม
+
+**วิธีตรวจ**: จำลอง `scoreProducts()` กับ `GET /api/products` แล้วดู top 5 ของคำถามนั้น — ถ้าสินค้าที่ถูกต้องอยู่นอก top 5 = ปัญหาการจัดอันดับ ไม่ใช่ prompt · ถ้าอยู่ใน top 5 แต่ AI ยังปฏิเสธ → ดูกฎ "ไม่มีในระบบ — ห้ามใช้ SEARCH" ใน `SYSTEM_TEMPLATE` (เคยค้างกฎสีน้ำมันทั้งที่มีสินค้าแล้ว)
 
 ## "I added a product but it doesn't show on the homepage"
 
