@@ -13,8 +13,10 @@ import { useState } from "react"
  *
  * Scheme facts (confirmed via official site ไทยช่วยไทยพลัส.th + Thai gov / PRD):
  *  - State pays 60%, citizen pays 40% (co-payment).
- *  - State subsidy capped at ฿200/day and ฿1,000/month.
- *  - Total ฿4,000/person across 4 months (1 Jun – 30 Sep 2026).
+ *  - State subsidy capped at ฿200/day.
+ *  - Round 1: ฿1,000/month, ฿4,000 total (1 Jun – 30 Sep 2026).
+ *  - Extension (ครม. 22 Sep 2026): ฿1,000/person total, 1 Oct – 30 Nov 2026;
+ *    citizens must re-confirm in เป๋าตัง 1–15 Oct, shops in ถุงเงิน.
  * No official logo/colour asset exists yet → banner is CSS-only (Thai tricolour
  * accents on the site's dark theme) so it renders without an image dependency.
  */
@@ -25,9 +27,10 @@ const DAILY_STATE_CAP = 200 // เพดานรัฐช่วยต่อว�
 
 // Official timeline (จากเว็บทางการ ไทยช่วยไทยพลัส.th) — ส่วนที่เกี่ยวกับผู้ใช้สิทธิ์
 const TIMELINE = [
-  { date: "1 มิ.ย. 69", title: "เริ่มใช้สิทธิ์วันแรก", detail: "ทุกวัน 06:00–23:00 น.", now: true },
-  { date: "15 มิ.ย. 69", title: "ใช้ผ่านฟู้ดเดลิเวอรีได้", detail: "06:00–21:00 น." },
-  { date: "30 ก.ย. 69", title: "วันสุดท้ายของโครงการ", detail: "ปิดรับสิทธิ์ 23:00 น." },
+  { date: "1 มิ.ย.–30 ก.ย. 69", title: "รอบแรก (จบแล้ว)", detail: "รัฐช่วยเดือนละ 1,000฿ รวม 4,000฿" },
+  { date: "1 ต.ค. 69", title: "รอบเพิ่มเติม เริ่มใช้สิทธิ์", detail: "รัฐช่วยรวม 1,000฿/คน (ทั้ง 2 เดือน) · ทุกวัน 06:00–23:00 น.", now: true },
+  { date: "1–15 ต.ค. 69", title: "กดยืนยันสิทธิ์รอบเพิ่มเติม", detail: "ในแอปเป๋าตัง — ไม่ยืนยัน = ใช้สิทธิ์ไม่ได้" },
+  { date: "30 พ.ย. 69", title: "วันสุดท้ายของโครงการ", detail: "ปิดรับสิทธิ์ 23:00 น. · วงเงินเหลือใช้ต่อไม่ได้" },
 ]
 
 const baht = (n: number) =>
@@ -122,8 +125,9 @@ export default function ThaiChuayThaiBanner() {
               {/* How it works — compact one-liner (ย่อให้ประหยัดพื้นที่) */}
               <p className="text-[12px] md:text-[13px] text-slate-600 th-text leading-relaxed">
                 💡 ซื้อของที่ร้าน <b className="text-blue-700">รัฐช่วยจ่าย 60%</b> เราจ่ายเอง 40% ·
-                รัฐช่วยสูงสุด <b className="text-slate-800">200฿/วัน</b> · <b className="text-slate-800">1,000฿/เดือน</b>{" "}
-                (รวม 4,000฿) · ใช้ได้ 1 มิ.ย.–30 ก.ย. 69 ผ่านแอป <b className="text-slate-800">เป๋าตัง</b>
+                รัฐช่วยสูงสุด <b className="text-slate-800">200฿/วัน</b> · รอบเพิ่มเติมรวม <b className="text-slate-800">1,000฿/คน</b>{" "}
+                · ใช้ได้ถึง <b className="text-slate-800">30 พ.ย. 69</b> ผ่านแอป <b className="text-slate-800">เป๋าตัง</b>{" "}
+                (ต้องกดยืนยันสิทธิ์ 1–15 ต.ค. 69)
               </p>
 
               {/* Live calculator */}
@@ -235,7 +239,7 @@ export default function ThaiChuayThaiBanner() {
                               <span className="text-amber-600 font-bold text-[13px] th-text">{t.date}</span>
                               {t.now && (
                                 <span className="text-[9px] font-bold th-text bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">
-                                  เริ่มแล้ววันนี้
+                                  ตอนนี้
                                 </span>
                               )}
                             </div>
