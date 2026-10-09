@@ -41,6 +41,18 @@ function extractNameTerms(name: string): string[] {
     .filter((t) => t.length >= 3)
 }
 
+/** Thai has no spaces → a token like "มีสว่านไร้สาย" never equals a name word.
+ *  Credit the longest 3-8 char chunk of the token found in the name, so the
+ *  product-type word ("สว่านไร้") still counts when a brand word ties many items. */
+function partialNameBonus(word: string, name: string): number {
+  for (let len = Math.min(8, word.length); len >= 3; len--) {
+    for (let start = 0; start <= word.length - len; start++) {
+      if (name.includes(word.slice(start, start + len))) return len >= 5 ? 2 : 1
+    }
+  }
+  return 0
+}
+
 /** Score products against query — bidirectional matching for Thai */
 function scoreProducts(userQuery: string, allProducts: Product[]): ScoredProduct[] {
   const products = allProducts
@@ -57,6 +69,7 @@ function scoreProducts(userQuery: string, allProducts: Product[]): ScoredProduct
     .filter((p) => p.price > 0 && p.stock > 0)
     .map((p) => {
       let score = 0
+      let partial = 0
       const name = p.name.toLowerCase()
       const brand = (p.brand || "").toLowerCase()
       const desc = (p.description || "").toLowerCase()
@@ -66,6 +79,7 @@ function scoreProducts(userQuery: string, allProducts: Product[]): ScoredProduct
       // Forward matching: query tokens → product fields
       for (const w of queryWords) {
         if (name.includes(w)) score += 3
+        else partial += partialNameBonus(w, name)
         if (brand.includes(w)) score += 2
         if (catLabel.includes(w)) score += 2
         if (desc.includes(w)) score += 1
@@ -79,6 +93,10 @@ function scoreProducts(userQuery: string, allProducts: Product[]): ScoredProduct
       }
       // Also check brand in query
       if (brand && brand.length >= 2 && queryFlat.includes(brand)) score += 2
+
+      // Tie-breaker only for already-matched items (e.g. brand ties) — keeps the
+      // zero-score fallback below unchanged
+      if (score > 0) score += partial
 
       // Substring matching: extract 3-8 char substrings from query → check in product name
       // Handles Thai queries like "มีสว่านมั้ย" matching product "สว่านกระแทก"
